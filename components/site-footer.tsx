@@ -95,7 +95,7 @@ export function SiteFooter() {
                     support@spockshop.com
                   </a>
                 </li>
-                <li>Austin, Texas</li>
+                <li>Bentonville, Arkansas</li>
               </ul>
               <div className="mt-4 flex flex-wrap gap-4">
                 {socialLinks.map((link) => (
