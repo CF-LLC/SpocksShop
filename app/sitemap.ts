@@ -15,12 +15,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/wishlist",
     "/faq",
   ].map((path) => ({
-    url: `https://spocksresaleshop.com${path}`,
+    url: `https://spockshop.com${path}`,
     lastModified: new Date(),
   }));
 
   const productPages = products.map((product) => ({
-    url: `https://spocksresaleshop.com/shop/${product.slug}`,
+    url: `https://spockshop.com/shop/${product.slug}`,
     lastModified: new Date(product.updatedAt),
   }));
 
