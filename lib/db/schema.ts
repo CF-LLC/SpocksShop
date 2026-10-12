@@ -56,7 +56,29 @@ export const categories = pgTable("categories", {
   createdAt: createdAt(),
 });
 
-export const products = pgTable("products", {
+export const itemSources = ["closet", "affiliate", "community"] as const;
+export type ItemSource = (typeof itemSources)[number];
+
+export const sellers = pgTable(
+  "sellers",
+  {
+  id: id(),
+  // Optional link to a login account.
+  userId: uuid("user_id").unique().references(() => users.id, { onDelete: "set null" }),
+  email: text("email").notNull().unique(),
+  displayName: text("display_name").notNull(),
+  status: text("status", { enum: ["pending", "active", "suspended"] }).notNull().default("pending"),
+  // Payout placeholder only. No Stripe Connect yet.
+  payoutMethod: text("payout_method"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+  },
+  (t) => [check("sellers_status_valid", sql`${t.status} in ('pending', 'active', 'suspended')`)],
+);
+
+export const products = pgTable(
+  "products",
+  {
   id: id(),
   sku: text("sku").notNull().unique(),
   slug: text("slug").notNull().unique(),
@@ -71,13 +93,18 @@ export const products = pgTable("products", {
   purchaseCostCents: integer("purchase_cost_cents"), // admin-only
   weightLb: numeric("weight_lb", { precision: 8, scale: 2 }),
   uniqueFind: boolean("unique_find").notNull().default(true),
+  // Which shop section the item belongs to. Existing products are Cooper's own closet.
+  source: text("source", { enum: itemSources }).notNull().default("closet"),
+  sellerId: uuid("seller_id").references(() => sellers.id, { onDelete: "set null" }),
   status: text("status").notNull().default("draft"),
   featured: boolean("featured").notNull().default(false),
   images: jsonb("images").notNull().default(sql`'[]'::jsonb`),
   tags: jsonb("tags").notNull().default(sql`'[]'::jsonb`),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
-});
+  },
+  (t) => [check("products_source_valid", sql`${t.source} in ('closet', 'affiliate', 'community')`)],
+);
 
 export const inventory = pgTable(
   "inventory",
@@ -187,4 +214,73 @@ export const adminNotes = pgTable("admin_notes", {
   entityId: uuid("entity_id").notNull(),
   body: text("body").notNull(),
   createdAt: createdAt(),
+});
+
+export const communityListings = pgTable(
+  "community_listings",
+  {
+  id: id(),
+  sellerId: uuid("seller_id")
+    .notNull()
+    .references(() => sellers.id, { onDelete: "cascade" }),
+  // Set once an approved listing is published as a product (source = community).
+  productId: uuid("product_id").unique().references(() => products.id, { onDelete: "set null" }),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  condition: text("condition"),
+  priceCents: integer("price_cents").notNull(),
+  status: text("status", { enum: ["draft", "pending", "approved", "rejected"] }).notNull().default("draft"),
+  moderationNote: text("moderation_note"),
+  reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+  },
+  (t) => [
+    check("community_listings_status_valid", sql`${t.status} in ('draft', 'pending', 'approved', 'rejected')`),
+    check("community_listings_price_non_negative", sql`${t.priceCents} >= 0`),
+  ],
+);
+
+export const affiliateItems = pgTable(
+  "affiliate_items",
+  {
+    id: id(),
+    title: text("title").notNull(),
+    imageUrl: text("image_url"),
+    amazonUrl: text("amazon_url"),
+    asin: text("asin"),
+    priceNote: text("price_note"),
+    active: boolean("active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [check("affiliate_items_url_or_asin", sql`${t.amazonUrl} is not null or ${t.asin} is not null`)],
+);
+
+export const photos = pgTable(
+  "photos",
+  {
+    id: id(),
+    productId: uuid("product_id").references(() => products.id, { onDelete: "cascade" }),
+    communityListingId: uuid("community_listing_id").references(() => communityListings.id, { onDelete: "cascade" }),
+    // Path relative to the media volume (/var/spocks/media).
+    storagePath: text("storage_path").notNull(),
+    alt: text("alt").notNull().default(""),
+    width: integer("width"),
+    height: integer("height"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [check("photos_has_owner", sql`${t.productId} is not null or ${t.communityListingId} is not null`)],
+);
+
+export const errorLog = pgTable("error_log", {
+  id: id(),
+  level: text("level", { enum: ["error", "warn", "info"] }).notNull().default("error"),
+  source: text("source").notNull(),
+  message: text("message").notNull(),
+  context: jsonb("context"),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
 });
