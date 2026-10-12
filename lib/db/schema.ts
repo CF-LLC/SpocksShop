@@ -20,7 +20,7 @@ export const users = pgTable("users", {
   id: id(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role", { enum: ["admin", "staff"] }).notNull().default("admin"),
+  role: text("role", { enum: ["admin", "staff", "seller"] }).notNull().default("admin"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

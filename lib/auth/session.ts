@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 const COOKIE = "spocks_admin";
+export const ADMIN_AUDIENCE = "spocks:admin";
 
 function secret() {
   const value = process.env.SESSION_SECRET;
@@ -26,6 +27,7 @@ export async function createSession(session: AdminSession) {
   const token = await new SignJWT(session)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
+    .setAudience(ADMIN_AUDIENCE)
     .setExpirationTime("7d")
     .sign(secret());
 
@@ -50,7 +52,7 @@ export async function getSession(): Promise<AdminSession | null> {
   const token = store.get(COOKIE)?.value;
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secret());
+    const { payload } = await jwtVerify(token, secret(), { audience: ADMIN_AUDIENCE });
     return payload as unknown as AdminSession;
   } catch {
     return null;
