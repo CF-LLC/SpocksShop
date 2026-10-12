@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 
+// Admin pages query the database at request time; never prerender at build.
+export const dynamic = "force-dynamic";
+
 const links = [
   ["/admin", "Dashboard"],
   ["/admin/products", "Products"],

@@ -30,7 +30,7 @@ services:
       - "3000:3000"
     volumes:
       - spocks_media:/var/spocks/media
-    command: ["sh", "-c", "npx tsx scripts/migrate.ts && node scripts/ensure-admin.mjs && npm run start"]
+    command: ["sh", "-c", "npx tsx scripts/migrate.mts && npx tsx scripts/seed.mts && node scripts/ensure-admin.mjs && npm run start"]
 
 volumes:
   spocks_pgdata:
