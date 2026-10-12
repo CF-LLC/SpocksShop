@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSession, type AdminSession } from "@/lib/auth/session";
+import { publicUrl } from "@/lib/public-url";
 
 export class AdminInputError extends Error {}
 
 /** 303 redirect for admin form posts, with optional ?error= / ?ok= message. */
 export function back(request: Request, path: string, params: { error?: string; ok?: string } = {}) {
-  const url = new URL(path, request.url);
+  const url = publicUrl(request, path);
   if (params.error) url.searchParams.set("error", params.error);
   if (params.ok) url.searchParams.set("ok", params.ok);
   return NextResponse.redirect(url, 303);
