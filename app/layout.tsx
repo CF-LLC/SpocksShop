@@ -24,7 +24,7 @@ const techFont = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://spocksresaleshop.com"),
+  metadataBase: new URL("https://spockshop.com"),
   title: {
     default: "Spock's Resale Shop",
     template: "%s | Spock's Resale Shop",

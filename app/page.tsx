@@ -56,7 +56,7 @@ export default function HomePage() {
     slogan: "Live Long and Prosper",
     description:
       "Curated ecommerce resale store featuring unique secondhand products and constantly changing inventory.",
-    url: "https://spocksresaleshop.com",
+    url: "https://spockshop.com",
   };
 
   return (

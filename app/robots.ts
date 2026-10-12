@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://spocksresaleshop.com/sitemap.xml",
+    sitemap: "https://spockshop.com/sitemap.xml",
   };
 }
