@@ -132,7 +132,7 @@ No database clients, auth SDKs, payment SDKs, email SDKs, or image upload librar
 ### 1.12 Current Deployment Configuration
 
 - Minimal `next.config.ts` (empty options object)
-- Metadata base URL: `https://spocksresaleshop.com`
+- Metadata base URL: `https://spockshop.com`
 - `robots.ts` and `sitemap.ts` point at that domain
 - No `vercel.json`, Docker, CI workflow, or infrastructure-as-code in repo
 - `.vercel` is gitignored — deployment is assumed to be standard Vercel (or any Node host) when configured

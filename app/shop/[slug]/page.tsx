@@ -61,7 +61,7 @@ export default async function ProductDetailPage({
       priceCurrency: "USD",
       price: product.price,
       availability: "https://schema.org/InStock",
-      url: `https://spocksresaleshop.com/shop/${product.slug}`,
+      url: `https://spockshop.com/shop/${product.slug}`,
     },
     brand: {
       "@type": "Brand",
