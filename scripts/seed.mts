@@ -40,6 +40,7 @@ for (const p of catalogProducts) {
       purchaseCostCents: dollarsToCents(p.purchaseCost),
       weightLb: String(p.weightLb),
       uniqueFind: p.quantity <= 1,
+      source: "closet",
       status: p.status,
       featured: Boolean(p.featured),
       images: p.images,

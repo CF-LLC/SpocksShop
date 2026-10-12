@@ -6,11 +6,14 @@ export const dynamic = "force-dynamic";
 
 const links = [
   ["/admin", "Dashboard"],
-  ["/admin/products", "Products"],
+  ["/admin/health", "Health"],
+  ["/admin/closet", "Closet"],
+  ["/admin/affiliate", "Amazon Picks"],
+  ["/admin/community", "Approval Queue"],
+  ["/admin/sellers", "Sellers"],
+  ["/admin/products", "All Products"],
   ["/admin/inventory", "Inventory"],
   ["/admin/orders", "Orders"],
-  ["/admin/shipping", "Shipping Settings"],
-  ["/admin/tax", "Tax Settings"],
   ["/admin/payments", "Payment Settings"],
 ] as const;
 

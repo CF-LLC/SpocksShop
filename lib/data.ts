@@ -117,7 +117,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-pendleton-overcoat",
-        listingUrl: "https://spocksresaleshop.com/shop/pendleton-wool-overcoat-charcoal",
+        listingUrl: "https://spockshop.com/shop/pendleton-wool-overcoat-charcoal",
         status: "active",
         listedAt: "2026-08-09T09:40:00.000Z",
         lastSyncedAt: NOW,
@@ -167,7 +167,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-nb-574",
-        listingUrl: "https://spocksresaleshop.com/shop/new-balance-574-sneakers-navy",
+        listingUrl: "https://spockshop.com/shop/new-balance-574-sneakers-navy",
         status: "active",
         listedAt: "2026-08-10T08:22:00.000Z",
         lastSyncedAt: NOW,
@@ -208,7 +208,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-sony-cfd-s70",
-        listingUrl: "https://spocksresaleshop.com/shop/sony-cassette-boombox-cfd-s70",
+        listingUrl: "https://spockshop.com/shop/sony-cassette-boombox-cfd-s70",
         status: "active",
         listedAt: "2026-08-06T11:20:00.000Z",
         lastSyncedAt: NOW,
@@ -257,7 +257,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-hot-wheels-case",
-        listingUrl: "https://spocksresaleshop.com/shop/hot-wheels-display-case-vintage",
+        listingUrl: "https://spockshop.com/shop/hot-wheels-display-case-vintage",
         status: "active",
         listedAt: "2026-08-07T14:12:00.000Z",
         lastSyncedAt: NOW,
@@ -299,7 +299,7 @@ export const products: Product[] = [
         channel: "Website",
         listingId: "web-midcentury-brass-lamp",
         listingUrl:
-          "https://spocksresaleshop.com/shop/midcentury-brass-desk-lamp-adjustable",
+          "https://spockshop.com/shop/midcentury-brass-desk-lamp-adjustable",
         status: "active",
         listedAt: "2026-08-04T16:08:00.000Z",
         lastSyncedAt: NOW,
@@ -348,7 +348,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-le-creuset-mugs",
-        listingUrl: "https://spocksresaleshop.com/shop/le-creuset-ceramic-mug-set-blue",
+        listingUrl: "https://spockshop.com/shop/le-creuset-ceramic-mug-set-blue",
         status: "active",
         listedAt: "2026-08-10T10:40:00.000Z",
         lastSyncedAt: NOW,
@@ -389,7 +389,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-switch-pro-controller",
-        listingUrl: "https://spocksresaleshop.com/shop/nintendo-switch-pro-controller",
+        listingUrl: "https://spockshop.com/shop/nintendo-switch-pro-controller",
         status: "active",
         listedAt: "2026-08-08T13:20:00.000Z",
         lastSyncedAt: NOW,
@@ -430,7 +430,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-timex-ironman",
-        listingUrl: "https://spocksresaleshop.com/shop/timex-ironman-digital-watch",
+        listingUrl: "https://spockshop.com/shop/timex-ironman-digital-watch",
         status: "active",
         listedAt: "2026-08-06T09:18:00.000Z",
         lastSyncedAt: NOW,
@@ -471,7 +471,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-lee-rider-jacket",
-        listingUrl: "https://spocksresaleshop.com/shop/lee-rider-denim-jacket-vintage",
+        listingUrl: "https://spockshop.com/shop/lee-rider-denim-jacket-vintage",
         status: "active",
         listedAt: "2026-08-05T15:00:00.000Z",
         lastSyncedAt: NOW,
@@ -521,7 +521,7 @@ export const products: Product[] = [
         channel: "Website",
         listingId: "web-cole-haan-loafers",
         listingUrl:
-          "https://spocksresaleshop.com/shop/cole-haan-loafers-brown-leather",
+          "https://spockshop.com/shop/cole-haan-loafers-brown-leather",
         status: "active",
         listedAt: "2026-08-03T12:08:00.000Z",
         lastSyncedAt: NOW,
@@ -562,7 +562,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-yamaha-rx-v371",
-        listingUrl: "https://spocksresaleshop.com/shop/yamaha-receiver-rx-v371",
+        listingUrl: "https://spockshop.com/shop/yamaha-receiver-rx-v371",
         status: "active",
         listedAt: "2026-08-02T11:50:00.000Z",
         lastSyncedAt: NOW,
@@ -603,7 +603,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-atari-joystick-pair",
-        listingUrl: "https://spocksresaleshop.com/shop/atari-2600-joystick-pair-repair",
+        listingUrl: "https://spockshop.com/shop/atari-2600-joystick-pair-repair",
         status: "active",
         listedAt: "2026-08-10T14:00:00.000Z",
         lastSyncedAt: NOW,
@@ -644,7 +644,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-walnut-shelf-set",
-        listingUrl: "https://spocksresaleshop.com/shop/walnut-floating-shelves-set",
+        listingUrl: "https://spockshop.com/shop/walnut-floating-shelves-set",
         status: "active",
         listedAt: "2026-08-08T09:48:00.000Z",
         lastSyncedAt: NOW,
@@ -685,7 +685,7 @@ export const products: Product[] = [
       {
         channel: "Website",
         listingId: "web-pyrex-butterprint",
-        listingUrl: "https://spocksresaleshop.com/shop/pyrex-butterprint-mixing-bowl",
+        listingUrl: "https://spockshop.com/shop/pyrex-butterprint-mixing-bowl",
         status: "active",
         listedAt: "2026-08-07T18:30:00.000Z",
         lastSyncedAt: NOW,
@@ -770,7 +770,7 @@ export const huntEntries: HuntEntry[] = [
   {
     id: "hunt-1",
     productId: "prod-12",
-    whereDiscovered: "Saturday booth row at North Austin Flea Market",
+    whereDiscovered: "Saturday booth row at a Northwest Arkansas flea market",
     discoveryDate: "2026-08-06",
     purchasePrice: 6,
     story:

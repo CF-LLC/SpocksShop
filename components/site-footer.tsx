@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BRAND, navLinks, policies } from "@/lib/data";
+import { AMAZON_ASSOCIATES_DISCLOSURE } from "@/lib/shop/sections";
 import { StarField } from "@/components/visual/star-field";
 import { OrbitalDecoration } from "@/components/visual/orbital-decoration";
 import { Constellation } from "@/components/visual/constellation";
@@ -91,12 +92,11 @@ export function SiteFooter() {
               </h2>
               <ul className="mt-3 space-y-2 text-sm text-stone-400">
                 <li>
-                  <a href="mailto:hello@spocksresaleshop.com" className="hover:text-stone-200 transition-colors">
-                    hello@spocksresaleshop.com
+                  <a href="mailto:support@spockshop.com" className="hover:text-stone-200 transition-colors">
+                    support@spockshop.com
                   </a>
                 </li>
-                <li>(555) 203-6601</li>
-                <li>Austin, Texas</li>
+                <li>Bentonville, Arkansas</li>
               </ul>
               <div className="mt-4 flex flex-wrap gap-4">
                 {socialLinks.map((link) => (
@@ -133,6 +133,9 @@ export function SiteFooter() {
             </p>
             <p className="font-tech text-[10px] tracking-[0.14em] text-stone-600">
               Not affiliated with Star Trek or Paramount Pictures
+            </p>
+            <p className="w-full font-tech text-[10px] tracking-[0.14em] text-stone-600">
+              {AMAZON_ASSOCIATES_DISCLOSURE}
             </p>
           </div>
         </div>

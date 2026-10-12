@@ -4,8 +4,16 @@ import { EmptyState } from "@/components/empty-state";
 import { ProductCard } from "@/components/product-card";
 import { SectionHeading } from "@/components/section-heading";
 import { CatalogLabel } from "@/components/visual/catalog-label";
-import { categories, conditionFilterOptions, shopProducts } from "@/lib/data";
+import { categories, conditionFilterOptions } from "@/lib/data";
+import { getClosetProducts } from "@/lib/catalog";
 import { numberFromQuery } from "@/lib/utils";
+import { AmazonPicks } from "@/components/shop/amazon-picks";
+import { CommunityMarket } from "@/components/shop/community-market";
+import { communitySellersEnabled } from "@/lib/features";
+import { SHOP_SECTIONS } from "@/lib/shop/sections";
+import { activeAffiliateItems, approvedCommunityListings } from "@/lib/shop/queries";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Shop",
@@ -71,6 +79,7 @@ export default async function ShopPage({
   const parsedPage = Number(params.page ?? "1");
   const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
 
+  const shopProducts = await getClosetProducts();
   const filteredProducts = shopProducts.filter((product) => {
     if (category && product.category !== category) return false;
     if (condition && product.condition !== condition) return false;
@@ -101,6 +110,8 @@ export default async function ShopPage({
   const safePage = Math.min(currentPage, totalPages);
   const start = (safePage - 1) * PAGE_SIZE;
   const pageItems = sortedProducts.slice(start, start + PAGE_SIZE);
+  const [affiliate, community] = await Promise.all([activeAffiliateItems(), approvedCommunityListings()]);
+  const sellersEnabled = communitySellersEnabled();
 
   return (
     <div className="space-y-9">
@@ -126,6 +137,21 @@ export default async function ShopPage({
         </div>
       </section>
 
+      <nav aria-label="Shop sections" className="flex flex-wrap gap-2">
+        {[SHOP_SECTIONS.affiliate, SHOP_SECTIONS.closet, SHOP_SECTIONS.community].map((section) => (
+          <a key={section.id} href={`#${section.id}`} className="btn btn-outline">
+            {section.title}
+          </a>
+        ))}
+      </nav>
+
+      <AmazonPicks items={affiliate} />
+
+      <section id={SHOP_SECTIONS.closet.id} aria-labelledby="spocks-closet-title" className="space-y-6">
+      <header>
+        <h2 id="spocks-closet-title" className="font-display text-2xl font-semibold text-slate-900">{SHOP_SECTIONS.closet.title}</h2>
+        <p className="text-sm text-slate-600">{SHOP_SECTIONS.closet.blurb}</p>
+      </header>
       <section className="surface-panel rounded-2xl p-5">
         <form action="/shop" method="get" className="grid gap-4 md:grid-cols-6">
           <div className="md:col-span-2">
@@ -279,6 +305,9 @@ export default async function ShopPage({
           </nav>
         </>
       )}
+      </section>
+
+      <CommunityMarket listings={community} sellersEnabled={sellersEnabled} />
     </div>
   );
 }

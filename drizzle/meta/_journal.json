@@ -8,6 +8,20 @@
       "when": 1791821156274,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791823470369,
+      "tag": "0001_marketplace",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791824528615,
+      "tag": "0002_app_status",
+      "breakpoints": true
     }
   ]
 }
