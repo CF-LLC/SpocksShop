@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 
 const links = [
   ["/admin", "Dashboard"],
+  ["/admin/health", "Health"],
   ["/admin/closet", "Closet"],
   ["/admin/affiliate", "Amazon Picks"],
   ["/admin/community", "Approval Queue"],
