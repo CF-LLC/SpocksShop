@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Live long and prosper</title>
+  <rect width="512" height="512" rx="112" fill="#1b2433"/>
+  <g fill="#e2b866">
+    <g transform="rotate(-11 266 340)">
+      <rect x="148" y="118" width="60" height="230" rx="30"/>
+      <rect x="206" y="72" width="62" height="276" rx="31"/>
+    </g>
+    <g transform="rotate(11 270 340)">
+      <rect x="270" y="80" width="62" height="268" rx="31"/>
+      <rect x="330" y="132" width="56" height="216" rx="28"/>
+    </g>
+    <rect x="64" y="327" width="150" height="66" rx="33" transform="rotate(32 205 360)"/>
+    <path d="M138 296 H390 V352 C390 428 342 470 264 470 C186 470 138 428 138 352 Z"/>
+  </g>
+  <g stroke="#1b2433" stroke-width="7" stroke-linecap="round" fill="none">
+    <path d="M207 150 V300" transform="rotate(-11 266 340)"/>
+    <path d="M331 160 V300" transform="rotate(11 270 340)"/>
+  </g>
+</svg>
