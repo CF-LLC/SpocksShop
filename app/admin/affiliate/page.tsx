@@ -1,4 +1,5 @@
 import { asc } from "drizzle-orm";
+import Link from "next/link";
 import { AdminNotice, type NoticeParams } from "@/components/admin/notice";
 import { AffiliateLink } from "@/components/shop/affiliate-link";
 import { db } from "@/lib/db";
@@ -27,6 +28,7 @@ export default async function AdminAffiliatePage({ searchParams }: { searchParam
     <section className="space-y-6">
       <h1 className="text-2xl font-semibold">{SHOP_SECTIONS.affiliate.title}</h1>
       <p className="text-xs text-slate-500">Links always carry tag=mrspock-20. {AMAZON_ASSOCIATES_DISCLOSURE}</p>
+      <p><Link href="/admin/affiliate/import" className="text-sm text-blue-700">Bulk import from JSON →</Link></p>
       <AdminNotice {...await searchParams} />
       <form action="/api/admin/affiliate" method="post" className="surface-panel grid gap-3 rounded-2xl p-4 sm:grid-cols-4">
         <h2 className="text-lg font-semibold sm:col-span-4">Add a pick</h2>
