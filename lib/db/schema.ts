@@ -284,3 +284,10 @@ export const errorLog = pgTable("error_log", {
   context: jsonb("context"),
   occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Small key/value store for operational status (e.g. last backup), written by scripts/backup.sh. */
+export const appStatus = pgTable("app_status", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedAt: updatedAt(),
+});

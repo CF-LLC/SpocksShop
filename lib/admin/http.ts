@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession, type AdminSession } from "@/lib/auth/session";
+import { logError } from "@/lib/errors/log";
 
 export class AdminInputError extends Error {}
 
@@ -26,7 +27,8 @@ export function adminForm<C>(
       return await handler({ request, form, session, context });
     } catch (error) {
       if (error instanceof AdminInputError) return back(request, fallbackPath, { error: error.message });
-      throw error;
+      await logError("admin-form", error, { path: new URL(request.url).pathname, userId: session.userId });
+      return back(request, fallbackPath, { error: "Something went wrong. It was logged on the health page." });
     }
   };
 }
