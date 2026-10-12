@@ -24,6 +24,7 @@ COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
+RUN mkdir -p /var/spocks/media /var/spocks/backups && chown -R nextjs:nextjs /var/spocks
 USER nextjs
 EXPOSE 3000
 CMD ["npm", "run", "start"]

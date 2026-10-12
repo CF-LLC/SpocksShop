@@ -20,7 +20,8 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, new TextEncoder().encode(secret));
+    // Audience must match lib/auth/session.ts so seller tokens can't open /admin.
+    await jwtVerify(token, new TextEncoder().encode(secret), { audience: "spocks:admin" });
     return NextResponse.next();
   } catch {
     return NextResponse.redirect(new URL("/admin/login", request.url));
