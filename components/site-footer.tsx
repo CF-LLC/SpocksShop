@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BRAND, navLinks, policies } from "@/lib/data";
+import { AMAZON_ASSOCIATES_DISCLOSURE } from "@/lib/shop/sections";
 import { StarField } from "@/components/visual/star-field";
 import { OrbitalDecoration } from "@/components/visual/orbital-decoration";
 import { Constellation } from "@/components/visual/constellation";
@@ -132,6 +133,9 @@ export function SiteFooter() {
             </p>
             <p className="font-tech text-[10px] tracking-[0.14em] text-stone-600">
               Not affiliated with Star Trek or Paramount Pictures
+            </p>
+            <p className="w-full font-tech text-[10px] tracking-[0.14em] text-stone-600">
+              {AMAZON_ASSOCIATES_DISCLOSURE}
             </p>
           </div>
         </div>
