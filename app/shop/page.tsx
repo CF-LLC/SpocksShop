@@ -4,7 +4,8 @@ import { EmptyState } from "@/components/empty-state";
 import { ProductCard } from "@/components/product-card";
 import { SectionHeading } from "@/components/section-heading";
 import { CatalogLabel } from "@/components/visual/catalog-label";
-import { categories, conditionFilterOptions, shopProducts } from "@/lib/data";
+import { categories, conditionFilterOptions } from "@/lib/data";
+import { getClosetProducts } from "@/lib/catalog";
 import { numberFromQuery } from "@/lib/utils";
 import { AmazonPicks } from "@/components/shop/amazon-picks";
 import { CommunityMarket } from "@/components/shop/community-market";
@@ -78,6 +79,7 @@ export default async function ShopPage({
   const parsedPage = Number(params.page ?? "1");
   const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
 
+  const shopProducts = await getClosetProducts();
   const filteredProducts = shopProducts.filter((product) => {
     if (category && product.category !== category) return false;
     if (condition && product.condition !== condition) return false;
