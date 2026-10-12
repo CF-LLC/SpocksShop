@@ -7,7 +7,10 @@ import { ProductCard } from "@/components/product-card";
 import { ProductGallery } from "@/components/product-gallery";
 import { SectionHeading } from "@/components/section-heading";
 import { WishlistButton } from "@/components/wishlist-button";
-import { getProductBySlug, getRelatedProducts, isOnSale } from "@/lib/data";
+import { getRelatedProducts, isOnSale } from "@/lib/data";
+import { getListedProductBySlug } from "@/lib/catalog";
+
+export const dynamic = "force-dynamic";
 import { formatCurrency, formatDate, toTitleCase } from "@/lib/utils";
 
 export async function generateMetadata({
@@ -16,7 +19,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getListedProductBySlug(slug);
 
   if (!product) {
     return {
@@ -42,7 +45,7 @@ export default async function ProductDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getListedProductBySlug(slug);
 
   if (!product || product.status !== "listed") {
     notFound();
