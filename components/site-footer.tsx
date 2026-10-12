@@ -91,11 +91,10 @@ export function SiteFooter() {
               </h2>
               <ul className="mt-3 space-y-2 text-sm text-stone-400">
                 <li>
-                  <a href="mailto:hello@spocksresaleshop.com" className="hover:text-stone-200 transition-colors">
-                    hello@spocksresaleshop.com
+                  <a href="mailto:support@spockshop.com" className="hover:text-stone-200 transition-colors">
+                    support@spockshop.com
                   </a>
                 </li>
-                <li>(555) 203-6601</li>
                 <li>Austin, Texas</li>
               </ul>
               <div className="mt-4 flex flex-wrap gap-4">
