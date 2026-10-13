@@ -31,7 +31,7 @@ export default async function AdminDashboardPage() {
         </article>
       </div>
       <p className="text-sm text-slate-600">
-        Unverified tax rows: {unverified.filter((row) => !row.verifiedWithAuthority).length}. {stripeSettings().checkoutEnabled ? "Stripe Checkout is on; tax is not collected." : "Checkout is off until Stripe keys are set (shop shows \"Checkout coming soon\")."}
+        Unverified tax rows: {unverified.filter((row) => !row.verifiedWithAuthority).length}. {stripeSettings().checkoutEnabled ? "Stripe Checkout is on; tax is not collected." : "Checkout is off until STRIPE_CHECKOUT_ENABLED=true and a Stripe secret key are set (shop shows \"Checkout coming soon\")."}
       </p>
     </section>
   );

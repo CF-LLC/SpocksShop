@@ -6,7 +6,7 @@ export type PaymentProviderName = "stripe" | "btcpay";
 export function paymentSettingsStatus(env: Record<string, string | undefined> = process.env) {
   const s = stripeSettings(env);
   return {
-    stripeConfigured: s.checkoutEnabled,
+    stripeConfigured: Boolean(s.secretKey),
     stripeMode: s.mode,
     webhookConfigured: Boolean(s.webhookSecret),
     publishableKeyConfigured: Boolean(s.publishableKey),
@@ -16,6 +16,10 @@ export function paymentSettingsStatus(env: Record<string, string | undefined> = 
       ? s.webhookSecret
         ? "Stripe Checkout is live for Spock's Closet. Orders turn paid only when the signed webhook arrives."
         : "STRIPE_WEBHOOK_SECRET is missing: shoppers can pay, but orders stay pending and stock stays reserved until the webhook is configured."
-      : "Stripe keys are not set, so the shop shows 'Checkout coming soon'.",
+      : s.checkoutRequestedWithoutKey
+        ? "STRIPE_CHECKOUT_ENABLED is true but STRIPE_SECRET_KEY is missing, so the shop still shows 'Checkout coming soon'."
+        : s.secretKey
+          ? `Stripe keys are installed (${s.mode} mode) but checkout is OFF. Set STRIPE_CHECKOUT_ENABLED=true and restart to open it.`
+          : "Stripe keys are not set, so the shop shows 'Checkout coming soon'.",
   };
 }

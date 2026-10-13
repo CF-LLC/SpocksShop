@@ -1,0 +1,15 @@
+# Keep secrets and local state out of the Docker build context (and image layers).
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
+ADMIN_TEMP_PASSWORD.txt
+*.pem
+*.key
+backups/
+build.log
+.git
+node_modules
+.next
+coverage
+tests/integration/.tmp
