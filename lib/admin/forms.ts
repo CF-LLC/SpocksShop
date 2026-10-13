@@ -49,6 +49,10 @@ export function parseClosetForm(form: FormData) {
     throw new AdminInputError(`Check ${issue?.path.join(".") || "the form"}: ${issue?.message ?? "invalid"}`);
   }
   const d = parsed.data;
+  // Same rule as the admin Publish action: live items need stock (price > 0 is enforced by the schema).
+  if (d.status === "listed" && d.quantity < 1) {
+    throw new AdminInputError("Live items need a quantity of at least 1. Set quantity to 1 or save as Draft.");
+  }
   return {
     product: {
       title: d.title,
