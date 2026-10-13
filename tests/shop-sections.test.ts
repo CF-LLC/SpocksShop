@@ -4,10 +4,11 @@ import { MediaError, resolveMediaPath, validatePhoto } from "../lib/media";
 import { AFFILIATE_LINK_REL, AFFILIATE_LINK_TARGET, AMAZON_ASSOCIATES_DISCLOSURE, COMMUNITY_MARKET_NAME, SHOP_SECTIONS } from "../lib/shop/sections";
 
 describe("shop sections", () => {
-  it("names the three sections from one config", () => {
+  it("names the two sections from one config", () => {
     expect(SHOP_SECTIONS.affiliate.title).toBe("Amazon Picks");
-    expect(SHOP_SECTIONS.closet.title).toBe("Spock's Closet");
-    expect(COMMUNITY_MARKET_NAME).toBe("Community Market");
+    expect(SHOP_SECTIONS.closet.title).toBe("Closet Picks");
+    expect(Object.keys(SHOP_SECTIONS)).toEqual(["affiliate", "closet"]);
+    expect(COMMUNITY_MARKET_NAME).toBe("Closet Picks");
   });
   it("uses the exact disclosure and link attributes", () => {
     expect(AMAZON_ASSOCIATES_DISCLOSURE).toBe("As an Amazon Associate I earn from qualifying purchases.");

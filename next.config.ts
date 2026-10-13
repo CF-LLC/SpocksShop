@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { LEGACY_SHOP_REDIRECTS } from "./lib/redirects";
 
 const nextConfig: NextConfig = {
   // Old pages from the first design point somewhere useful instead of 404ing.
@@ -10,6 +11,7 @@ const nextConfig: NextConfig = {
       { source: "/wishlist", destination: "/shop", permanent: true },
       { source: "/account", destination: "/shop", permanent: true },
       { source: "/cart", destination: "/checkout", permanent: false },
+      ...LEGACY_SHOP_REDIRECTS,
     ];
   },
 };

@@ -4,7 +4,7 @@ import { COMMUNITY_MARKET_NAME } from "@/lib/shop/sections";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: `Sell on ${COMMUNITY_MARKET_NAME}`, robots: { index: false } };
+export const metadata = { title: `Sell in ${COMMUNITY_MARKET_NAME}`, robots: { index: false } };
 
 export default function SellLayout({ children }: { children: React.ReactNode }) {
   if (!communitySellersEnabled()) notFound();

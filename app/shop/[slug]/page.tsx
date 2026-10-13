@@ -34,7 +34,7 @@ export default async function ProductPage({ params }: Params) {
   const product = await getListedProductBySlug(slug);
   if (!product) notFound();
 
-  const section = product.source === "community" ? { label: SHOP_SECTIONS.community.title, href: "/shop?tab=community" } : { label: SHOP_SECTIONS.closet.title, href: "/shop?tab=closet" };
+  const section = { label: SHOP_SECTIONS.closet.title, href: "/shop?tab=closet" };
   const [rates, others] = await Promise.all([activeRates(), product.source === "closet" ? getClosetProducts() : Promise.resolve([])]);
   const related = others.filter((p) => p.id !== product.id).slice(0, 4);
   const purchasable = isPurchasable(product);
@@ -42,7 +42,7 @@ export default async function ProductPage({ params }: Params) {
   const reason = sold
     ? "This one has found a new home. It was one of a kind."
     : product.source === "community" && !purchasable
-      ? "Community Market checkout isn't open yet. Contact us if you're interested in this item."
+      ? "Checkout for this seller item isn't open yet. Contact us if you're interested in it."
       : undefined;
   const fromRate = rates[0]?.amountCents;
 
@@ -72,7 +72,7 @@ export default async function ProductPage({ params }: Params) {
 
         <div className="space-y-5">
           <div>
-            <p className="t-eyebrow">{product.source === "community" ? `Sold by ${product.sellerName ?? "a local seller"}` : "Spock's Closet · One of a kind"}</p>
+            <p className="t-eyebrow">{product.source === "community" ? `Closet Picks · Sold by ${product.sellerName ?? "a seller"}` : "Closet Picks · One of a kind"}</p>
             <h1 className="t-h1 mt-2">{product.title}</h1>
           </div>
           <div className="flex items-baseline gap-3">

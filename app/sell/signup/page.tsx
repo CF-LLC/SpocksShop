@@ -6,7 +6,7 @@ export default async function SellerSignupPage({ searchParams }: { searchParams:
   const { error } = await searchParams;
   return (
     <section className="space-y-5">
-      <h1 className="text-2xl font-semibold">Become a {COMMUNITY_MARKET_NAME} seller</h1>
+      <h1 className="text-2xl font-semibold">Sell in {COMMUNITY_MARKET_NAME}</h1>
       <p className="text-sm text-slate-600">New seller accounts are reviewed before you can list items.</p>
       <FormError message={error} />
       <form action="/api/sell/signup" method="post" className="space-y-4">

@@ -49,7 +49,7 @@ export function BottomNav({ sellersEnabled, isAdmin = false }: { sellersEnabled:
               {SHOP_TABS.filter((t) => t.key !== "all").map((t) => (
                 <li key={t.key}><Link href={t.href} className="muted flex min-h-[48px] items-center rounded-xl px-3 font-semibold hover:bg-[var(--space-3)]">{t.label}</Link></li>
               ))}
-              {sellersEnabled ? <li><Link href="/sell/signup" className="muted flex min-h-[48px] items-center rounded-xl px-3 font-semibold hover:bg-[var(--space-3)]">Sell on Community Market</Link></li> : null}
+              {sellersEnabled ? <li><Link href="/sell/signup" className="muted flex min-h-[48px] items-center rounded-xl px-3 font-semibold hover:bg-[var(--space-3)]">Sell in Closet Picks</Link></li> : null}
             </ul>
           </div>
         </>

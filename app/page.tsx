@@ -5,19 +5,18 @@ import { ProductCard } from "@/components/shop/product-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/lcars";
 import { getClosetProducts } from "@/lib/catalog";
-import { communitySellersEnabled } from "@/lib/features";
 import { AMAZON_ASSOCIATES_DISCLOSURE, SHOP_SECTIONS } from "@/lib/shop/sections";
 import { activeAffiliateItems, approvedCommunityListings } from "@/lib/shop/queries";
 import { plural } from "@/lib/utils";
 
 export default async function HomePage() {
   const [closet, picks, community] = await Promise.all([getClosetProducts(), activeAffiliateItems(), approvedCommunityListings()]);
-  const sellersEnabled = communitySellersEnabled();
+  // Seller-listed items (if any are approved) are part of Closet Picks.
+  const closetCount = closet.length + community.length;
 
   const sections = [
-    { href: "/shop?tab=closet", title: SHOP_SECTIONS.closet.title, blurb: SHOP_SECTIONS.closet.blurb, count: closet.length, unit: "item", accent: "var(--gold)" },
+    { href: "/shop?tab=closet", title: SHOP_SECTIONS.closet.title, blurb: SHOP_SECTIONS.closet.blurb, count: closetCount, unit: "item", accent: "var(--gold)" },
     { href: "/shop?tab=amazon", title: SHOP_SECTIONS.affiliate.title, blurb: SHOP_SECTIONS.affiliate.blurb, count: picks.length, unit: "pick", accent: "var(--lilac)" },
-    { href: "/shop?tab=community", title: SHOP_SECTIONS.community.title, blurb: sellersEnabled ? SHOP_SECTIONS.community.blurb : "Local sellers are coming soon.", count: community.length, unit: "listing", accent: "var(--peach)" },
   ];
 
   return (
@@ -25,8 +24,8 @@ export default async function HomePage() {
       <SpaceHero />
 
       <section aria-labelledby="sections-title">
-        <SectionHeader id="sections-title" eyebrow="Three ways to shop" title="Pick a section" />
-        <ul className="grid gap-4 md:grid-cols-3">
+        <SectionHeader id="sections-title" eyebrow="Two ways to shop" title="Pick a section" />
+        <ul className="grid gap-4 md:grid-cols-2">
           {sections.map((s) => (
             <li key={s.href}>
               <Link href={s.href} className="panel group flex h-full min-h-[44px] flex-col gap-2 p-6 hover:border-[var(--line-strong)]">
@@ -41,7 +40,7 @@ export default async function HomePage() {
       </section>
 
       <section aria-labelledby="closet-title">
-        <SectionHeader id="closet-title" eyebrow="Spock's Closet" title="Latest finds" action={closet.length ? <Link href="/shop?tab=closet" className="btn btn-outline">View all</Link> : null}>
+        <SectionHeader id="closet-title" eyebrow="Closet Picks" title="Latest finds" action={closet.length ? <Link href="/shop?tab=closet" className="btn btn-outline">View all</Link> : null}>
           Every item is one of a kind. When it&apos;s gone, it&apos;s gone.
         </SectionHeader>
         {closet.length ? (

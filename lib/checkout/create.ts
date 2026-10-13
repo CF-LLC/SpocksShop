@@ -43,7 +43,7 @@ export async function reserveOrder(database: Database, input: CheckoutInput, env
       const inv = stock.find((s) => s.productId === line.productId);
       if (!row || !inv || row.p.status !== "listed" || row.p.source === "affiliate") throw new CheckoutError("An item in your cart is no longer available.", 409);
       if (row.p.source === "community" && (!communitySellersEnabled(env) || row.sellerStatus !== "active")) {
-        throw new CheckoutError(`"${row.p.title}" is a Community Market item. Checkout for those isn't open yet.`, 409);
+        throw new CheckoutError(`"${row.p.title}" is a seller-listed Closet Picks item. Checkout for those isn't open yet.`, 409);
       }
       if (inv.quantityOnHand - inv.quantityReserved < line.quantity) throw new CheckoutError(`"${row.p.title}" just sold out or is in someone else's checkout.`, 409);
       if (!(row.p.priceCents > 0)) throw new CheckoutError(`"${row.p.title}" has no price yet.`, 409);

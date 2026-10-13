@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 const bodyFont = Inter({ variable: "--font-body", subsets: ["latin"] });
 const displayFont = Space_Grotesk({ variable: "--font-display", subsets: ["latin"] });
 
-const DESCRIPTION = "Spock's Resale Shop: one-of-a-kind secondhand finds from Bentonville, Arkansas, plus Amazon picks we recommend.";
+const DESCRIPTION = "Spock's Resale Shop: Closet Picks (one-of-a-kind secondhand finds from Bentonville, Arkansas) and Amazon Picks we recommend.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://spockshop.com"),

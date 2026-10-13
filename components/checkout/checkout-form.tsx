@@ -17,8 +17,8 @@ export function CheckoutForm({ checkoutEnabled, shippingRates }: { checkoutEnabl
       <EmptyState
         icon="🛸"
         title="Your cart is empty"
-        body="Add something from Spock's Closet to check out."
-        actions={[{ href: "/shop?tab=closet", label: "Shop Spock's Closet" }, { href: "/shop?tab=amazon", label: "Amazon Picks" }]}
+        body="Add something from Closet Picks to check out."
+        actions={[{ href: "/shop?tab=closet", label: "Shop Closet Picks" }, { href: "/shop?tab=amazon", label: "Amazon Picks" }]}
       />
     );
   }
