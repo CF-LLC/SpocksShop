@@ -2,6 +2,7 @@ import { count } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { inventory, orders, products, taxRates } from "@/lib/db/schema";
 import { TAX_DFA_BANNER } from "@/lib/commerce/tax";
+import { stripeSettings } from "@/lib/stripe";
 
 export default async function AdminDashboardPage() {
   const [productCount] = await db.select({ value: count() }).from(products);
@@ -30,7 +31,7 @@ export default async function AdminDashboardPage() {
         </article>
       </div>
       <p className="text-sm text-slate-600">
-        Unverified tax rows: {unverified.filter((row) => !row.verifiedWithAuthority).length}. Checkout is not enabled.
+        Unverified tax rows: {unverified.filter((row) => !row.verifiedWithAuthority).length}. {stripeSettings().checkoutEnabled ? "Stripe Checkout is on; tax is not collected." : "Checkout is off until Stripe keys are set (shop shows \"Checkout coming soon\")."}
       </p>
     </section>
   );
