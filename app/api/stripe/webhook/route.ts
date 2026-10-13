@@ -3,6 +3,9 @@ import { db } from "@/lib/db";
 import { markPaid, markProcessing, releaseOrder } from "@/lib/checkout/fulfill";
 import { handleStripeEvent } from "@/lib/checkout/webhook";
 import { getStripe, stripeSettings } from "@/lib/stripe";
+import { handleAiBillingEvent } from "@/lib/ai/billing";
+import { aiBillingOps } from "@/lib/ai/billing-db";
+import { sellerBillingEnabled } from "@/lib/ai/entitlement";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -30,6 +33,14 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Seller AI credit packs / plans (only when AI_SELLER_BILLING_ENABLED=true). Not ours -> fall through to orders.
+    if (sellerBillingEnabled()) {
+      const ai = await handleAiBillingEvent(event, aiBillingOps);
+      if (ai.handled) {
+        console.info("stripe webhook ai billing", { type: event.type, id: event.id, result: ai.result });
+        return NextResponse.json({ received: true });
+      }
+    }
     const outcome = await handleStripeEvent(event, {
       markPaid: (id, session) => markPaid(db, id, session),
       markProcessing: (id) => markProcessing(db, id),
