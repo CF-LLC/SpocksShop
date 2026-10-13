@@ -4,7 +4,7 @@ import { inventory, orderItems, orders, payments, photos, products, sellers, shi
 import { communitySellersEnabled } from "@/lib/features";
 import { mediaUrl } from "@/lib/media";
 import { quoteShipping } from "@/lib/commerce/shipping";
-import { buildSessionParams, CheckoutError, mergeLines, newOrderNumber, STALE_PENDING_MINUTES, type CheckoutInput, type PricedLine } from "./core";
+import { buildSessionParams, CheckoutError, mergeLines, newOrderNumber, STALE_PENDING_MINUTES, taxSettings, type CheckoutInput, type PricedLine } from "./core";
 import type { Database } from "./db";
 import { releaseOrder } from "./fulfill";
 
@@ -71,7 +71,9 @@ export async function reserveOrder(database: Database, input: CheckoutInput, env
         shippingCents: quote.amountCents,
         taxCents: 0,
         totalCents: subtotal + quote.amountCents,
-        taxSnapshot: { collected: false, reason: "Tax collection is off until the Arkansas rate is verified with DFA." },
+        taxSnapshot: taxSettings(env).enabled
+          ? { collected: true, provider: "stripe_tax", reason: "Computed by Stripe Tax at checkout; final amount recorded when paid." }
+          : { collected: false, reason: "Tax collection is off until the Arkansas rate is verified with DFA." },
       })
       .returning();
     await tx.insert(orderItems).values(
@@ -95,7 +97,7 @@ export async function createCheckout(deps: { db: Database; stripe: Stripe; origi
   let session: Stripe.Checkout.Session;
   try {
     session = await deps.stripe.checkout.sessions.create(
-      buildSessionParams({ orderId: order.id, orderNumber: order.orderNumber, lines: reserved.lines, method: input.method, shipping: reserved.shipping, origin: deps.origin }),
+      buildSessionParams({ orderId: order.id, orderNumber: order.orderNumber, lines: reserved.lines, method: input.method, shipping: reserved.shipping, origin: deps.origin, tax: taxSettings(deps.env) }),
       { idempotencyKey: `checkout-${order.id}` },
     );
   } catch (error) {

@@ -2,9 +2,10 @@
 export const AFFILIATE_CATEGORIES = [
   { slug: "spock", label: "Spock", blurb: "Star Trek and Spock gear" },
   { slug: "necessities", label: "Necessities", blurb: "Household basics: paper towels, cleaners, toothpaste, batteries, chargers" },
+  { slug: "home", label: "Home", blurb: "Things for the home: kitchen, decor, storage" },
 ] as const;
 
-export const AFFILIATE_CATEGORY_SLUGS = ["spock", "necessities"] as const;
+export const AFFILIATE_CATEGORY_SLUGS = ["spock", "necessities", "home"] as const;
 export type AffiliateCategory = (typeof AFFILIATE_CATEGORY_SLUGS)[number];
 
 export function parseAffiliateCategory(v: unknown): AffiliateCategory | null {
@@ -19,6 +20,7 @@ export function parseAffiliateCategory(v: unknown): AffiliateCategory | null {
 const CATEGORY_ALIASES: Record<string, AffiliateCategory> = {
   spock: "spock", "star-trek": "spock", startrek: "spock", collectibles: "spock", apparel: "spock", "books-media": "spock", gadgets: "spock",
   necessities: "necessities", household: "necessities", essentials: "necessities", basics: "necessities",
+  home: "home", kitchen: "home", decor: "home", "home-decor": "home", furniture: "home",
 };
 
 export function normalizeAffiliateCategory(v: unknown): AffiliateCategory | null | "invalid" {

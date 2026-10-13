@@ -47,11 +47,14 @@ export async function markPaid(database: Database, orderId: string, session: Str
 
     const customerId = await upsertCustomer(tx, session);
     const shippingAddressId = order.fulfillmentMethod === "ship" ? await saveAddress(tx, customerId, session) : null;
-    const amountMatches = session.amount_total == null || session.amount_total === order.totalCents;
+    // With Stripe Tax on, amount_total = our total + tax; record the tax Stripe charged.
+    const taxCents = session.total_details?.amount_tax ?? 0;
+    const amountMatches = session.amount_total == null || session.amount_total === order.totalCents + taxCents;
     await tx
       .update(orders)
       .set({
         status: amountMatches ? "paid" : "paid_review",
+        ...(taxCents > 0 && amountMatches ? { taxCents, totalCents: order.totalCents + taxCents } : {}),
         customerId: customerId ?? order.customerId,
         shippingAddressId: shippingAddressId ?? order.shippingAddressId,
         updatedAt: new Date(),

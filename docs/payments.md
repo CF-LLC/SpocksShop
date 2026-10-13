@@ -17,6 +17,14 @@ The webhook ignores events whose `livemode` doesn't match the key's mode, so a t
 
 The API version is pinned in `lib/stripe.ts` (`2026-09-30.endive`, the version stripe@23.0.0 ships with).
 
+## Stripe Tax (optional, off by default)
+
+`STRIPE_TAX_ENABLED=true` turns on `automatic_tax`. Prices and shipping are sent as tax-exclusive, with tax codes
+`STRIPE_PRODUCT_TAX_CODE` (default `txcd_99999999`, general tangible goods) and `STRIPE_SHIPPING_TAX_CODE` (default `txcd_92010001`).
+Stripe needs a customer location, so shipped orders use the shipping address and pickup orders require a billing address.
+The webhook accepts `amount_total = order total + amount_tax` and records the tax on the order.
+Before turning it on: activate Stripe Tax, set the origin address (Bentonville, AR) and add the Arkansas registration in the dashboard.
+
 ## Flow
 
 1. `/checkout`: the shopper picks **local pickup** (free, Bentonville) or **ship** (US, rate by total weight from `shipping_rates`).

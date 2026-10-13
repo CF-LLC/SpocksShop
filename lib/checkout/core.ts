@@ -38,11 +38,33 @@ export function newOrderNumber(now = new Date()): string {
   return `SPK-${d}-${randomBytes(3).toString("hex").toUpperCase()}`;
 }
 
+/** General tangible goods. https://docs.stripe.com/tax/tax-codes */
+export const DEFAULT_PRODUCT_TAX_CODE = "txcd_99999999";
+/** Shipping charges. */
+export const DEFAULT_SHIPPING_TAX_CODE = "txcd_92010001";
+const TAX_CODE = /^txcd_\d{8}$/;
+
+export type TaxSettings = { enabled: boolean; productTaxCode: string; shippingTaxCode: string };
+
+/**
+ * Stripe Tax is OFF unless STRIPE_TAX_ENABLED=true (needs Stripe Tax set up and an AR registration in the dashboard).
+ * STRIPE_PRODUCT_TAX_CODE / STRIPE_SHIPPING_TAX_CODE override the codes; invalid values fall back to the defaults.
+ */
+export function taxSettings(env: Record<string, string | undefined> = process.env): TaxSettings {
+  const code = (v: string | undefined, d: string) => (v && TAX_CODE.test(v.trim()) ? v.trim() : d);
+  return {
+    enabled: env.STRIPE_TAX_ENABLED?.trim().toLowerCase() === "true",
+    productTaxCode: code(env.STRIPE_PRODUCT_TAX_CODE, DEFAULT_PRODUCT_TAX_CODE),
+    shippingTaxCode: code(env.STRIPE_SHIPPING_TAX_CODE, DEFAULT_SHIPPING_TAX_CODE),
+  };
+}
+
 export type PricedLine = { productId: string; title: string; sku: string; unitPriceCents: number; quantity: number; image: string | null };
 
 /**
  * Build the Checkout Session request. Every amount comes from the database lines passed in, never from the client.
- * Tax collection is deliberately off: the only tax row is an unverified placeholder.
+ * Tax: off by default. With STRIPE_TAX_ENABLED=true, Stripe Tax computes it (prices are tax-exclusive) and
+ * needs a customer address: shipping address for "ship", billing address for "pickup".
  */
 export function buildSessionParams(input: {
   orderId: string;
@@ -52,8 +74,10 @@ export function buildSessionParams(input: {
   shipping: { amountCents: number; name: string };
   origin: string;
   now?: Date;
+  tax?: TaxSettings;
 }): Stripe.Checkout.SessionCreateParams {
   const now = input.now ?? new Date();
+  const tax = input.tax?.enabled ? input.tax : null;
   const absolute = (src: string | null) => (src && /^https:\/\//.test(src) ? src : src && input.origin.startsWith("https://") ? new URL(src, input.origin).toString() : null);
   return {
     mode: "payment",
@@ -67,7 +91,8 @@ export function buildSessionParams(input: {
         price_data: {
           currency: "usd",
           unit_amount: l.unitPriceCents,
-          product_data: { name: l.title, metadata: { product_id: l.productId, sku: l.sku }, ...(image ? { images: [image] } : {}) },
+          ...(tax ? { tax_behavior: "exclusive" as const } : {}),
+          product_data: { name: l.title, metadata: { product_id: l.productId, sku: l.sku }, ...(image ? { images: [image] } : {}), ...(tax ? { tax_code: tax.productTaxCode } : {}) },
         },
       };
     }),
@@ -77,11 +102,13 @@ export function buildSessionParams(input: {
           type: "fixed_amount",
           display_name: input.shipping.name,
           fixed_amount: { amount: input.shipping.amountCents, currency: "usd" },
+          ...(tax ? { tax_behavior: "exclusive" as const, tax_code: tax.shippingTaxCode } : {}),
         },
       },
     ],
     ...(input.method === "ship" ? { shipping_address_collection: { allowed_countries: ["US"] } } : {}),
-    automatic_tax: { enabled: false },
+    automatic_tax: { enabled: Boolean(tax) },
+    ...(tax && input.method === "pickup" ? { billing_address_collection: "required" as const } : {}),
     phone_number_collection: { enabled: false },
     expires_at: Math.floor(now.getTime() / 1000) + SESSION_TTL_MINUTES * 60,
     success_url: `${input.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
