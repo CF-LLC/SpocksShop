@@ -35,9 +35,10 @@ export function ClosetForm({ action, values = {}, categories, submitLabel, isNew
       </label>
       <label className={label}>Description<textarea name="description" rows={4} defaultValue={values.description} className={input} placeholder="Size, measurements, flaws, story…" /></label>
       <label className={label}>Status
-        <select name="status" defaultValue={values.status ?? "draft"} className={input}>
+        <select name="status" defaultValue={values.status ?? (isNew ? "listed" : "draft")} className={input} aria-describedby="status-hint">
           {statuses.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
+        <span id="status-hint" className="mt-1 block text-xs font-normal text-slate-600">Live items need a price and a quantity of at least 1.</span>
       </label>
 
       <details className="rounded-xl border border-slate-200 bg-white p-3" open={!isNew}>

@@ -45,7 +45,7 @@ export function NewListing({ aiEnabled, maxPhotos, categories }: { aiEnabled: bo
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [autoRemove, setAutoRemove] = useState(true);
   const [fields, setFields] = useState<Fields>(EMPTY);
-  const [extra, setExtra] = useState({ quantity: "1", status: "draft", categoryId: "" });
+  const [extra, setExtra] = useState({ quantity: "1", status: "listed", categoryId: "" });
   const [ai, setAi] = useState<{ state: "idle" | "loading" | "ready" | "error" | "skipped"; values?: Fields; error?: string; used: Set<FieldKey>; cost?: number }>({ state: "idle", used: new Set() });
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -280,7 +280,7 @@ export function NewListing({ aiEnabled, maxPhotos, categories }: { aiEnabled: bo
           <label className={label}>Title<input name="title" required minLength={2} maxLength={160} value={fields.title} onChange={set("title")} className={input} placeholder="e.g. Vintage Pyrex mixing bowl" /></label>
           <div className="grid grid-cols-2 gap-3">
             <label className={label}>Price ($)<input name="price" type="number" inputMode="decimal" step="0.01" min="0.01" required value={fields.price} onChange={set("price")} className={input} /></label>
-            <label className={label}>Quantity<input name="quantity" type="number" inputMode="numeric" min="0" required value={extra.quantity} onChange={(e) => setExtra((x) => ({ ...x, quantity: e.target.value }))} className={input} /></label>
+            <label className={label}>Quantity<input name="quantity" type="number" inputMode="numeric" min={extra.status === "listed" ? 1 : 0} required value={extra.quantity} onChange={(e) => setExtra((x) => ({ ...x, quantity: e.target.value }))} className={input} /></label>
           </div>
           <label className={label}>Condition
             <select name="condition" value={fields.condition} onChange={set("condition")} className={input}>{productConditions.map((c) => <option key={c}>{c}</option>)}</select>
@@ -300,10 +300,11 @@ export function NewListing({ aiEnabled, maxPhotos, categories }: { aiEnabled: bo
             </label>
             <label className={label}>Status
               <select name="status" value={extra.status} onChange={(e) => setExtra((x) => ({ ...x, status: e.target.value }))} className={input}>
-                <option value="draft">Draft (hidden)</option>
                 <option value="listed">Live in shop</option>
+                <option value="draft">Draft (hidden)</option>
               </select>
             </label>
+            <p className="col-span-2 -mt-1 text-xs text-slate-600" data-testid="live-hint">Live items need a price and a quantity of at least 1.</p>
           </div>
           <div className="sticky bottom-20 md:bottom-2 z-10 rounded-2xl bg-white/90 p-2 backdrop-blur">
             <button type="submit" className="btn btn-primary w-full" disabled={Boolean(saving)} data-testid="save-item">{saving ?? "Save item"}</button>
