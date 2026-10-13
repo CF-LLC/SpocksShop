@@ -1,110 +1,44 @@
-export type Category = {
-  slug: string;
-  name: string;
-  description: string;
-};
-
-export const productConditions = [
-  "New",
-  "Like New",
-  "Excellent",
-  "Good",
-  "Fair",
-  "For Parts/Repair",
-] as const;
-
+export const productConditions = ["New", "Like New", "Excellent", "Good", "Fair", "For Parts/Repair"] as const;
 export type ProductCondition = (typeof productConditions)[number];
 
-export type ProductStatus =
-  | "draft"
-  | "listed"
-  | "reserved"
-  | "sold"
-  | "archived";
+export type ProductStatus = "draft" | "listed" | "reserved" | "sold" | "archived";
 
-export type MarketplaceListing = {
-  channel: "Website" | "eBay" | "Facebook Marketplace" | "Poshmark" | "Mercari";
-  listingId: string;
-  listingUrl: string;
-  status: "active" | "ended" | "sold";
-  listedAt: string;
-  lastSyncedAt: string;
-};
+export type ProductImage = { id: string; src: string; alt: string; width: number; height: number };
 
-export type ProductImage = {
-  id: string;
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
-};
-
-export type HuntEntryStatus = "Available" | "Sold";
-
-export type HuntEntry = {
-  id: string;
-  productId: string;
-  whereDiscovered: string;
-  discoveryDate: string;
-  purchasePrice: number;
-  story: string;
-  result: string;
-  photos: ProductImage[];
-  finalResalePrice: number;
-  profit?: number;
-  status: HuntEntryStatus;
-  createdAt: string;
-  updatedAt: string;
-};
-
+/** A storefront product (closet or community), always read from the database. */
 export type Product = {
   id: string;
   sku: string;
   slug: string;
   title: string;
   description: string;
-  category: string;
-  subcategory: string;
+  source: "closet" | "community";
+  categoryName: string | null;
   brand: string;
-  condition: ProductCondition;
+  condition: string;
   conditionNotes: string;
-  price: number;
-  originalPrice?: number;
-  purchaseCost: number;
-  quantity: number;
+  priceCents: number;
+  originalPriceCents: number | null;
+  /** Units a shopper can buy right now (on hand minus reserved). */
+  available: number;
   images: ProductImage[];
-  dimensions: {
-    lengthIn: number;
-    widthIn: number;
-    heightIn: number;
-  };
+  hasPhotos: boolean;
   weightLb: number;
-  color: string;
-  size: string;
-  tags: string[];
-  dateAcquired: string;
-  dateListed: string;
-  featured?: boolean;
+  sellerName: string | null;
   status: ProductStatus;
-  marketplaceListing: MarketplaceListing[];
-  createdAt: string;
-  updatedAt: string;
+  listedAt: string;
 };
 
-export type CartItem = {
-  productId: string;
-  quantity: number;
-};
+export type CartLine = { productId: string; quantity: number };
 
-export type Order = {
+/** What the cart drawer shows; refreshed from /api/cart so prices and stock are never trusted from storage. */
+export type CartProduct = {
   id: string;
-  createdAt: string;
-  customerName: string;
-  email: string;
-  items: Array<{
-    productId: string;
-    quantity: number;
-    price: number;
-  }>;
-  total: number;
+  slug: string;
+  title: string;
+  priceCents: number;
+  available: number;
+  image: string | null;
+  source: "closet" | "community";
+  purchasable: boolean;
 };
