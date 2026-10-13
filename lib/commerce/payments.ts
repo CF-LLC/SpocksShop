@@ -1,57 +1,21 @@
+import { stripeSettings } from "@/lib/stripe";
+
 export type PaymentProviderName = "stripe" | "btcpay";
 
-export type CreatePaymentInput = {
-  orderId: string;
-  amountCents: number;
-  currency: string;
-  successUrl: string;
-  cancelUrl: string;
-};
-
-export type CreatePaymentResult = {
-  provider: PaymentProviderName;
-  redirectUrl: string;
-  providerPaymentId: string;
-};
-
-export interface PaymentProvider {
-  readonly name: PaymentProviderName;
-  createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult>;
-}
-
-export class PaymentsNotEnabledError extends Error {
-  constructor(provider: string) {
-    super(`${provider} is configured in the data model only. Checkout is not implemented in Phase 1.`);
-    this.name = "PaymentsNotEnabledError";
-  }
-}
-
-export class StripeProvider implements PaymentProvider {
-  readonly name = "stripe" as const;
-  async createPayment(): Promise<CreatePaymentResult> {
-    throw new PaymentsNotEnabledError("Stripe");
-  }
-}
-
-export class BTCPayProvider implements PaymentProvider {
-  readonly name = "btcpay" as const;
-  async createPayment(): Promise<CreatePaymentResult> {
-    throw new PaymentsNotEnabledError("BTCPay");
-  }
-}
-
-export function getPaymentProvider(name: PaymentProviderName): PaymentProvider {
-  if (name === "stripe") return new StripeProvider();
-  return new BTCPayProvider();
-}
-
-export function paymentSettingsStatus() {
+/** What admin sees on /admin/payments. Never includes key values. */
+export function paymentSettingsStatus(env: Record<string, string | undefined> = process.env) {
+  const s = stripeSettings(env);
   return {
-    stripeConfigured: Boolean(process.env.STRIPE_SECRET_KEY),
-    btcpayConfigured: Boolean(
-      process.env.BTCPAY_URL && process.env.BTCPAY_API_KEY && process.env.BTCPAY_STORE_ID,
-    ),
-    checkoutEnabled: false,
-    note: "Phase 1 stores payment rows and provider names only. No fake success path. Webhook confirmation comes in the checkout phase.",
+    stripeConfigured: s.checkoutEnabled,
+    stripeMode: s.mode,
+    webhookConfigured: Boolean(s.webhookSecret),
+    publishableKeyConfigured: Boolean(s.publishableKey),
+    btcpayConfigured: Boolean(env.BTCPAY_URL && env.BTCPAY_API_KEY && env.BTCPAY_STORE_ID),
+    checkoutEnabled: s.checkoutEnabled,
+    note: s.checkoutEnabled
+      ? s.webhookSecret
+        ? "Stripe Checkout is live for Spock's Closet. Orders turn paid only when the signed webhook arrives."
+        : "STRIPE_WEBHOOK_SECRET is missing: shoppers can pay, but orders stay pending and stock stays reserved until the webhook is configured."
+      : "Stripe keys are not set, so the shop shows 'Checkout coming soon'.",
   };
 }
