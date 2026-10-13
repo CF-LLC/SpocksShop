@@ -17,3 +17,16 @@ The storefront `/shop` and `/shop/[slug]` read the Closet from the database (fal
   other fields (blurb, rating, ...) are ignored. Validation uses zod; the whole batch is rejected if any pick is invalid.
 - Upserts by ASIN, else by link. Never deletes. Links are rewritten to `https://www.amazon.com/dp/<ASIN>?tag=mrspock-20`
   (non-Amazon links are rejected), and `price_note` becomes "About $X, price may vary on Amazon".
+
+## Removing the original sample products
+
+The first seed inserted 14 placeholder products (SKUs `SRS-…`). The seed no longer does this, but existing databases still have them.
+
+```bash
+# Dry run (default): lists exactly what would be removed. Changes nothing.
+docker compose exec app npx tsx scripts/remove-sample-products.mts
+# After review and approval:
+docker compose exec app npx tsx scripts/remove-sample-products.mts --apply
+```
+
+Rows are matched on seed SKU **and** slug (closet only). Any product referenced by an order line is refused.
