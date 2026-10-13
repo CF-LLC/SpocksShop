@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/contexts/cart-context";
-import { PRIMARY_NAV, isActive } from "@/lib/nav";
+import { isActive, mainNav } from "@/lib/nav";
 import { CartIcon } from "@/components/ui/icons";
 
 export function Brand() {
@@ -17,7 +17,7 @@ export function Brand() {
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
   const cart = useCart();
   return (
@@ -25,7 +25,7 @@ export function SiteHeader() {
       <div className="container-x flex h-16 items-center justify-between gap-4">
         <Brand />
         <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
-          {PRIMARY_NAV.map((l) => (
+          {mainNav(isAdmin).map((l) => (
             <Link
               key={l.href}
               href={l.href}

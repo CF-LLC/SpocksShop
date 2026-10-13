@@ -66,3 +66,12 @@ export async function requireAdmin() {
   }
   return session;
 }
+
+/** True only for a verified, unexpired admin/staff session (used to show the "Admin" nav link). */
+export function isStaffSession(session: AdminSession | null): boolean {
+  return Boolean(session && (session.role === "admin" || session.role === "staff"));
+}
+
+export async function hasAdminSession(): Promise<boolean> {
+  return isStaffSession(await getSession());
+}
