@@ -293,3 +293,45 @@ export const appStatus = pgTable("app_status", {
   value: jsonb("value").notNull(),
   updatedAt: updatedAt(),
 });
+
+// ---------- AI listing suggestions: usage + seller entitlements (additive, migration 0004) ----------
+
+/** One row per AI suggestion request (admin or seller). Never stores images or prompts. */
+export const aiUsageEvents = pgTable("ai_usage_events", {
+  id: id(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  sellerId: uuid("seller_id").references(() => sellers.id, { onDelete: "set null" }),
+  actorRole: text("actor_role").notNull(), // admin | staff | seller
+  provider: text("provider").notNull(),
+  model: text("model").notNull(),
+  imageCount: integer("image_count").notNull().default(0),
+  inputTokens: integer("input_tokens").notNull().default(0),
+  outputTokens: integer("output_tokens").notNull().default(0),
+  /** Estimated cost in micro-USD (1e-6 $), from the provider's list price at request time. */
+  estCostMicros: integer("est_cost_micros").notNull().default(0),
+  status: text("status").notNull(), // ok | error | invalid_output
+  billedVia: text("billed_via"), // free_staff | credit | plan
+  createdAt: createdAt(),
+});
+
+/** Append-only credit ledger per seller. Balance = sum(delta). */
+export const aiCreditLedger = pgTable("ai_credit_ledger", {
+  id: id(),
+  sellerId: uuid("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+  delta: integer("delta").notNull(),
+  reason: text("reason").notNull(), // purchase | use | grant | refund
+  /** Stripe Checkout Session id for purchases (unique, so webhook re-deliveries can't double-credit). */
+  reference: text("reference").unique(),
+  usageEventId: uuid("usage_event_id").references(() => aiUsageEvents.id, { onDelete: "set null" }),
+  createdAt: createdAt(),
+});
+
+/** Optional monthly AI plan per seller (Stripe subscription). */
+export const sellerAiPlans = pgTable("seller_ai_plans", {
+  sellerId: uuid("seller_id").primaryKey().references(() => sellers.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("none"), // none | active | past_due | canceled
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id").unique(),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  updatedAt: updatedAt(),
+});

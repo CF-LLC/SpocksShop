@@ -13,7 +13,8 @@
     "db:seed": "tsx scripts/seed.mts",
     "db:ensure-admin": "node scripts/ensure-admin.mjs",
     "prebuild": "node scripts/copy-ort.mjs",
-    "predev": "node scripts/copy-ort.mjs"
+    "predev": "node scripts/copy-ort.mjs",
+    "check:client-secrets": "node scripts/check-client-secrets.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.44.5",
