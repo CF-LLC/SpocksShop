@@ -66,7 +66,7 @@ describe("POST /api/stripe/webhook", () => {
     return POST(new Request("http://localhost/api/stripe/webhook", { method: "POST", body: payload, headers: signature ? { "stripe-signature": signature } : {} }));
   }
 
-  const payload = JSON.stringify({ id: "evt_2", object: "event", type: "checkout.session.completed", data: { object: { id: "cs_test_2", object: "checkout.session", payment_status: "paid", metadata: { order_id: ORDER } } } });
+  const payload = JSON.stringify({ id: "evt_2", object: "event", livemode: false, type: "checkout.session.completed", data: { object: { id: "cs_test_2", object: "checkout.session", payment_status: "paid", metadata: { order_id: ORDER } } } });
 
   it("accepts a correctly signed event and marks the order paid", async () => {
     const sig = new Stripe("sk_test_dummy").webhooks.generateTestHeaderString({ payload, secret });
@@ -86,6 +86,14 @@ describe("POST /api/stripe/webhook", () => {
     fulfill.markPaid.mockRejectedValueOnce(new Error("db down"));
     const sig = new Stripe("sk_test_dummy").webhooks.generateTestHeaderString({ payload, secret });
     expect((await post(payload, sig)).status).toBe(500);
+  });
+  it("ignores (200, no state change) a test-mode event when running on a live key", async () => {
+    process.env.STRIPE_SECRET_KEY = "sk_live_dummy";
+    const sig = new Stripe("sk_test_dummy").webhooks.generateTestHeaderString({ payload, secret });
+    const res = await post(payload, sig);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ ignored: "mode_mismatch" });
+    expect(fulfill.markPaid).not.toHaveBeenCalled();
   });
   it("is disabled (503) without a webhook secret", async () => {
     delete process.env.STRIPE_WEBHOOK_SECRET;

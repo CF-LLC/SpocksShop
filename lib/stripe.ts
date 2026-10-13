@@ -9,8 +9,13 @@ export type StripeSettings = {
   secretKey: string | null;
   webhookSecret: string | null;
   publishableKey: string | null;
-  /** Checkout needs a secret key; the webhook additionally needs its signing secret. */
+  /**
+   * Checkout is OFF unless STRIPE_CHECKOUT_ENABLED=true AND a secret key is set.
+   * Adding keys alone never turns checkout on, so live keys can be installed and tested first.
+   */
   checkoutEnabled: boolean;
+  /** STRIPE_CHECKOUT_ENABLED is true but no secret key yet. */
+  checkoutRequestedWithoutKey: boolean;
   webhookEnabled: boolean;
   mode: "test" | "live" | null;
 };
@@ -20,14 +25,31 @@ const clean = (v: string | undefined) => (v && v.trim() ? v.trim() : null);
 export function stripeSettings(env: Env = process.env): StripeSettings {
   const secretKey = clean(env.STRIPE_SECRET_KEY);
   const webhookSecret = clean(env.STRIPE_WEBHOOK_SECRET);
+  const flag = clean(env.STRIPE_CHECKOUT_ENABLED)?.toLowerCase() === "true";
   return {
     secretKey,
     webhookSecret,
     publishableKey: clean(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
-    checkoutEnabled: Boolean(secretKey),
+    checkoutEnabled: flag && Boolean(secretKey),
+    checkoutRequestedWithoutKey: flag && !secretKey,
     webhookEnabled: Boolean(secretKey && webhookSecret),
     mode: secretKey ? (secretKey.startsWith("sk_live_") || secretKey.startsWith("rk_live_") ? "live" : "test") : null,
   };
+}
+
+/**
+ * Canonical public origin for Stripe redirect URLs. Uses APP_URL (https://spockshop.com in prod) so
+ * success/cancel URLs never depend on request Host headers. Non-https APP_URL is only accepted outside production.
+ */
+export function siteOrigin(env: Env = process.env, fallback?: string): string | null {
+  const raw = clean(env.APP_URL);
+  if (raw) {
+    try {
+      const u = new URL(raw);
+      if (u.protocol === "https:" || env.NODE_ENV !== "production") return u.origin;
+    } catch { /* fall through */ }
+  }
+  return env.NODE_ENV === "production" ? null : fallback ?? null;
 }
 
 let cached: { key: string; client: Stripe } | null = null;

@@ -10,6 +10,7 @@ export default function AdminPaymentsPage() {
       <p className="text-sm text-slate-700">{s.note}</p>
       <ul className="space-y-2 text-sm">
         <li>Stripe secret key (STRIPE_SECRET_KEY): {yes(s.stripeConfigured)}{s.stripeMode ? ` (${s.stripeMode} mode)` : ""}</li>
+        <li>Checkout switch (STRIPE_CHECKOUT_ENABLED=true): {yes(s.checkoutEnabled)}</li>
         <li>Webhook signing secret (STRIPE_WEBHOOK_SECRET): {yes(s.webhookConfigured)}</li>
         <li>Publishable key (NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, optional): {yes(s.publishableKeyConfigured)}</li>
         <li>Webhook endpoint: <code>https://spockshop.com/api/stripe/webhook</code> (events: checkout.session.completed, checkout.session.expired, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed)</li>

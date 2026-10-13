@@ -23,6 +23,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
+  // Refuse test-mode events on a live key (and vice versa) so a misrouted endpoint can't mark orders paid.
+  if (settings.mode && typeof event.livemode === "boolean" && event.livemode !== (settings.mode === "live")) {
+    console.warn("stripe webhook mode mismatch", { id: event.id, livemode: event.livemode, keyMode: settings.mode });
+    return NextResponse.json({ received: true, ignored: "mode_mismatch" });
+  }
+
   try {
     const outcome = await handleStripeEvent(event, {
       markPaid: (id, session) => markPaid(db, id, session),
