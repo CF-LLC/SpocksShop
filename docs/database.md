@@ -42,3 +42,5 @@ Always build outbound links with `lib/commerce/affiliate.ts` (`affiliateUrlFor`,
 ## Migrations and seed
 
 See `docs/self-hosting.md`.
+
+`npm run db:seed` only ensures the shipping weight table and the (unverified) tax placeholder exist. It inserts no categories or products; the storefront renders only what is in the database (closet items added in admin, `affiliate_items`, approved community listings). See `docs/admin.md` to remove the 14 legacy sample products.

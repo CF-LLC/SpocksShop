@@ -10,6 +10,7 @@ export type CommunityCard = {
   priceCents: number;
   sellerName: string;
   photoPath: string | null;
+  slug: string | null;
 };
 
 /** Never let a DB outage take down the storefront: fall back to an empty section. */
@@ -40,6 +41,7 @@ export function approvedCommunityListings(): Promise<CommunityCard[]> {
         priceCents: communityListings.priceCents,
         sellerName: sellers.displayName,
         productStatus: products.status,
+        slug: products.slug,
       })
       .from(communityListings)
       .innerJoin(sellers, eq(sellers.id, communityListings.sellerId))
@@ -57,6 +59,7 @@ export function approvedCommunityListings(): Promise<CommunityCard[]> {
       description: r.description,
       priceCents: r.priceCents,
       sellerName: r.sellerName,
+      slug: r.slug,
       photoPath: pics.find((p) => p.communityListingId === r.id)?.storagePath ?? null,
     }));
   }, []);
