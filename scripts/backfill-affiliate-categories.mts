@@ -8,7 +8,9 @@
  */
 import postgres from "postgres";
 
-const NECESSITIES = new Set(["B0DF8RSVJK", "B00QIT9NDW", "B01BNEWDFQ", "B00NTCH52W", "B099F558S1", "B08573DQ39"]);
+const NECESSITIES = new Set(["B0DF8RSVJK", "B00QIT9NDW", "B01BNEWDFQ", "B00NTCH52W", "B099F558S1"]);
+/** Explicit Spock picks whose titles don't mention Star Trek (Cooper moved the Umite utensil set here). */
+const SPOCK_ASINS = new Set(["B08573DQ39"]);
 const SPOCK_RE = /star\s*trek|spock|klingon|starfleet|enterprise/i;
 
 const apply = process.argv.includes("--apply");
@@ -21,7 +23,7 @@ try {
   const plan: { id: string; title: string; from: string | null; to: string }[] = [];
   const unmatched: string[] = [];
   for (const r of rows) {
-    const to = r.asin && NECESSITIES.has(r.asin) ? "necessities" : SPOCK_RE.test(r.title) ? "spock" : null;
+    const to = r.asin && SPOCK_ASINS.has(r.asin) ? "spock" : r.asin && NECESSITIES.has(r.asin) ? "necessities" : SPOCK_RE.test(r.title) ? "spock" : null;
     if (!to) { unmatched.push(`${r.asin ?? "-"}  ${r.title}`); continue; }
     if (r.category === to || (r.category && !overwrite)) continue;
     plan.push({ id: r.id, title: r.title, from: r.category, to });
