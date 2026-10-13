@@ -1,19 +1,42 @@
-# Payments (architecture only — checkout not implemented)
+# Payments (Stripe Checkout)
 
-Providers implement `PaymentProvider`:
+Spock's Closet items are bought through **Stripe Checkout** (hosted page). Amazon Picks link to Amazon and are never sold here.
+Community Market items can only be checked out when `COMMUNITY_SELLERS_ENABLED` is on (seller payouts are not built yet, so keep it off).
 
-- `StripeProvider`
-- `BTCPayProvider`
+## Env (`.env` on the server)
 
-Both receive the **same server-calculated order total**. Phase 1 methods throw `PaymentsNotEnabledError`. There is no simulated “payment succeeded” path.
+| Var | Needed | Notes |
+| --- | --- | --- |
+| `STRIPE_SECRET_KEY` | yes | `sk_test_…` first. Without it every buy button shows **Checkout coming soon**. |
+| `STRIPE_WEBHOOK_SECRET` | yes | `whsec_…` from the webhook endpoint (or `stripe listen`). Without it orders stay pending and stock stays held until the 90-minute stale release. |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | no | Not used by hosted Checkout; shown as configured in admin only. |
 
-A payment row stores:
+The API version is pinned in `lib/stripe.ts` (`2026-09-30.endive`, the version stripe@23.0.0 ships with).
 
-- `payment_provider`
-- `payment_status`
-- `provider_payment_id`
-- `amount`
-- `currency`
-- timestamps
+## Flow
 
-Confirmation in a later phase must come from the provider webhook. Secrets stay in environment variables and are never rendered in admin.
+1. `/checkout`: the shopper picks **local pickup** (free, Bentonville) or **ship** (US, rate by total weight from `shipping_rates`).
+2. `POST /api/checkout` (same-origin only) takes product ids + quantities only. In one transaction it locks inventory rows, prices every line from the DB, creates a `pending` order + `order_items`, and increments `quantity_reserved`.
+3. A Checkout Session is created with those DB prices, one fixed shipping option, `automatic_tax` off (the tax row is unverified), and `expires_at` = 30 minutes. If Stripe fails, the hold is released.
+4. `POST /api/stripe/webhook` verifies the `Stripe-Signature` on the raw body, then:
+   - `checkout.session.completed` (paid) / `checkout.session.async_payment_succeeded`: order → `paid`, reserved → sold, on-hand decremented, product → `sold` at 0. Re-deliveries are no-ops (row lock + status check).
+   - `checkout.session.completed` (unpaid, delayed method): order → `processing`, stock stays held.
+   - `checkout.session.expired` / `checkout.session.async_payment_failed`: hold released once, order → `canceled`.
+   - A paid amount that differs from the order total marks it `paid_review`.
+5. `/checkout/cancel` expires the session right away so the item frees up; `/checkout/success` shows the order number.
+6. Safety net: pending orders older than 90 minutes are released on the next checkout.
+
+## Setup (test mode first)
+
+1. Stripe Dashboard → Developers → API keys: copy the **test** secret key into `STRIPE_SECRET_KEY`.
+2. Webhook, either:
+   - Dashboard → Developers → Webhooks → Add endpoint `https://spockshop.com/api/stripe/webhook`, events
+     `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`; copy the signing secret into `STRIPE_WEBHOOK_SECRET`; or
+   - Stripe CLI: `stripe listen --forward-to localhost:3000/api/stripe/webhook` and use the `whsec_…` it prints (local testing only).
+3. `docker compose up -d app` to pick up the env, then buy a test item with card `4242 4242 4242 4242`.
+
+## Tests
+
+- `npm test`: unit tests with mocked Stripe (session params, webhook routing, real signature verification).
+- Integration (real Postgres + [stripe-mock](https://github.com/stripe/stripe-mock)):
+  `INTEGRATION_DATABASE_URL=postgres://…/throwaway STRIPE_API_BASE=http://localhost:12111 npx vitest run tests/integration`

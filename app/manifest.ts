@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Live long and prosper. Unique secondhand finds from Bentonville, Arkansas.",
     start_url: "/",
     display: "standalone",
-    background_color: "#1b2433",
-    theme_color: "#1b2433",
+    background_color: "#04060d",
+    theme_color: "#04060d",
     icons: [
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml" },
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },

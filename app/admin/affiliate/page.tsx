@@ -1,6 +1,8 @@
 import { asc } from "drizzle-orm";
+import Link from "next/link";
 import { AdminNotice, type NoticeParams } from "@/components/admin/notice";
 import { AffiliateLink } from "@/components/shop/affiliate-link";
+import { AFFILIATE_CATEGORIES } from "@/lib/affiliate/categories";
 import { db } from "@/lib/db";
 import { affiliateItems } from "@/lib/db/schema";
 import { AMAZON_ASSOCIATES_DISCLOSURE, SHOP_SECTIONS } from "@/lib/shop/sections";
@@ -15,6 +17,10 @@ function Fields({ item }: { item?: Item }) {
       <input name="asin" placeholder="or ASIN" defaultValue={item?.asin ?? ""} className="field-input font-mono" />
       <input name="imageUrl" placeholder="Image URL" defaultValue={item?.imageUrl ?? ""} className="field-input sm:col-span-2" />
       <input name="priceNote" placeholder="Price note, e.g. ~$25" defaultValue={item?.priceNote ?? ""} className="field-input" />
+      <select name="category" aria-label="Category" defaultValue={item?.category ?? ""} className="field-input">
+        <option value="">No category (All only)</option>
+        {AFFILIATE_CATEGORIES.map((c) => <option key={c.slug} value={c.slug}>{c.label}</option>)}
+      </select>
       <input name="sortOrder" type="number" title="Sort order" defaultValue={item?.sortOrder ?? 0} className="field-input" />
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={item?.active ?? true} /> Active</label>
     </>
@@ -27,6 +33,7 @@ export default async function AdminAffiliatePage({ searchParams }: { searchParam
     <section className="space-y-6">
       <h1 className="text-2xl font-semibold">{SHOP_SECTIONS.affiliate.title}</h1>
       <p className="text-xs text-slate-500">Links always carry tag=mrspock-20. {AMAZON_ASSOCIATES_DISCLOSURE}</p>
+      <p><Link href="/admin/affiliate/import" className="text-sm text-blue-700">Bulk import from JSON →</Link></p>
       <AdminNotice {...await searchParams} />
       <form action="/api/admin/affiliate" method="post" className="surface-panel grid gap-3 rounded-2xl p-4 sm:grid-cols-4">
         <h2 className="text-lg font-semibold sm:col-span-4">Add a pick</h2>

@@ -1,0 +1,1 @@
+ALTER TABLE "affiliate_items" ADD COLUMN "category" text;

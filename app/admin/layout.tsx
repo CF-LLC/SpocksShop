@@ -20,7 +20,7 @@ const links = [
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   return (
-    <div className="space-y-6">
+    <div className="light-shell space-y-6">
       <nav className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm">
         {links.map(([href, label]) => (
           <Link key={href} href={href} className="font-medium text-slate-700 hover:text-slate-900">
