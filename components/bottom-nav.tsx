@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCart } from "@/contexts/cart-context";
-import { isActive, PRIMARY_NAV, SHOP_TABS } from "@/lib/nav";
+import { isActive, mainNav, SHOP_TABS } from "@/lib/nav";
 import { CartIcon, CloseIcon, HomeIcon, MenuIcon, ShopIcon } from "@/components/ui/icons";
 
 /** Thumb-reach navigation for phones: Home, Shop, Cart, Menu. Hidden from md up. */
-export function BottomNav({ sellersEnabled }: { sellersEnabled: boolean }) {
+export function BottomNav({ sellersEnabled, isAdmin = false }: { sellersEnabled: boolean; isAdmin?: boolean }) {
   const pathname = usePathname();
   const cart = useCart();
   const [menu, setMenu] = useState(false);
@@ -40,7 +40,7 @@ export function BottomNav({ sellersEnabled }: { sellersEnabled: boolean }) {
               <button type="button" className="icon-btn" onClick={() => setMenu(false)} aria-label="Close menu"><CloseIcon className="h-6 w-6" /></button>
             </div>
             <ul className="grid gap-1" onClick={() => setMenu(false)}>
-              {PRIMARY_NAV.map((l) => (
+              {mainNav(isAdmin).map((l) => (
                 <li key={l.href}><Link href={l.href} className="flex min-h-[48px] items-center rounded-xl px-3 text-lg font-semibold hover:bg-[var(--space-3)]">{l.label}</Link></li>
               ))}
             </ul>

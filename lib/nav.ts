@@ -20,3 +20,10 @@ export function parseTab(value: string | undefined): ShopTab {
 export function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
+
+export const ADMIN_NAV = { href: "/admin", label: "Admin" } as const;
+
+/** Main menu links; "Admin" is appended only when the server verified an admin session. */
+export function mainNav(isAdmin: boolean): readonly { href: string; label: string }[] {
+  return isAdmin ? [...PRIMARY_NAV, ADMIN_NAV] : PRIMARY_NAV;
+}
