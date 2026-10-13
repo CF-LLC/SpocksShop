@@ -251,6 +251,8 @@ export const affiliateItems = pgTable(
     amazonUrl: text("amazon_url"),
     asin: text("asin"),
     priceNote: text("price_note"),
+    /** Shop filter chip slug, e.g. "spock" | "necessities". Nullable: uncategorised picks show under "All". */
+    category: text("category"),
     active: boolean("active").notNull().default(true),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: createdAt(),

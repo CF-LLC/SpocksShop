@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AFFILIATE_CATEGORY_SLUGS } from "@/lib/affiliate/categories";
 import { dollarsToCents } from "@/lib/commerce/money";
 import { productConditions } from "@/lib/types";
 import { AdminInputError } from "@/lib/admin/http";
@@ -71,6 +72,7 @@ export const affiliateItemSchema = z
     amazonUrl: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().max(2000).optional()),
     asin: z.preprocess((v) => (v === "" ? undefined : typeof v === "string" ? v.trim().toUpperCase() : v), z.string().regex(/^[A-Z0-9]{10}$/, "ASIN must be 10 letters/digits").optional()),
     priceNote: optionalText,
+    category: z.preprocess((v) => (v === "" || v == null ? null : v), z.enum(AFFILIATE_CATEGORY_SLUGS).nullable()).default(null),
     active: z.preprocess((v) => v === "on" || v === "true", z.boolean()),
     sortOrder: z.coerce.number().int().min(-10000).max(10000).default(0),
   })

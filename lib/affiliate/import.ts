@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeAffiliateCategory } from "./categories";
 import { AMAZON_ASSOCIATE_TAG, buildAffiliateUrlFromAsin, isValidAsin, withAffiliateTag } from "../commerce/affiliate";
 
 /**
@@ -19,6 +20,11 @@ export const affiliatePickSchema = z
     image_url: optionalString.pipe(z.string().url().optional()),
     price: z.union([z.number().nonnegative(), z.string().trim()]).nullish(),
     price_checked: optionalString,
+    category: z.unknown().transform((v, ctx) => {
+      const c = normalizeAffiliateCategory(v);
+      if (c === "invalid") { ctx.addIssue({ code: "custom", message: `Unknown category "${String(v)}" (use spock or necessities)` }); return z.NEVER; }
+      return c ?? undefined;
+    }).optional(),
     active: z.boolean().optional(),
     sort_order: z.number().int().min(-10000).max(10000).optional(),
   })
@@ -38,6 +44,8 @@ export type AffiliateRow = {
   amazonUrl: string;
   imageUrl: string | null;
   priceNote: string;
+  /** undefined = leave existing value untouched on update */
+  category?: string;
   active: boolean;
   sortOrder: number;
 };
@@ -85,6 +93,7 @@ export function normalizePick(pick: AffiliatePick, index: number): AffiliateRow 
     amazonUrl,
     imageUrl: pick.image_url && pick.image_url.startsWith("https://") ? pick.image_url : null,
     priceNote: priceNoteFor(pick.price),
+    ...(pick.category ? { category: pick.category } : {}),
     active: pick.active ?? true,
     sortOrder: pick.sort_order ?? (index + 1) * 10,
   };

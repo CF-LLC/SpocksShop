@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { SpaceHero } from "@/components/space-hero";
 import { AffiliateCard } from "@/components/shop/affiliate-card";
 import { ProductCard } from "@/components/shop/product-card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { LcarsBar, SectionHeader } from "@/components/ui/lcars";
+import { SectionHeader } from "@/components/ui/lcars";
 import { getClosetProducts } from "@/lib/catalog";
 import { communitySellersEnabled } from "@/lib/features";
 import { AMAZON_ASSOCIATES_DISCLOSURE, SHOP_SECTIONS } from "@/lib/shop/sections";
@@ -21,18 +22,7 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-16 md:space-y-24">
-      <section className="relative overflow-hidden rounded-[28px] border border-[var(--line)] px-6 py-12 md:px-12 md:py-20" style={{ background: "radial-gradient(ellipse 80% 90% at 100% 0%, rgba(201,179,255,.18), transparent 60%), radial-gradient(ellipse 60% 80% at 0% 100%, rgba(245,185,66,.14), transparent 60%), linear-gradient(160deg, #0c1430, #060914)" }}>
-        <LcarsBar className="mb-8 max-w-[220px]" />
-        <p className="t-eyebrow">🖖 Live long and prosper</p>
-        <h1 className="t-display mt-3 max-w-3xl">Secondhand finds and stellar picks, out of Bentonville.</h1>
-        <p className="t-lead mt-5 max-w-2xl">
-          Shop one-of-a-kind items from Spock&apos;s Closet, browse the things we recommend on Amazon, and soon, buy from local sellers in the Community Market.
-        </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Link href="/shop" className="btn btn-primary">Browse the shop</Link>
-          <Link href="/shop?tab=amazon" className="btn btn-outline">See Amazon Picks</Link>
-        </div>
-      </section>
+      <SpaceHero />
 
       <section aria-labelledby="sections-title">
         <SectionHeader id="sections-title" eyebrow="Three ways to shop" title="Pick a section" />

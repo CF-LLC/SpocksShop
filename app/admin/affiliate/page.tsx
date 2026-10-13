@@ -2,6 +2,7 @@ import { asc } from "drizzle-orm";
 import Link from "next/link";
 import { AdminNotice, type NoticeParams } from "@/components/admin/notice";
 import { AffiliateLink } from "@/components/shop/affiliate-link";
+import { AFFILIATE_CATEGORIES } from "@/lib/affiliate/categories";
 import { db } from "@/lib/db";
 import { affiliateItems } from "@/lib/db/schema";
 import { AMAZON_ASSOCIATES_DISCLOSURE, SHOP_SECTIONS } from "@/lib/shop/sections";
@@ -16,6 +17,10 @@ function Fields({ item }: { item?: Item }) {
       <input name="asin" placeholder="or ASIN" defaultValue={item?.asin ?? ""} className="field-input font-mono" />
       <input name="imageUrl" placeholder="Image URL" defaultValue={item?.imageUrl ?? ""} className="field-input sm:col-span-2" />
       <input name="priceNote" placeholder="Price note, e.g. ~$25" defaultValue={item?.priceNote ?? ""} className="field-input" />
+      <select name="category" aria-label="Category" defaultValue={item?.category ?? ""} className="field-input">
+        <option value="">No category (All only)</option>
+        {AFFILIATE_CATEGORIES.map((c) => <option key={c.slug} value={c.slug}>{c.label}</option>)}
+      </select>
       <input name="sortOrder" type="number" title="Sort order" defaultValue={item?.sortOrder ?? 0} className="field-input" />
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={item?.active ?? true} /> Active</label>
     </>
