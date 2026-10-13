@@ -119,7 +119,7 @@ run("checkout against Postgres + stripe-mock", () => {
     const tag = randomBytes(3).toString("hex");
     const [seller] = await db.insert(schema.sellers).values({ email: `it-${tag}@example.test`, displayName: "IT Seller", status: "active" }).returning();
     const p = await product({ source: "community", sellerId: seller.id });
-    await expect(createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" })).rejects.toThrow(/Community Market/);
+    await expect(createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" })).rejects.toThrow(/seller-listed Closet Picks item/);
     const r = await createCheckout({ db, stripe, origin, env: { COMMUNITY_SELLERS_ENABLED: "true" } }, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" });
     expect(r.orderNumber).toMatch(/^SPK-/);
     const a = await product({ source: "affiliate" });

@@ -25,7 +25,7 @@ export default async function AdminCommunityQueuePage({ searchParams }: { search
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-semibold">{COMMUNITY_MARKET_NAME}: approval queue</h1>
+      <h1 className="text-2xl font-semibold">{COMMUNITY_MARKET_NAME}: seller listing queue</h1>
       <AdminNotice {...await searchParams} />
       {pending.length === 0 ? <p className="text-sm text-slate-500">Nothing waiting for review.</p> : (
         <ul className="space-y-4">

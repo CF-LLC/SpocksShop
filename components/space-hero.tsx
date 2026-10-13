@@ -34,7 +34,7 @@ export function SpaceHero() {
             <span className="text-[var(--gold-light)]">FULL OF FINDS.</span>
           </h1>
           <p className="hero-enter mt-4 max-w-xl text-[clamp(1rem,2.2vw,1.3rem)] text-stone-300" style={{ animationDelay: "0.32s" }}>
-            Secondhand treasures from Spock&apos;s Closet, stellar Amazon Picks, and soon a local Community Market, out of Bentonville.
+            One-of-a-kind Closet Picks and stellar Amazon Picks, out of Bentonville.
           </p>
           <p className="hero-enter hero-tech mt-3 text-[11px] tracking-[0.2em] text-stone-500 uppercase" style={{ animationDelay: "0.48s" }}>
             🖖 Live long and prosper.

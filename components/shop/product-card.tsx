@@ -11,7 +11,7 @@ export function ProductCard({ product, priority = false }: { product: Product; p
         <img src={img.src} alt={product.hasPhotos ? img.alt : ""} loading={priority ? "eager" : "lazy"} />
       </div>
       <div className="flex flex-1 flex-col gap-1 p-4">
-        <p className="dim text-xs font-semibold uppercase tracking-wider">{product.source === "community" ? `Community · ${product.sellerName ?? "Local seller"}` : "Spock's Closet"}</p>
+        <p className="dim text-xs font-semibold uppercase tracking-wider">{product.source === "community" ? `Closet Picks · ${product.sellerName ?? "Seller"}` : "Closet Picks"}</p>
         <h3 className="font-semibold leading-snug">
           <Link href={`/shop/${product.slug}`} className="stretched">{product.title}</Link>
         </h3>

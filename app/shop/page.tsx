@@ -6,7 +6,6 @@ import { ProductCard } from "@/components/shop/product-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/lcars";
 import { getClosetProducts } from "@/lib/catalog";
-import { communitySellersEnabled } from "@/lib/features";
 import { AFFILIATE_CATEGORIES, parseAffiliateCategory, type AffiliateCategory } from "@/lib/affiliate/categories";
 import { parseTab, SHOP_TABS, type ShopTab } from "@/lib/nav";
 import { AMAZON_ASSOCIATES_DISCLOSURE, SHOP_SECTIONS } from "@/lib/shop/sections";
@@ -15,7 +14,7 @@ import type { Product } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Shop",
-  description: "Shop Spock's Closet, Amazon Picks and the Community Market.",
+  description: "Shop Closet Picks (one-of-a-kind secondhand finds) and Amazon Picks.",
 };
 
 type Sort = "newest" | "price-asc" | "price-desc";
@@ -33,15 +32,19 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   const q = (params.q ?? "").trim().slice(0, 80);
   const sort: Sort = SORTS.some((s) => s.key === params.sort) ? (params.sort as Sort) : "newest";
   const [closetAll, picks, community] = await Promise.all([getClosetProducts(), activeAffiliateItems(), approvedCommunityListings()]);
-  const sellersEnabled = communitySellersEnabled();
   const cat = parseAffiliateCategory(params.cat);
 
   const needle = q.toLowerCase();
   const closet = closetAll
     .filter((p) => !needle || [p.title, p.description, p.brand, p.categoryName ?? ""].join(" ").toLowerCase().includes(needle))
     .sort((a, b) => (sort === "price-asc" ? a.priceCents - b.priceCents : sort === "price-desc" ? b.priceCents - a.priceCents : b.listedAt.localeCompare(a.listedAt)));
+  // Approved seller listings are part of Closet Picks (shown after closet items).
+  const sellerItems = community
+    .filter((l) => !needle || [l.title, l.description, l.sellerName].join(" ").toLowerCase().includes(needle))
+    .sort((a, b) => (sort === "price-asc" ? a.priceCents - b.priceCents : sort === "price-desc" ? b.priceCents - a.priceCents : 0));
+  const closetTotal = closetAll.length + community.length;
 
-  const counts: Record<ShopTab, number> = { all: closetAll.length + picks.length + community.length, amazon: picks.length, closet: closetAll.length, community: community.length };
+  const counts: Record<ShopTab, number> = { all: closetTotal + picks.length, amazon: picks.length, closet: closetTotal };
 
   return (
     <div>
@@ -60,15 +63,14 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
 
       {tab === "all" ? (
         <div className="space-y-16">
-          <ClosetSection items={closetAll.slice(0, 8)} total={closetAll.length} preview />
+          <ClosetSection items={closetAll.slice(0, 8)} sellerItems={community.slice(0, Math.max(0, 8 - closetAll.length))} total={closetTotal} preview />
           <AmazonSection items={picks.slice(0, 8)} total={picks.length} preview />
-          <CommunitySection items={community.slice(0, 8)} sellersEnabled={sellersEnabled} preview total={community.length} />
         </div>
       ) : null}
 
       {tab === "closet" ? (
         <>
-          {closetAll.length > 0 ? (
+          {closetTotal > 0 ? (
             <form className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end" action="/shop" role="search">
               <input type="hidden" name="tab" value="closet" />
               <label className="flex-1">
@@ -84,29 +86,31 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
               <button className="btn btn-outline" type="submit">Apply</button>
             </form>
           ) : null}
-          {q && closet.length === 0 && closetAll.length > 0 ? (
+          {q && closet.length + sellerItems.length === 0 && closetTotal > 0 ? (
             <EmptyState icon="🔍" title={`No closet items match "${q}"`} body="Try a different word, or clear the search." actions={[{ href: "/shop?tab=closet", label: "Clear search" }, { href: "/shop?tab=amazon", label: "Browse Amazon Picks" }]} />
           ) : (
-            <ClosetSection items={closet} total={closetAll.length} />
+            <ClosetSection items={closet} sellerItems={sellerItems} total={closetTotal} />
           )}
         </>
       ) : null}
 
       {tab === "amazon" ? <AmazonSection items={cat ? picks.filter((p) => p.category === cat) : picks} total={picks.length} filters={{ active: cat, all: picks }} /> : null}
-      {tab === "community" ? <CommunitySection items={community} sellersEnabled={sellersEnabled} total={community.length} /> : null}
     </div>
   );
 }
 
-function ClosetSection({ items, total, preview = false }: { items: Product[]; total: number; preview?: boolean }) {
+function ClosetSection({ items, sellerItems = [], total, preview = false }: { items: Product[]; sellerItems?: Listing[]; total: number; preview?: boolean }) {
   const s = SHOP_SECTIONS.closet;
   return (
     <section aria-labelledby={`${s.id}-title`} id={s.id}>
-      <SectionHeader id={`${s.id}-title`} title={s.title} eyebrow={preview ? "One of a kind" : undefined} action={preview && total > items.length ? <Link className="btn btn-outline" href="/shop?tab=closet">All {total}</Link> : null}>
+      <SectionHeader id={`${s.id}-title`} title={s.title} eyebrow={preview ? "One of a kind" : undefined} action={preview && total > items.length + sellerItems.length ? <Link className="btn btn-outline" href="/shop?tab=closet">All {total}</Link> : null}>
         {s.blurb}
       </SectionHeader>
-      {items.length ? (
-        <ul className={grid}>{items.map((p, i) => <li key={p.id}><ProductCard product={p} priority={i < 2} /></li>)}</ul>
+      {items.length + sellerItems.length ? (
+        <ul className={grid}>
+          {items.map((p, i) => <li key={p.id}><ProductCard product={p} priority={i < 2} /></li>)}
+          {sellerItems.map((l) => <li key={`l-${l.id}`}><CommunityCard item={l} /></li>)}
+        </ul>
       ) : (
         <EmptyState
           icon="🧳"
@@ -150,25 +154,7 @@ function AmazonSection({ items, total, preview = false, filters }: { items: Pick
       ) : filters?.active ? (
         <EmptyState icon="🛰️" title={`No ${AFFILIATE_CATEGORIES.find((c) => c.slug === filters.active)?.label ?? "matching"} picks yet`} body="We haven't added picks here yet. Try another category, or see every pick." actions={[{ href: "/shop?tab=amazon", label: "Show all picks" }]} />
       ) : (
-        <EmptyState title="Picks are on the way" body="We're choosing what to recommend." actions={[{ href: "/shop?tab=closet", label: "Shop Spock's Closet" }]} />
-      )}
-    </section>
-  );
-}
-
-function CommunitySection({ items, sellersEnabled, total, preview = false }: { items: Listing[]; sellersEnabled: boolean; total: number; preview?: boolean }) {
-  const s = SHOP_SECTIONS.community;
-  return (
-    <section aria-labelledby={`${s.id}-title`} id={s.id}>
-      <SectionHeader id={`${s.id}-title`} title={s.title} eyebrow={preview ? "Local sellers" : undefined} action={preview && total > items.length ? <Link className="btn btn-outline" href="/shop?tab=community">All {total}</Link> : null}>
-        {s.blurb}
-      </SectionHeader>
-      {items.length ? (
-        <ul className={grid}>{items.map((l) => <li key={l.id}><CommunityCard item={l} /></li>)}</ul>
-      ) : sellersEnabled ? (
-        <EmptyState icon="🤝" title="No listings yet" body="Local sellers can apply to list their finds here." actions={[{ href: "/sell/signup", label: "Apply to sell" }, { href: "/shop?tab=closet", label: "Shop Spock's Closet" }]} />
-      ) : (
-        <EmptyState icon="🛰️" title="Community Market is coming soon" body="Soon local sellers will be able to list their own finds here, reviewed by us before they go live." actions={[{ href: "/shop?tab=closet", label: "Shop Spock's Closet" }, { href: "/contact", label: "Interested in selling?" }]} />
+        <EmptyState title="Picks are on the way" body="We're choosing what to recommend." actions={[{ href: "/shop?tab=closet", label: "Shop Closet Picks" }]} />
       )}
     </section>
   );

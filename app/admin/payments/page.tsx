@@ -15,7 +15,7 @@ export default function AdminPaymentsPage() {
         <li>Publishable key (NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, optional): {yes(s.publishableKeyConfigured)}</li>
         <li>Webhook endpoint: <code>https://spockshop.com/api/stripe/webhook</code> (events: checkout.session.completed, checkout.session.expired, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed)</li>
         <li>Tax collection: off (tax row unverified with Arkansas DFA)</li>
-        <li>Community Market checkout: only when COMMUNITY_SELLERS_ENABLED is on; seller payouts are not built yet</li>
+        <li>Seller-listed Closet Picks checkout: only when COMMUNITY_SELLERS_ENABLED is on; seller payouts are not built yet</li>
         <li>BTCPay configured: {yes(s.btcpayConfigured)} (not wired to checkout)</li>
       </ul>
     </section>

@@ -50,9 +50,9 @@ export function CartDrawer() {
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
             <span aria-hidden className="text-4xl">🛸</span>
             <p className="t-h3">Your cart is empty</p>
-            <p className="muted">Browse Spock&apos;s Closet for one-of-a-kind finds, or see what we recommend on Amazon.</p>
+            <p className="muted">Browse Closet Picks for one-of-a-kind finds, or see what we recommend on Amazon.</p>
             <div className="mt-2 flex flex-wrap justify-center gap-3">
-              <Link href="/shop?tab=closet" className="btn btn-primary" onClick={close}>Shop Spock&apos;s Closet</Link>
+              <Link href="/shop?tab=closet" className="btn btn-primary" onClick={close}>Shop Closet Picks</Link>
               <Link href="/shop?tab=amazon" className="btn btn-outline" onClick={close}>Amazon Picks</Link>
             </div>
           </div>
@@ -73,7 +73,7 @@ export function CartDrawer() {
                       <Link href={`/shop/${p?.slug ?? ""}`} className="line-clamp-2 font-semibold hover:underline" onClick={close}>{p?.title ?? "Item"}</Link>
                       <p className="price mt-1">{formatCents(p?.priceCents ?? 0)}</p>
                       {v && v.available === 0 ? <p className="mt-1 text-sm text-[var(--danger)]">Just sold out. Remove it to check out.</p> : null}
-                      {v && v.available > 0 && !v.purchasable ? <p className="mt-1 text-sm text-[var(--warn)]">Community Market checkout isn&apos;t open yet.</p> : null}
+                      {v && v.available > 0 && !v.purchasable ? <p className="mt-1 text-sm text-[var(--warn)]">Checkout for this seller item isn&apos;t open yet.</p> : null}
                       <div className="mt-2 flex items-center gap-2">
                         {max > 1 ? (
                           <div className="flex items-center rounded-full border border-[var(--line-strong)]">

@@ -11,7 +11,7 @@ export function CommunityCard({ item }: { item: Item }) {
         <img src={item.photoPath ? mediaUrl(item.photoPath) : "/placeholder.svg"} alt="" loading="lazy" />
       </div>
       <div className="flex flex-1 flex-col gap-1 p-4">
-        <p className="dim text-xs font-semibold uppercase tracking-wider">Sold by {item.sellerName}</p>
+        <p className="dim text-xs font-semibold uppercase tracking-wider">Closet Picks · {item.sellerName}</p>
         <h3 className="font-semibold leading-snug">
           {item.slug ? <Link href={`/shop/${item.slug}`} className="stretched">{item.title}</Link> : item.title}
         </h3>
