@@ -1,120 +1,114 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { useCart } from "@/contexts/cart-context";
-import { products } from "@/lib/data";
-import { formatCurrency } from "@/lib/utils";
+import { formatCents } from "@/lib/commerce/money";
+import { CloseIcon, MinusIcon, PlusIcon } from "@/components/ui/icons";
 
-export function CartDrawer({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  const { cartItems, removeFromCart, subtotal } = useCart();
+export function CartDrawer() {
+  const cart = useCart();
+  const pathname = usePathname();
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const { isOpen, close } = cart;
 
   useEffect(() => {
-    if (!open) return;
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [open, onClose]);
-
-  useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
+    if (!isOpen) return;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
     };
-  }, [open]);
+  }, [isOpen, close]);
 
-  const lineItems = useMemo(
-    () =>
-      cartItems
-        .map((item) => {
-          const product = products.find((entry) => entry.id === item.productId);
-          if (!product) return null;
-          return { product, quantity: item.quantity };
-        })
-        .filter((entry): entry is { product: (typeof products)[number]; quantity: number } =>
-          Boolean(entry),
-        ),
-    [cartItems],
-  );
+  // Navigating away closes the drawer.
+  const lastPath = useRef(pathname);
+  useEffect(() => {
+    if (lastPath.current !== pathname) close();
+    lastPath.current = pathname;
+  }, [pathname, close]);
+
+  if (!isOpen) return null;
+  const blocked = cart.lines.some((l) => cart.verified[l.productId] && !cart.verified[l.productId].purchasable);
+  const empty = cart.lines.length === 0;
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="Close cart drawer"
-        onClick={onClose}
-        className={`fixed inset-0 z-40 bg-slate-950/45 transition-opacity duration-300 ${
-          open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-        }`}
-      />
-      <aside
-        aria-label="Cart drawer"
-        className={`fixed right-0 top-0 z-50 flex h-dvh w-full max-w-md flex-col border-l border-stone-700 bg-[var(--charcoal)] text-stone-100 shadow-2xl transition-transform duration-300 ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <header className="flex items-center justify-between border-b border-stone-700 px-5 py-4">
-          <h2 className="text-lg font-semibold">Your Cart</h2>
-          <button type="button" className="btn btn-outline-dark" onClick={onClose}>
-            Close
-          </button>
-        </header>
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          {lineItems.length === 0 ? (
-            <p className="rounded-xl border border-stone-700 bg-stone-900/30 px-4 py-3 text-sm text-stone-300">
-              Your cart is empty.
-            </p>
-          ) : (
-            <ul className="space-y-3">
-              {lineItems.map(({ product, quantity }) => (
-                <li key={product.id} className="rounded-xl border border-stone-700 bg-stone-900/40 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold">{product.title}</p>
-                      <p className="text-xs text-stone-400">Qty {quantity}</p>
-                    </div>
-                    <p className="text-sm">{formatCurrency(product.price * quantity)}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeFromCart(product.id)}
-                    className="mt-2 text-xs font-semibold text-rose-300 hover:text-rose-200"
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+      <div className="overlay" onClick={close} aria-hidden />
+      <aside role="dialog" aria-modal="true" aria-labelledby="cart-title" className="drawer">
+        <div className="flex items-center justify-between border-b border-[var(--line)] px-4 py-3">
+          <h2 id="cart-title" className="t-h3">Your cart {cart.count ? <span className="dim">({cart.count})</span> : null}</h2>
+          <button ref={closeRef} type="button" onClick={close} className="icon-btn" aria-label="Close cart"><CloseIcon className="h-6 w-6" /></button>
         </div>
-        <footer className="border-t border-stone-700 px-5 py-4">
-          <div className="mb-3 flex items-center justify-between text-sm">
-            <span className="text-stone-300">Subtotal</span>
-            <span className="text-base font-semibold">{formatCurrency(subtotal)}</span>
+
+        {empty ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+            <span aria-hidden className="text-4xl">🛸</span>
+            <p className="t-h3">Your cart is empty</p>
+            <p className="muted">Browse Spock&apos;s Closet for one-of-a-kind finds, or see what we recommend on Amazon.</p>
+            <div className="mt-2 flex flex-wrap justify-center gap-3">
+              <Link href="/shop?tab=closet" className="btn btn-primary" onClick={close}>Shop Spock&apos;s Closet</Link>
+              <Link href="/shop?tab=amazon" className="btn btn-outline" onClick={close}>Amazon Picks</Link>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Link href="/cart" className="btn btn-outline-dark flex-1" onClick={onClose}>
-              View cart
-            </Link>
-            <Link href="/checkout" className="btn btn-accent flex-1" onClick={onClose}>
-              Checkout
-            </Link>
-          </div>
-        </footer>
+        ) : (
+          <>
+            <ul className="flex-1 divide-y divide-[var(--line)] overflow-y-auto px-4">
+              {cart.lines.map((line) => {
+                const p = cart.products[line.productId];
+                const v = cart.verified[line.productId];
+                const max = v ? Math.max(1, v.available) : line.quantity;
+                return (
+                  <li key={line.productId} className="flex gap-3 py-4">
+                    <div className="h-20 w-20 flex-none overflow-hidden rounded-xl bg-[#0d1428]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p?.image ?? "/placeholder.svg"} alt="" className="h-full w-full object-cover" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/shop/${p?.slug ?? ""}`} className="line-clamp-2 font-semibold hover:underline" onClick={close}>{p?.title ?? "Item"}</Link>
+                      <p className="price mt-1">{formatCents(p?.priceCents ?? 0)}</p>
+                      {v && v.available === 0 ? <p className="mt-1 text-sm text-[var(--danger)]">Just sold out. Remove it to check out.</p> : null}
+                      {v && v.available > 0 && !v.purchasable ? <p className="mt-1 text-sm text-[var(--warn)]">Community Market checkout isn&apos;t open yet.</p> : null}
+                      <div className="mt-2 flex items-center gap-2">
+                        {max > 1 ? (
+                          <div className="flex items-center rounded-full border border-[var(--line-strong)]">
+                            <button type="button" className="icon-btn" aria-label="Decrease quantity" onClick={() => cart.setQuantity(line.productId, line.quantity - 1)}><MinusIcon className="h-4 w-4" /></button>
+                            <span className="w-6 text-center tabular-nums" aria-live="polite">{line.quantity}</span>
+                            <button type="button" className="icon-btn" aria-label="Increase quantity" disabled={line.quantity >= max} onClick={() => cart.setQuantity(line.productId, Math.min(max, line.quantity + 1))}><PlusIcon className="h-4 w-4" /></button>
+                          </div>
+                        ) : <span className="dim text-sm">One of a kind</span>}
+                        <button type="button" className="btn-text ml-auto text-sm" onClick={() => cart.remove(line.productId)}>Remove</button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="border-t border-[var(--line)] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
+              <div className="flex items-baseline justify-between">
+                <span className="muted">Subtotal</span>
+                <span className="price text-xl">{formatCents(cart.subtotalCents)}</span>
+              </div>
+              <p className="dim mt-1 text-sm">Shipping or free Bentonville pickup is chosen at checkout. Sales tax isn&apos;t collected yet.</p>
+              {cart.checkoutEnabled === false ? (
+                <>
+                  <button type="button" className="btn btn-primary btn-block mt-4" aria-disabled="true" disabled>Checkout coming soon</button>
+                  <p className="dim mt-2 text-center text-sm">Online payment is almost ready. Questions about an item? <Link href="/contact" className="link" onClick={close}>Contact us</Link>.</p>
+                </>
+              ) : (
+                <Link href="/checkout" onClick={close} aria-disabled={blocked || cart.checkoutEnabled === null} className={`btn btn-primary btn-block mt-4 ${blocked ? "pointer-events-none" : ""}`}>
+                  {cart.checkoutEnabled === null ? "Checking…" : "Checkout"}
+                </Link>
+              )}
+              <button type="button" onClick={close} className="btn btn-ghost btn-block mt-2">Keep shopping</button>
+            </div>
+          </>
+        )}
       </aside>
     </>
   );
