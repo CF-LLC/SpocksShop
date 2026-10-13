@@ -244,3 +244,10 @@ a { color: inherit; }
 .chip-filter[aria-current="true"] { background: var(--lilac, #c9b3ff); border-color: var(--lilac, #c9b3ff); color: #120a24; }
 .chip-filter .count { font-size: .72rem; font-weight: 700; padding: 0 .4rem; border-radius: 999px; background: var(--space-3); color: var(--text-muted); }
 .chip-filter[aria-current="true"] .count { background: rgba(18,10,36,.18); color: #120a24; }
+
+/* ===== Admin: transparent-image preview checkerboard ===== */
+.checker { background-color: #fff; background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%); background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0; }
+.admin-nav { display: flex; gap: .25rem; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.admin-nav::-webkit-scrollbar { display: none; }
+.admin-nav a, .admin-nav button { flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 44px; padding: 0 .85rem; border-radius: 999px; white-space: nowrap; }
+.admin-nav a[aria-current="page"] { background: #0f172a; color: #fff; }

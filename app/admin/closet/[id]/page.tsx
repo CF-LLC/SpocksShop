@@ -3,10 +3,11 @@ import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { AdminNotice, type NoticeParams } from "@/components/admin/notice";
 import { ClosetForm } from "@/components/admin/closet-form";
-import { centsToDollars } from "@/lib/commerce/money";
+import { PhotoUploader } from "@/components/admin/photo-uploader";
+import { centsToDollars, formatCents } from "@/lib/commerce/money";
 import { db } from "@/lib/db";
 import { categories, inventory, photos, products } from "@/lib/db/schema";
-import { MAX_PHOTOS, mediaUrl } from "@/lib/media";
+import { MAX_PHOTOS_PER_PRODUCT, mediaUrl } from "@/lib/media";
 
 export default async function EditClosetItemPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: NoticeParams }) {
   const { id } = await params;
@@ -23,49 +24,82 @@ export default async function EditClosetItemPage({ params, searchParams }: { par
   ]);
   const p = row.p;
   const money = (c: number | null) => (c == null ? null : centsToDollars(c));
+  const live = p.status === "listed";
+  const canToggle = p.status === "listed" || p.status === "draft";
+  const reserved = row.inv?.quantityReserved ?? 0;
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
+    <section className="mx-auto max-w-3xl space-y-6">
+      <div className="space-y-3">
+        <Link href="/admin/closet" className="inline-flex min-h-[44px] items-center text-sm text-slate-600">← All closet items</Link>
         <h1 className="text-2xl font-semibold">{p.title}</h1>
-        <Link href={`/shop/${p.slug}`} className="btn btn-outline">View in shop</Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`rounded-full px-3 py-1 text-sm font-semibold ${live ? "bg-emerald-100 text-emerald-900" : "bg-slate-200 text-slate-800"}`}>{live ? "Live in shop" : p.status === "draft" ? "Draft (hidden)" : p.status}</span>
+          <span className="text-sm text-slate-600">{formatCents(p.priceCents)} · qty {row.inv?.quantityOnHand ?? 0}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {canToggle ? (
+            <form action={`/api/admin/closet/${id}`} method="post">
+              <input type="hidden" name="intent" value={live ? "unpublish" : "publish"} />
+              <button type="submit" className={`btn w-full ${live ? "btn-outline" : "btn-primary"}`} data-testid="publish-toggle">{live ? "Unpublish" : "Publish"}</button>
+            </form>
+          ) : <span />}
+          <Link href={`/shop/${p.slug}`} className="btn btn-outline w-full">View in shop</Link>
+        </div>
       </div>
       <AdminNotice {...await searchParams} />
-      <ClosetForm
-        action={`/api/admin/closet/${id}`}
-        categories={cats}
-        submitLabel="Save"
-        values={{ ...p, price: centsToDollars(p.priceCents), originalPrice: money(p.originalPriceCents), purchaseCost: money(p.purchaseCostCents), quantity: row.inv?.quantityOnHand ?? 0 }}
-      />
 
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Photos</h2>
-        {pics.length === 0 ? <p className="text-sm text-slate-500">No uploaded photos yet. The shop uses the catalog images until you add some.</p> : (
-          <ul className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <section id="photos" aria-labelledby="photos-title" className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+        <h2 id="photos-title" className="text-lg font-semibold">Photos <span className="text-sm font-normal text-slate-600">({pics.length}/{MAX_PHOTOS_PER_PRODUCT})</span></h2>
+        {pics.length ? (
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {pics.map((ph, i) => (
-              <li key={ph.id} className="rounded-xl border p-2">
+              <li key={ph.id} className="rounded-xl border border-slate-200 bg-white p-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={mediaUrl(ph.storagePath)} alt={ph.alt} className="aspect-square w-full rounded-lg object-cover" />
-                <div className="mt-2 flex gap-2 text-xs">
-                  <form action={`/api/admin/photos/${ph.id}`} method="post"><input type="hidden" name="intent" value="up" /><button className="btn-text" disabled={i === 0}>↑</button></form>
-                  <form action={`/api/admin/photos/${ph.id}`} method="post"><input type="hidden" name="intent" value="down" /><button className="btn-text" disabled={i === pics.length - 1}>↓</button></form>
-                  <form action={`/api/admin/photos/${ph.id}`} method="post" className="ml-auto"><input type="hidden" name="intent" value="delete" /><button className="btn-text text-red-700">Delete</button></form>
+                <img src={mediaUrl(ph.storagePath)} alt={ph.alt} className="checker aspect-square w-full rounded-lg object-contain" />
+                {i === 0 ? <p className="mt-1 text-center text-xs font-semibold text-amber-800">Cover photo</p> : null}
+                <div className="mt-1 grid grid-cols-3 gap-1">
+                  <form action={`/api/admin/photos/${ph.id}`} method="post"><input type="hidden" name="intent" value="up" /><button className="btn btn-outline w-full px-0" disabled={i === 0} aria-label="Move earlier">↑</button></form>
+                  <form action={`/api/admin/photos/${ph.id}`} method="post"><input type="hidden" name="intent" value="down" /><button className="btn btn-outline w-full px-0" disabled={i === pics.length - 1} aria-label="Move later">↓</button></form>
+                  <form action={`/api/admin/photos/${ph.id}`} method="post"><input type="hidden" name="intent" value="delete" /><button className="btn btn-outline w-full px-0 text-red-700" aria-label="Delete photo">🗑</button></form>
                 </div>
               </li>
             ))}
           </ul>
-        )}
-        <form action={`/api/admin/closet/${id}/photos`} method="post" encType="multipart/form-data" className="flex flex-wrap items-center gap-3">
-          <input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple required className="text-sm" />
-          <button type="submit" className="btn btn-outline">Upload (up to {MAX_PHOTOS})</button>
-        </form>
-      </div>
+        ) : <p className="text-sm text-slate-600">No photos yet. The first photo becomes the cover.</p>}
+        <PhotoUploader productId={id} remaining={MAX_PHOTOS_PER_PRODUCT - pics.length} alt={p.title} />
+      </section>
 
-      <form action={`/api/admin/closet/${id}`} method="post" className="border-t pt-4">
-        <input type="hidden" name="intent" value="delete" />
-        <button type="submit" className="btn btn-outline text-red-700">Delete item</button>
-        <span className="ml-3 text-xs text-slate-500">Removes the item, its inventory row and its uploaded photos. Order history keeps its snapshots.</span>
-      </form>
+      <section aria-labelledby="details-title" className="space-y-3">
+        <h2 id="details-title" className="text-lg font-semibold">Details &amp; price</h2>
+        <ClosetForm
+          action={`/api/admin/closet/${id}`}
+          categories={cats}
+          submitLabel="Save changes"
+          values={{ ...p, price: centsToDollars(p.priceCents), originalPrice: money(p.originalPriceCents), purchaseCost: money(p.purchaseCostCents), quantity: row.inv?.quantityOnHand ?? 0 }}
+        />
+      </section>
+
+      <section aria-labelledby="danger-title" className="rounded-2xl border border-red-200 bg-red-50 p-4">
+        <h2 id="danger-title" className="font-semibold text-red-900">Delete item</h2>
+        {reserved > 0 ? (
+          <p className="mt-1 text-sm text-red-900">This item is in an open checkout, so it can&apos;t be deleted right now.</p>
+        ) : (
+          <details className="mt-2" data-testid="delete-confirm">
+            <summary className="btn btn-outline cursor-pointer list-none text-red-700">Delete…</summary>
+            <form action={`/api/admin/closet/${id}`} method="post" className="mt-3 space-y-3">
+              <input type="hidden" name="intent" value="delete" />
+              <p className="text-sm text-red-900">
+                Permanently delete <strong>{p.title}</strong>, its inventory and {pics.length} photo{pics.length === 1 ? "" : "s"}? Past orders keep their own copy of the title and price. This can&apos;t be undone. Tip: <em>Unpublish</em> hides it without deleting.
+              </p>
+              <label className="flex min-h-[44px] items-center gap-3 text-sm text-red-900">
+                <input type="checkbox" name="confirm" value="delete" required className="h-5 w-5" /> Yes, delete this item
+              </label>
+              <button type="submit" className="btn w-full border-red-700 bg-red-700 text-white">Delete permanently</button>
+            </form>
+          </details>
+        )}
+      </section>
     </section>
   );
 }

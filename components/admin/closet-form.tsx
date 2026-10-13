@@ -6,42 +6,63 @@ type Values = {
   weightLb?: string | null; quantity?: number; status?: string; featured?: boolean;
 };
 
-const statuses = ["draft", "listed", "reserved", "sold", "archived"];
+const statuses = [
+  ["draft", "Draft (hidden)"],
+  ["listed", "Live in shop"],
+  ["reserved", "Reserved"],
+  ["sold", "Sold"],
+  ["archived", "Archived"],
+] as const;
 
-export function ClosetForm({ action, values = {}, categories, submitLabel }: {
-  action: string; values?: Values; categories: { id: string; name: string }[]; submitLabel: string;
+const label = "block text-sm font-medium text-slate-800";
+const input = "field-input mt-1 w-full";
+
+/** Mobile-first: one column on phones, the essentials (title, price, qty, status) first; details tucked away. */
+export function ClosetForm({ action, values = {}, categories, submitLabel, isNew = false }: {
+  action: string; values?: Values; categories: { id: string; name: string }[]; submitLabel: string; isNew?: boolean;
 }) {
   return (
-    <form action={action} method="post" className="grid gap-4 sm:grid-cols-2">
-      <label className="text-sm sm:col-span-2">Title<input name="title" required defaultValue={values.title} className="field-input mt-1 w-full" /></label>
-      <label className="text-sm">SKU<input name="sku" required defaultValue={values.sku} className="field-input mt-1 w-full font-mono" /></label>
-      <label className="text-sm">Slug (optional)<input name="slug" defaultValue={values.slug} placeholder="from title" className="field-input mt-1 w-full" /></label>
-      <label className="text-sm sm:col-span-2">Description<textarea name="description" rows={4} defaultValue={values.description} className="field-input mt-1 w-full" /></label>
-      <label className="text-sm">Category
-        <select name="categoryId" defaultValue={values.categoryId ?? ""} className="field-input mt-1 w-full">
-          <option value="">None</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-      </label>
-      <label className="text-sm">Brand<input name="brand" defaultValue={values.brand ?? ""} className="field-input mt-1 w-full" /></label>
-      <label className="text-sm">Condition
-        <select name="condition" defaultValue={values.condition ?? "Good"} className="field-input mt-1 w-full">
+    <form action={action} method="post" className="space-y-4" data-testid="closet-form">
+      <label className={label}>Title<input name="title" required maxLength={200} defaultValue={values.title} className={input} placeholder="e.g. Vintage Pyrex mixing bowl" /></label>
+      <div className="grid grid-cols-2 gap-3">
+        <label className={label}>Price ($)<input name="price" type="number" inputMode="decimal" step="0.01" min="0.01" required defaultValue={values.price} className={input} /></label>
+        <label className={label}>Quantity<input name="quantity" type="number" inputMode="numeric" min="0" required defaultValue={values.quantity ?? 1} className={input} /></label>
+      </div>
+      <label className={label}>Condition
+        <select name="condition" defaultValue={values.condition ?? "Good"} className={input}>
           {productConditions.map((c) => <option key={c}>{c}</option>)}
         </select>
       </label>
-      <label className="text-sm">Condition notes<input name="conditionNotes" defaultValue={values.conditionNotes ?? ""} className="field-input mt-1 w-full" /></label>
-      <label className="text-sm">Price ($)<input name="price" type="number" step="0.01" min="0.01" required defaultValue={values.price} className="field-input mt-1 w-full" /></label>
-      <label className="text-sm">Original price ($)<input name="originalPrice" type="number" step="0.01" min="0" defaultValue={values.originalPrice ?? ""} className="field-input mt-1 w-full" /></label>
-      <label className="text-sm">Purchase cost ($, admin only)<input name="purchaseCost" type="number" step="0.01" min="0" defaultValue={values.purchaseCost ?? ""} className="field-input mt-1 w-full" /></label>
-      <label className="text-sm">Weight (lb)<input name="weightLb" type="number" step="0.01" min="0" defaultValue={values.weightLb ?? ""} className="field-input mt-1 w-full" /></label>
-      <label className="text-sm">Quantity on hand<input name="quantity" type="number" min="0" required defaultValue={values.quantity ?? 1} className="field-input mt-1 w-full" /></label>
-      <label className="text-sm">Status
-        <select name="status" defaultValue={values.status ?? "draft"} className="field-input mt-1 w-full">
-          {statuses.map((s) => <option key={s}>{s}</option>)}
+      <label className={label}>Description<textarea name="description" rows={4} defaultValue={values.description} className={input} placeholder="Size, measurements, flaws, story…" /></label>
+      <label className={label}>Status
+        <select name="status" defaultValue={values.status ?? "draft"} className={input}>
+          {statuses.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       </label>
-      <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="featured" defaultChecked={values.featured} /> Featured</label>
-      <div className="sm:col-span-2"><button type="submit" className="btn btn-primary">{submitLabel}</button></div>
+
+      <details className="rounded-xl border border-slate-200 bg-white p-3" open={!isNew}>
+        <summary className="min-h-[44px] cursor-pointer py-2 font-medium">More details</summary>
+        <div className="mt-2 grid gap-4 sm:grid-cols-2">
+          <label className={label}>Category
+            <select name="categoryId" defaultValue={values.categoryId ?? ""} className={input}>
+              <option value="">None</option>
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </label>
+          <label className={label}>Brand<input name="brand" defaultValue={values.brand ?? ""} className={input} /></label>
+          <label className={`${label} sm:col-span-2`}>Condition notes<input name="conditionNotes" defaultValue={values.conditionNotes ?? ""} className={input} /></label>
+          <label className={label}>Original price ($)<input name="originalPrice" type="number" inputMode="decimal" step="0.01" min="0" defaultValue={values.originalPrice ?? ""} className={input} /></label>
+          <label className={label}>Purchase cost ($, admin only)<input name="purchaseCost" type="number" inputMode="decimal" step="0.01" min="0" defaultValue={values.purchaseCost ?? ""} className={input} /></label>
+          <label className={label}>Weight (lb, for shipping)<input name="weightLb" type="number" inputMode="decimal" step="0.01" min="0" defaultValue={values.weightLb ?? ""} className={input} /></label>
+          <label className={label}>SKU{isNew ? " (blank = auto)" : ""}<input name="sku" required={!isNew} defaultValue={values.sku} className={`${input} font-mono`} /></label>
+          <label className={label}>URL slug (optional)<input name="slug" defaultValue={values.slug} placeholder="from title" className={input} /></label>
+          <label className="flex min-h-[44px] items-center gap-3 text-sm"><input type="checkbox" name="featured" className="h-5 w-5" defaultChecked={values.featured} /> Featured</label>
+        </div>
+      </details>
+
+      <div className="sticky bottom-2 z-10 rounded-2xl bg-white/90 p-2 backdrop-blur">
+        <button type="submit" className="btn btn-primary w-full">{submitLabel}</button>
+      </div>
     </form>
   );
 }

@@ -9,7 +9,7 @@ import { CartIcon } from "@/components/ui/icons";
 export function Brand() {
   return (
     <Link href="/" className="flex min-h-[44px] items-center gap-2.5 font-display text-lg font-bold tracking-tight" aria-label="Spock's Resale Shop, home">
-      <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)] text-xl leading-none">🖖</span>
+      <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full border border-[var(--line-strong)] bg-[var(--space-1,#0a1022)] text-xl leading-none shadow-[inset_0_0_10px_rgba(201,179,255,.18)]">🖖</span>
       <span>
         Spock&apos;s <span className="text-[var(--gold-strong)]">Resale Shop</span>
       </span>

@@ -10,6 +10,19 @@ describe("affiliate categories", () => {
     expect(parseAffiliateCategory("x")).toBeNull();
     expect(parseAffiliateCategory(undefined)).toBeNull();
   });
+  it("has Spock, Necessities, Home in chip order", async () => {
+    const { AFFILIATE_CATEGORIES } = await import("../lib/affiliate/categories");
+    expect(AFFILIATE_CATEGORIES.map((c) => [c.slug, c.label])).toEqual([["spock", "Spock"], ["necessities", "Necessities"], ["home", "Home"]]);
+    expect(parseAffiliateCategory("home")).toBe("home");
+  });
+  it("maps home-ish batch categories to home", () => {
+    expect(normalizeAffiliateCategory("home")).toBe("home");
+    expect(normalizeAffiliateCategory("Kitchen")).toBe("home");
+    expect(normalizeAffiliateCategory("decor")).toBe("home");
+    const r = parseAffiliateBatch([{ title: "Shelf", asin: "B0D9NS9RT5", category: "home" }]);
+    expect(r.ok && r.rows[0].category).toBe("home");
+    expect(affiliateItemSchema.parse({ title: "Pick", asin: "B0D9NS9RT5", active: "on", category: "home" }).category).toBe("home");
+  });
   it("maps batch-file categories", () => {
     expect(normalizeAffiliateCategory("collectibles")).toBe("spock");
     expect(normalizeAffiliateCategory("books-media")).toBe("spock");

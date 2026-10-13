@@ -148,7 +148,7 @@ function AmazonSection({ items, total, preview = false, filters }: { items: Pick
       {items.length ? (
         <ul className={grid}>{items.map((item) => <li key={item.id}><AffiliateCard item={item} /></li>)}</ul>
       ) : filters?.active ? (
-        <EmptyState title="Nothing in this category yet" body="Try another category, or see every pick." actions={[{ href: "/shop?tab=amazon", label: "Show all picks" }]} />
+        <EmptyState icon="🛰️" title={`No ${AFFILIATE_CATEGORIES.find((c) => c.slug === filters.active)?.label ?? "matching"} picks yet`} body="We haven't added picks here yet. Try another category, or see every pick." actions={[{ href: "/shop?tab=amazon", label: "Show all picks" }]} />
       ) : (
         <EmptyState title="Picks are on the way" body="We're choosing what to recommend." actions={[{ href: "/shop?tab=closet", label: "Shop Spock's Closet" }]} />
       )}

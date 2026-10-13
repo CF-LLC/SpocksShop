@@ -22,7 +22,7 @@ export const affiliatePickSchema = z
     price_checked: optionalString,
     category: z.unknown().transform((v, ctx) => {
       const c = normalizeAffiliateCategory(v);
-      if (c === "invalid") { ctx.addIssue({ code: "custom", message: `Unknown category "${String(v)}" (use spock or necessities)` }); return z.NEVER; }
+      if (c === "invalid") { ctx.addIssue({ code: "custom", message: `Unknown category "${String(v)}" (use spock, necessities or home)` }); return z.NEVER; }
       return c ?? undefined;
     }).optional(),
     active: z.boolean().optional(),

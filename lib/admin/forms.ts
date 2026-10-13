@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { z } from "zod";
 import { AFFILIATE_CATEGORY_SLUGS } from "@/lib/affiliate/categories";
 import { dollarsToCents } from "@/lib/commerce/money";
@@ -19,7 +20,7 @@ const optionalMoney = z.preprocess((v) => (v === "" || v == null ? undefined : v
 
 export const closetItemSchema = z.object({
   title: z.string().trim().min(2).max(160),
-  sku: z.string().trim().min(2).max(40),
+  sku: z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), z.string().trim().min(2).max(40).optional()),
   slug: optionalText,
   description: z.string().trim().max(8000).default(""),
   categoryId: z.preprocess((v) => (v === "" ? undefined : v), z.string().uuid().optional()),
@@ -35,6 +36,12 @@ export const closetItemSchema = z.object({
   featured: z.preprocess((v) => v === "on" || v === "true", z.boolean()),
 });
 
+/** SRS-YYMMDD-XXXX when the admin leaves SKU blank (phone-friendly). */
+export function autoSku(now = new Date()): string {
+  const d = now.toISOString().slice(2, 10).replace(/-/g, "");
+  return `SRS-${d}-${randomBytes(2).toString("hex").toUpperCase()}`;
+}
+
 export function parseClosetForm(form: FormData) {
   const parsed = closetItemSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) {
@@ -45,7 +52,7 @@ export function parseClosetForm(form: FormData) {
   return {
     product: {
       title: d.title,
-      sku: d.sku.toUpperCase(),
+      sku: (d.sku ?? autoSku()).toUpperCase(),
       slug: slugify(d.slug || d.title),
       description: d.description,
       categoryId: d.categoryId ?? null,
