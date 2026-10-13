@@ -8,5 +8,5 @@ export const metadata = { title: `Sell on ${COMMUNITY_MARKET_NAME}`, robots: { i
 
 export default function SellLayout({ children }: { children: React.ReactNode }) {
   if (!communitySellersEnabled()) notFound();
-  return <div className="mx-auto max-w-2xl py-10">{children}</div>;
+  return <div className="light-shell mx-auto max-w-2xl">{children}</div>;
 }
