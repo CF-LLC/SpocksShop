@@ -1,7 +1,7 @@
 /** Display names for the three /shop sections. Change names here only. */
 export const SHOP_SECTIONS = {
-  affiliate: { id: "amazon-picks", title: "Amazon Picks", blurb: "Things we actually use and recommend." },
-  closet: { id: "spocks-closet", title: "Spock's Closet", blurb: "One-of-a-kind finds from Cooper's own closet." },
+  affiliate: { id: "amazon-picks", title: "Amazon Picks", blurb: "Things we use and recommend, linked to Amazon." },
+  closet: { id: "spocks-closet", title: "Spock's Closet", blurb: "One-of-a-kind secondhand finds from Cooper's own closet in Bentonville, AR." },
   community: { id: "community-market", title: "Community Market", blurb: "Approved listings from local sellers." },
 } as const;
 
