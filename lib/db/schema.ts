@@ -98,6 +98,8 @@ export const products = pgTable(
   sellerId: uuid("seller_id").references(() => sellers.id, { onDelete: "set null" }),
   status: text("status").notNull().default("draft"),
   featured: boolean("featured").notNull().default(false),
+  // Checkout only authorizes the card; Cooper accepts (capture) or declines (void) in /admin/orders.
+  requiresApproval: boolean("requires_approval").notNull().default(false),
   images: jsonb("images").notNull().default(sql`'[]'::jsonb`),
   tags: jsonb("tags").notNull().default(sql`'[]'::jsonb`),
   createdAt: createdAt(),
@@ -165,6 +167,16 @@ export const orders = pgTable("orders", {
   totalCents: integer("total_cents").notNull().default(0),
   currency: text("currency").notNull().default("USD"),
   taxSnapshot: jsonb("tax_snapshot"),
+  // Order approval (manual-capture) fields. See lib/approval.
+  requiresApproval: boolean("requires_approval").notNull().default(false),
+  paymentIntentId: text("payment_intent_id"),
+  customerEmail: text("customer_email"),
+  authorizedAt: timestamp("authorized_at", { withTimezone: true }),
+  holdExpiresAt: timestamp("hold_expires_at", { withTimezone: true }),
+  reminder24hSentAt: timestamp("reminder_24h_sent_at", { withTimezone: true }),
+  reminderDay5SentAt: timestamp("reminder_day5_sent_at", { withTimezone: true }),
+  decidedAt: timestamp("decided_at", { withTimezone: true }),
+  decisionReason: text("decision_reason"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

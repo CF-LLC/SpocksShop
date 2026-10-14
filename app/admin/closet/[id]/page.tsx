@@ -34,7 +34,8 @@ export default async function EditClosetItemPage({ params, searchParams }: { par
         <Link href="/admin/closet" className="inline-flex min-h-[44px] items-center text-sm text-slate-600">← All closet items</Link>
         <h1 className="text-2xl font-semibold">{p.title}</h1>
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`rounded-full px-3 py-1 text-sm font-semibold ${live ? "bg-emerald-100 text-emerald-900" : "bg-slate-200 text-slate-800"}`}>{live ? "Live in shop" : p.status === "draft" ? "Draft (hidden)" : p.status}</span>
+          <span className={`rounded-full px-3 py-1 text-sm font-semibold ${live ? "bg-emerald-100 text-emerald-900" : p.status === "pending_approval" ? "bg-amber-100 text-amber-900" : "bg-slate-200 text-slate-800"}`}>{live ? "Live in shop" : p.status === "draft" ? "Draft (hidden)" : p.status === "pending_approval" ? "Pending approval (held)" : p.status}</span>
+          {p.status === "pending_approval" ? <Link href="/admin/orders" className="text-sm font-semibold text-amber-800 underline" data-testid="pending-link">Waiting for your decision in Orders →</Link> : null}
           <span className="text-sm text-slate-600">{formatCents(p.priceCents)} · qty {row.inv?.quantityOnHand ?? 0}</span>
         </div>
         <div className="grid grid-cols-2 gap-2">

@@ -59,7 +59,7 @@ export function taxSettings(env: Record<string, string | undefined> = process.en
   };
 }
 
-export type PricedLine = { productId: string; title: string; sku: string; unitPriceCents: number; quantity: number; image: string | null };
+export type PricedLine = { productId: string; title: string; sku: string; unitPriceCents: number; quantity: number; image: string | null; requiresApproval?: boolean };
 
 /**
  * Build the Checkout Session request. Every amount comes from the database lines passed in, never from the client.
@@ -75,6 +75,8 @@ export function buildSessionParams(input: {
   origin: string;
   now?: Date;
   tax?: TaxSettings;
+  /** Authorize only (capture_method=manual); Cooper captures or voids it from /admin/orders. Card only. */
+  requiresApproval?: boolean;
 }): Stripe.Checkout.SessionCreateParams {
   const now = input.now ?? new Date();
   const tax = input.tax?.enabled ? input.tax : null;
@@ -82,8 +84,13 @@ export function buildSessionParams(input: {
   return {
     mode: "payment",
     client_reference_id: input.orderId,
-    metadata: { order_id: input.orderId, order_number: input.orderNumber, fulfillment: input.method },
-    payment_intent_data: { metadata: { order_id: input.orderId, order_number: input.orderNumber } },
+    metadata: { order_id: input.orderId, order_number: input.orderNumber, fulfillment: input.method, ...(input.requiresApproval ? { requires_approval: "true" } : {}) },
+    payment_intent_data: {
+      metadata: { order_id: input.orderId, order_number: input.orderNumber },
+      ...(input.requiresApproval ? { capture_method: "manual" as const } : {}),
+    },
+    // Manual capture needs a method that supports separate auth/capture; cards do (~7 day window).
+    ...(input.requiresApproval ? { allowed_payment_method_types: ["card" as const] } : {}),
     line_items: input.lines.map((l) => {
       const image = absolute(l.image);
       return {

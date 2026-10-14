@@ -32,8 +32,9 @@ export const closetItemSchema = z.object({
   purchaseCost: optionalMoney,
   weightLb: optionalMoney,
   quantity: z.coerce.number().int().min(0).max(10_000),
-  status: z.enum(["draft", "listed", "reserved", "sold", "archived"]),
+  status: z.enum(["draft", "listed", "reserved", "pending_approval", "sold", "archived"]),
   featured: z.preprocess((v) => v === "on" || v === "true", z.boolean()),
+  requiresApproval: z.preprocess((v) => v === "on" || v === "true", z.boolean()),
 });
 
 /** SRS-YYMMDD-XXXX when the admin leaves SKU blank (phone-friendly). */
@@ -69,6 +70,8 @@ export function parseClosetForm(form: FormData) {
       weightLb: d.weightLb != null ? String(d.weightLb) : null,
       status: d.status,
       featured: d.featured,
+      // Closet Picks default to needing approval; only a form that shows the checkbox can turn it off.
+      requiresApproval: form.has("requiresApprovalField") ? d.requiresApproval : true,
       uniqueFind: d.quantity <= 1,
       source: "closet" as const,
     },
