@@ -15,6 +15,7 @@ function ops(): FulfillOps & { calls: string[] } {
     markPaid: vi.fn(async () => (calls.push("paid"), "updated" as const)),
     markProcessing: vi.fn(async () => (calls.push("processing"), "updated" as const)),
     release: vi.fn(async (_id: string, reason: string) => (calls.push(`release:${reason}`), "updated" as const)),
+    awaitApproval: vi.fn(async () => (calls.push("await_approval"), "updated" as const)),
   };
 }
 

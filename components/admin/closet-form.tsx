@@ -3,13 +3,14 @@ import { productConditions } from "@/lib/types";
 type Values = {
   title?: string; sku?: string; slug?: string; description?: string; categoryId?: string | null; brand?: string | null;
   condition?: string; conditionNotes?: string | null; price?: number; originalPrice?: number | null; purchaseCost?: number | null;
-  weightLb?: string | null; quantity?: number; status?: string; featured?: boolean;
+  weightLb?: string | null; quantity?: number; status?: string; featured?: boolean; requiresApproval?: boolean;
 };
 
 const statuses = [
   ["draft", "Draft (hidden)"],
   ["listed", "Live in shop"],
   ["reserved", "Reserved"],
+  ["pending_approval", "Pending approval (held)"],
   ["sold", "Sold"],
   ["archived", "Archived"],
 ] as const;
@@ -39,6 +40,13 @@ export function ClosetForm({ action, values = {}, categories, submitLabel, isNew
           {statuses.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
         <span id="status-hint" className="mt-1 block text-xs font-normal text-slate-600">Live items need a price and a quantity of at least 1.</span>
+      </label>
+
+      <label className="flex min-h-[44px] items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm" data-testid="requires-approval">
+        <input type="hidden" name="requiresApprovalField" value="1" />
+        <input type="checkbox" name="requiresApproval" className="mt-0.5 h-5 w-5" defaultChecked={values.requiresApproval ?? isNew} />
+        <span><span className="font-medium text-slate-900">Requires my approval</span>
+          <span className="block text-xs text-slate-600">Checkout only authorizes the card. You accept (charge) or decline (release) in Orders within 6 days. Use for items also listed on Depop.</span></span>
       </label>
 
       <details className="rounded-xl border border-slate-200 bg-white p-3" open={!isNew}>

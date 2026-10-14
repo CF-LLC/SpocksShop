@@ -7,6 +7,7 @@ import { quoteShipping } from "@/lib/commerce/shipping";
 import { buildSessionParams, CheckoutError, mergeLines, newOrderNumber, STALE_PENDING_MINUTES, taxSettings, type CheckoutInput, type PricedLine } from "./core";
 import type { Database } from "./db";
 import { releaseOrder } from "./fulfill";
+import { needsApproval } from "@/lib/approval/core";
 
 type Env = Record<string, string | undefined>;
 
@@ -49,7 +50,7 @@ export async function reserveOrder(database: Database, input: CheckoutInput, env
       if (!(row.p.priceCents > 0)) throw new CheckoutError(`"${row.p.title}" has no price yet.`, 409);
       const pic = pics.find((ph) => ph.productId === row.p.id);
       const stored = Array.isArray(row.p.images) ? (row.p.images as { src?: string }[])[0]?.src ?? null : null;
-      priced.push({ productId: row.p.id, title: row.p.title, sku: row.p.sku, unitPriceCents: row.p.priceCents, quantity: line.quantity, image: pic ? mediaUrl(pic.storagePath) : stored });
+      priced.push({ productId: row.p.id, title: row.p.title, sku: row.p.sku, unitPriceCents: row.p.priceCents, quantity: line.quantity, image: pic ? mediaUrl(pic.storagePath) : stored, requiresApproval: row.p.requiresApproval });
       weight += (row.p.weightLb ? Number(row.p.weightLb) : 0) * line.quantity;
     }
 
@@ -66,6 +67,7 @@ export async function reserveOrder(database: Database, input: CheckoutInput, env
         orderNumber: newOrderNumber(),
         salesChannel: "website",
         status: "pending",
+        requiresApproval: needsApproval(priced),
         fulfillmentMethod: input.method,
         subtotalCents: subtotal,
         shippingCents: quote.amountCents,
@@ -97,7 +99,7 @@ export async function createCheckout(deps: { db: Database; stripe: Stripe; origi
   let session: Stripe.Checkout.Session;
   try {
     session = await deps.stripe.checkout.sessions.create(
-      buildSessionParams({ orderId: order.id, orderNumber: order.orderNumber, lines: reserved.lines, method: input.method, shipping: reserved.shipping, origin: deps.origin, tax: taxSettings(deps.env) }),
+      buildSessionParams({ orderId: order.id, orderNumber: order.orderNumber, lines: reserved.lines, method: input.method, shipping: reserved.shipping, origin: deps.origin, tax: taxSettings(deps.env), requiresApproval: order.requiresApproval }),
       { idempotencyKey: `checkout-${order.id}` },
     );
   } catch (error) {

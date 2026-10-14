@@ -14,7 +14,8 @@
     "db:ensure-admin": "node scripts/ensure-admin.mjs",
     "prebuild": "node scripts/copy-ort.mjs",
     "predev": "node scripts/copy-ort.mjs",
-    "check:client-secrets": "node scripts/check-client-secrets.mjs"
+    "check:client-secrets": "node scripts/check-client-secrets.mjs",
+    "holds:sweep": "tsx scripts/sweep-approval-holds.mts"
   },
   "dependencies": {
     "drizzle-orm": "^0.44.5",

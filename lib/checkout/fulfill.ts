@@ -105,7 +105,7 @@ export async function releaseOrder(database: Database, orderId: string, reason: 
   });
 }
 
-async function upsertCustomer(tx: Parameters<Parameters<Database["transaction"]>[0]>[0], session: Stripe.Checkout.Session): Promise<string | null> {
+export async function upsertCustomer(tx: Parameters<Parameters<Database["transaction"]>[0]>[0], session: Stripe.Checkout.Session): Promise<string | null> {
   const email = session.customer_details?.email?.trim().toLowerCase();
   if (!email) return null;
   const name = session.customer_details?.name ?? null;
@@ -117,7 +117,7 @@ async function upsertCustomer(tx: Parameters<Parameters<Database["transaction"]>
   return row.id;
 }
 
-async function saveAddress(tx: Parameters<Parameters<Database["transaction"]>[0]>[0], customerId: string | null, session: Stripe.Checkout.Session): Promise<string | null> {
+export async function saveAddress(tx: Parameters<Parameters<Database["transaction"]>[0]>[0], customerId: string | null, session: Stripe.Checkout.Session): Promise<string | null> {
   const ship = session.collected_information?.shipping_details;
   const a = ship?.address;
   if (!a?.line1 || !a.city || !a.state || !a.postal_code) return null;
