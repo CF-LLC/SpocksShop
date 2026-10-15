@@ -38,7 +38,10 @@ export default async function AdminClosetPage({ searchParams }: { searchParams: 
           <h1 className="text-2xl font-semibold">{SHOP_SECTIONS.closet.title}</h1>
           <p className="text-sm text-slate-600">{rows.length} item{rows.length === 1 ? "" : "s"} · {live} live</p>
         </div>
-        <Link href="/admin/closet/new" className="btn btn-primary">＋ Add item</Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/closet/import" className="btn btn-outline">Import from Depop</Link>
+          <Link href="/admin/closet/new" className="btn btn-primary">＋ Add item</Link>
+        </div>
       </div>
       <AdminNotice {...await searchParams} />
 
