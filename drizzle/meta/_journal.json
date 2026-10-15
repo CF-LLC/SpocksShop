@@ -43,6 +43,13 @@
       "when": 1791994174546,
       "tag": "0005_order_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792099256040,
+      "tag": "0007_blog_posts",
+      "breakpoints": true
     }
   ]
 }

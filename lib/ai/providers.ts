@@ -12,12 +12,12 @@ export class AiProviderError extends Error {
 type Fetch = typeof fetch;
 const TIMEOUT_MS = 30_000;
 
-async function post(fetchImpl: Fetch, url: string, headers: Record<string, string>, body: unknown) {
+async function post(fetchImpl: Fetch, url: string, headers: Record<string, string>, body: unknown, timeoutMs = TIMEOUT_MS) {
   const res = await fetchImpl(url, {
     method: "POST",
     headers: { "content-type": "application/json", ...headers },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!res.ok) {
     // Never echo request bodies (images) or headers (keys); only status + a short provider message.
@@ -100,4 +100,48 @@ export async function callProvider(cfg: AiConfig, images: AiImage[], fetchImpl: 
   if (cfg.provider === "gemini") return gemini(cfg, images, fetchImpl);
   if (cfg.provider === "mock") return mock(cfg, images);
   return anthropic(cfg, images, fetchImpl);
+}
+
+/**
+ * Text-only JSON generation (used by the blog draft writer). Same providers, keys and timeouts as
+ * listing suggestions. `mockRaw` supplies the deterministic output for AI_PROVIDER=mock.
+ */
+export async function callJsonProvider(
+  cfg: AiConfig,
+  req: { prompt: string; schema: Record<string, unknown>; maxTokens: number; mockRaw: () => unknown },
+  fetchImpl: Fetch = fetch,
+): Promise<ProviderResult> {
+  if (!cfg.apiKey) throw new AiProviderError("AI key not configured");
+  if (cfg.provider === "mock") return { raw: req.mockRaw(), inputTokens: 0, outputTokens: 0 };
+  if (cfg.provider === "gemini") {
+    const j = await post(
+      fetchImpl,
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cfg.model)}:generateContent`,
+      { "x-goog-api-key": cfg.apiKey },
+      {
+        contents: [{ role: "user", parts: [{ text: req.prompt }] }],
+        generationConfig: { responseMimeType: "application/json", responseSchema: req.schema, maxOutputTokens: req.maxTokens },
+      },
+      120_000,
+    );
+    const cands = (j.candidates as { content?: { parts?: { text?: string }[] } }[] | undefined) ?? [];
+    const u = (j.usageMetadata as { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number } | undefined) ?? {};
+    return { raw: cands[0]?.content?.parts?.map((p) => p.text ?? "").join("") || null, inputTokens: u.promptTokenCount ?? 0, outputTokens: (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0) };
+  }
+  const j = await post(
+    fetchImpl,
+    "https://api.anthropic.com/v1/messages",
+    { "x-api-key": cfg.apiKey, "anthropic-version": "2023-06-01" },
+    {
+      model: cfg.model,
+      max_tokens: req.maxTokens,
+      tools: [{ name: "result", description: "Return the result.", input_schema: req.schema }],
+      tool_choice: { type: "tool", name: "result" },
+      messages: [{ role: "user", content: [{ type: "text", text: req.prompt }] }],
+    },
+    120_000,
+  );
+  const content = (j.content as { type: string; input?: unknown }[] | undefined) ?? [];
+  const usage = (j.usage as { input_tokens?: number; output_tokens?: number } | undefined) ?? {};
+  return { raw: content.find((c) => c.type === "tool_use")?.input ?? null, inputTokens: usage.input_tokens ?? 0, outputTokens: usage.output_tokens ?? 0 };
 }

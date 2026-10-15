@@ -347,3 +347,31 @@ export const sellerAiPlans = pgTable("seller_ai_plans", {
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   updatedAt: updatedAt(),
 });
+
+export const blogPostStatuses = ["draft", "published", "rejected"] as const;
+export type BlogPostStatus = (typeof blogPostStatuses)[number];
+
+/** blog.spockshop.com posts. AI writes drafts; nothing is public until an admin approves it. */
+export const blogPosts = pgTable(
+  "blog_posts",
+  {
+    id: id(),
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    targetKeyword: text("target_keyword").notNull().default(""),
+    /** Normalized keyword used to avoid writing the same topic twice. */
+    topicKey: text("topic_key").notNull().default(""),
+    kind: text("kind").notNull().default("buying_guide"),
+    bodyMd: text("body_md").notNull().default(""),
+    affiliateItemIds: jsonb("affiliate_item_ids").$type<string[]>().notNull().default([]),
+    status: text("status").$type<BlogPostStatus>().notNull().default("draft"),
+    source: text("source").notNull().default("ai"),
+    aiModel: text("ai_model"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    rejectedAt: timestamp("rejected_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [check("blog_posts_status_valid", sql`${t.status} in ('draft', 'published', 'rejected')`)],
+);
