@@ -21,7 +21,7 @@ export function parseAffiliateCategory(v: unknown): AffiliateCategory | null {
  * picks have their own "star-trek" key: tag them with category "star-trek" in batches.
  */
 const CATEGORY_ALIASES: Record<string, AffiliateCategory> = {
-  spock: "spock", "star-trek": "star-trek", startrek: "star-trek", trek: "star-trek", collectibles: "spock", apparel: "spock", "books-media": "spock", gadgets: "spock", space: "spock", "sci-fi": "spock", scifi: "spock",
+  spock: "spock", "star-trek": "star-trek", startrek: "star-trek", trek: "star-trek", collectibles: "spock", apparel: "spock", "books-media": "spock", gadgets: "spock", space: "spock", "space-scifi": "spock", "space-sci-fi": "spock", "sci-fi": "spock", scifi: "spock",
   necessities: "necessities", household: "necessities", essentials: "necessities", basics: "necessities",
   home: "home", kitchen: "home", decor: "home", "home-decor": "home", furniture: "home",
 };

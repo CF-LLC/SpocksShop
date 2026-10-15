@@ -52,3 +52,38 @@ describe("affiliate import", () => {
     expect(asinFromUrl("https://www.amazon.com/gp/product/067174559X?x=1")).toBe("067174559X");
   });
 });
+
+describe("space & sci-fi picks batch", () => {
+  const space = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, "../data/amazon-picks-space-scifi.json"), "utf8"));
+
+  it("parses all 30 picks into the Space & Sci-Fi chip (spock) with short titles, full titles and blurbs", () => {
+    const r = parseAffiliateBatch(space);
+    if (!r.ok) throw new Error(r.errors.join("\n"));
+    expect(r.rows).toHaveLength(30);
+    for (const [i, row] of r.rows.entries()) {
+      expect(row.category).toBe("spock");
+      expect(row.title.length).toBeLessThanOrEqual(60);
+      expect(row.title).toBe(space[i].display_title);
+      expect(row.blurb).toBe(space[i].blurb);
+      expect(row.fullTitle === null || row.fullTitle === space[i].title).toBe(true);
+      expect(row.amazonUrl).toBe(`https://www.amazon.com/dp/${space[i].asin}?tag=mrspock-20`);
+    }
+    expect(r.rows[0].fullTitle).toMatch(/^LEGO Icons NASA Artemis/);
+    expect(r.rows.find((x) => x.asin === "0441013597")?.fullTitle).toBeNull(); // "Dune": display == full
+  });
+
+  it("rejects a display_title over 60 characters", () => {
+    const r = parseAffiliateBatch([{ title: "Thing", asin: "B0D9NS9RT5", display_title: "x".repeat(61) }]);
+    expect(r.ok).toBe(false);
+  });
+
+  it("keeps old batches working: no display_title/blurb means title as-is, null blurb", () => {
+    const p = normalizePick(affiliatePickSchema.parse({ title: "Plain", asin: "B0D9NS9RT5" }), 0);
+    expect(p).toMatchObject({ title: "Plain", fullTitle: null, blurb: null });
+  });
+
+  it("maps the space-scifi slug alias onto the existing spock chip", () => {
+    const r = parseAffiliateBatch([{ title: "Thing", asin: "B0D9NS9RT5", category: "space-scifi" }]);
+    expect(r.ok && r.rows[0].category).toBe("spock");
+  });
+});

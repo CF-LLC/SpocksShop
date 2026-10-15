@@ -4,13 +4,16 @@ import { AMAZON_ASSOCIATE_TAG, buildAffiliateUrlFromAsin, isValidAsin, withAffil
 
 /**
  * Bulk import of Amazon picks into affiliate_items.
- * Input: a JSON array (or { items: [...] }) of picks. Unknown fields (blurb, rating, ...) are ignored.
+ * Input: a JSON array (or { items: [...] }) of picks. `display_title` (<=60 chars) becomes the card title and
+ * the original `title` is kept as full_title; `blurb` is stored and shown on the card. Other unknown fields are ignored.
  */
 const optionalString = z.preprocess((v) => (v === "" || v === null ? undefined : v), z.string().trim().optional());
 
 export const affiliatePickSchema = z
   .object({
     title: z.string().trim().min(2),
+    display_title: optionalString.pipe(z.string().max(60, "display_title must be 60 characters or less").optional()),
+    blurb: optionalString.pipe(z.string().max(300, "blurb must be 300 characters or less").optional()),
     asin: z.preprocess(
       (v) => (v === "" || v === null ? undefined : typeof v === "string" ? v.trim().toUpperCase() : v),
       z.string().refine(isValidAsin, "ASIN must be 10 letters/digits").optional(),
@@ -44,6 +47,9 @@ export type AffiliateRow = {
   amazonUrl: string;
   imageUrl: string | null;
   priceNote: string;
+  /** Full Amazon title when `title` is a shortened display title, else null. */
+  fullTitle: string | null;
+  blurb: string | null;
   /** undefined = leave existing value untouched on update */
   category?: string;
   active: boolean;
@@ -88,7 +94,9 @@ export function normalizePick(pick: AffiliatePick, index: number): AffiliateRow 
   const url = new URL(amazonUrl);
   if (url.searchParams.get("tag") !== AMAZON_ASSOCIATE_TAG) throw new Error("tag not applied");
   return {
-    title: pick.title.slice(0, 200),
+    title: (pick.display_title ?? pick.title).slice(0, 200),
+    fullTitle: pick.display_title && pick.display_title !== pick.title ? pick.title.slice(0, 500) : null,
+    blurb: pick.blurb ?? null,
     asin,
     amazonUrl,
     imageUrl: pick.image_url && pick.image_url.startsWith("https://") ? pick.image_url : null,
