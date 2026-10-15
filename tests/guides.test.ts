@@ -38,12 +38,13 @@ describe("resolvePicks", () => {
 });
 
 describe("guide loading", () => {
-  it("ships the three placeholder stubs as drafts, so they 404", async () => {
+  it("ships the Curator's three space guides as drafts, so they 404 until published", async () => {
     const all = await loadAllGuides(path.join(process.cwd(), "content", "guides"));
-    expect(all.map((g) => g.title).sort()).toEqual(["Best Star Trek Books & Novels", "Best Star Trek Gifts for Adults", "Star Trek Kitchen & Mugs"]);
-    expect(all.every((g) => g.status === "draft" && g.sections.length === 0)).toBe(true);
+    expect(all.map((g) => g.slug).sort()).toEqual(["best-space-and-sci-fi-books", "best-space-gifts-for-adults", "space-kitchen-and-mugs"]);
+    expect(all.every((g) => g.status === "draft" && g.sections.length > 0)).toBe(true);
+    expect(all.flatMap((g) => g.sections.flatMap((s) => s.picks)).every((p) => p.asin && p.title)).toBe(true);
     expect(await publishedGuides(path.join(process.cwd(), "content", "guides"))).toEqual([]);
-    expect(await getPublishedGuide("best-star-trek-gifts-for-adults", path.join(process.cwd(), "content", "guides"))).toBeNull();
+    expect(await getPublishedGuide("best-space-gifts-for-adults", path.join(process.cwd(), "content", "guides"))).toBeNull();
   });
   it("only publishes valid, published guides whose file name matches the slug", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "guides-"));

@@ -6,8 +6,8 @@ Drafts (and missing/invalid files) 404 publicly and stay out of `/guides` and th
 
 ```json
 {
-  "slug": "best-star-trek-gifts-for-adults",
-  "title": "Best Star Trek Gifts for Adults",
+  "slug": "best-space-gifts-for-adults",
+  "title": "Best Space Gifts for Adults",
   "description": "SEO meta description, up to 200 chars.",
   "intro": "Intro paragraphs. Blank line = new paragraph.",
   "status": "draft",
