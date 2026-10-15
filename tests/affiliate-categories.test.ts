@@ -10,10 +10,14 @@ describe("affiliate categories", () => {
     expect(parseAffiliateCategory("x")).toBeNull();
     expect(parseAffiliateCategory(undefined)).toBeNull();
   });
-  it("has Spock, Necessities, Home in chip order", async () => {
+  it("has Space & Sci-Fi, Necessities, Home in chip order", async () => {
     const { AFFILIATE_CATEGORIES } = await import("../lib/affiliate/categories");
-    expect(AFFILIATE_CATEGORIES.map((c) => [c.slug, c.label])).toEqual([["spock", "Spock"], ["necessities", "Necessities"], ["home", "Home"]]);
+    expect(AFFILIATE_CATEGORIES.map((c) => [c.slug, c.label])).toEqual([["spock", "Space & Sci-Fi"], ["necessities", "Necessities"], ["home", "Home"]]);
     expect(parseAffiliateCategory("home")).toBe("home");
+  });
+  it("maps space aliases to the spock key", () => {
+    expect(normalizeAffiliateCategory("Space")).toBe("spock");
+    expect(normalizeAffiliateCategory("sci-fi")).toBe("spock");
   });
   it("maps home-ish batch categories to home", () => {
     expect(normalizeAffiliateCategory("home")).toBe("home");

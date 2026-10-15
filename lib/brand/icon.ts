@@ -1,4 +1,4 @@
-/** Original Vulcan-salute ("live long and prosper") hand mark. Keep in sync with app/icon.svg. */
+/** Original hand-salute ("live long and prosper") mark, kept by request. Keep in sync with app/icon.svg. */
 const HAND = `<g fill="#e2b866">
     <g transform="rotate(-11 266 340)">
       <rect x="148" y="118" width="60" height="230" rx="30"/>

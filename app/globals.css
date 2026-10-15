@@ -2,7 +2,7 @@
 
 /* ============================================================
    SPOCK'S RESALE SHOP: deep-space theme
-   Navy/black base, amber + LCARS lilac/peach highlights.
+   Navy/black base, amber + nebula lilac/peach highlights.
    All text/background pairs below are WCAG AA (>= 4.5:1, most >= 7:1).
    ============================================================ */
 
@@ -18,11 +18,11 @@
   --text-muted: #b4bdd4; /* 10.1:1 on space-1, 9.2:1 on space-2 */
   --text-dim: #8f9abb;   /* 7.2:1 on space-0, 6.2:1 on space-2 */
 
-  --gold: #f5b942;       /* LCARS amber */
+  --gold: #f5b942;       /* star amber */
   --gold-strong: #ffcb6b;
   --on-gold: #1a1203;    /* text on gold: 10.5:1 */
-  --lilac: #c9b3ff;      /* LCARS lilac (accents only) */
-  --peach: #ffa77a;      /* LCARS peach (accents only) */
+  --lilac: #c9b3ff;      /* nebula lilac (accents only) */
+  --peach: #ffa77a;      /* nebula peach (accents only) */
   --sky: #8cc8ff;        /* links: 9.7:1 on space-2 */
   --ok: #7ee2a8;
   --warn: #ffd166;
@@ -109,7 +109,7 @@ a { color: inherit; }
 .panel-solid { background: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-lg); }
 .surface-panel { background: var(--space-2); border: 1px solid var(--line); }
 
-/* LCARS-style accent bar: rounded elbow + pill segments */
+/* Accent bar: pill segments (class name kept for now, see docs/space-theme-proposal.md) */
 .lcars-bar { display: flex; gap: 6px; align-items: stretch; height: 10px; }
 .lcars-bar > span { border-radius: 999px; }
 .lcars-bar > span:nth-child(1) { flex: 0 0 72px; background: var(--gold); }
