@@ -1,6 +1,6 @@
 import { AffiliateLink } from "@/components/shop/affiliate-link";
 import { ExternalIcon } from "@/components/ui/icons";
-import type { AffiliateCard as Item } from "@/lib/shop/queries";
+import type { PublicPick as Item } from "@/lib/shop/public-pick";
 
 export function AffiliateCard({ item }: { item: Item }) {
   return (
@@ -18,7 +18,6 @@ export function AffiliateCard({ item }: { item: Item }) {
         <h3 className="line-clamp-3 font-semibold leading-snug">
           <AffiliateLink item={item} className="stretched">{item.title}<span className="sr-only"> (opens Amazon in a new tab)</span></AffiliateLink>
         </h3>
-        {item.priceNote ? <p className="muted text-sm">{item.priceNote}</p> : null}
         <p className="mt-auto inline-flex items-center gap-1 pt-2 text-sm font-semibold text-[var(--sky)]">View on Amazon <ExternalIcon className="h-4 w-4" /></p>
       </div>
     </article>

@@ -15,14 +15,14 @@ export function SiteFooter() {
           <nav aria-label="Footer">
             <p className="t-eyebrow mb-2">Explore</p>
             <ul className="grid gap-1 text-sm">
-              {[["/shop?tab=amazon", "Amazon Picks"], ["/shop?tab=closet", "Closet Picks"], ["/about", "About"], ["/contact", "Contact"]].map(([href, label]) => (
+              {[["/shop?tab=amazon", "Amazon Picks"], ["/shop?tab=closet", "Closet Picks"], ["/guides", "Guides"], ["/about", "About"], ["/contact", "Contact"]].map(([href, label]) => (
                 <li key={href}><Link href={href} className="muted inline-flex min-h-[36px] items-center hover:text-[var(--text)]">{label}</Link></li>
               ))}
             </ul>
           </nav>
           <div className="text-sm">
             <p className="t-eyebrow mb-2">Good to know</p>
-            <p className="muted">{AMAZON_ASSOCIATES_DISCLOSURE} Amazon prices are approximate and can change on Amazon.</p>
+            <p className="muted">{AMAZON_ASSOCIATES_DISCLOSURE}</p>
           </div>
         </div>
         <p className="dim mt-8 text-xs">© {new Date().getFullYear()} Spock&apos;s Resale Shop</p>
