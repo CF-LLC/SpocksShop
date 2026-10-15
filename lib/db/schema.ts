@@ -375,3 +375,19 @@ export const blogPosts = pgTable(
   },
   (t) => [check("blog_posts_status_valid", sql`${t.status} in ('draft', 'published', 'rejected')`)],
 );
+
+/**
+ * Where an imported product came from (Depop link importer). INTERNAL ONLY: never select this in
+ * public shop queries; shoppers must never see the original listing URL.
+ */
+export const productImports = pgTable(
+  "product_imports",
+  {
+    id: id(),
+    productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+    source: text("source", { enum: ["depop"] }).notNull(),
+    sourceUrl: text("source_url").notNull(),
+    importedAt: timestamp("imported_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check("product_imports_source_valid", sql`${t.source} in ('depop')`)],
+);

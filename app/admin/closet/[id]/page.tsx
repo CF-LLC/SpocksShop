@@ -6,7 +6,7 @@ import { ClosetForm } from "@/components/admin/closet-form";
 import { PhotoUploader } from "@/components/admin/photo-uploader";
 import { centsToDollars, formatCents } from "@/lib/commerce/money";
 import { db } from "@/lib/db";
-import { categories, inventory, photos, products } from "@/lib/db/schema";
+import { categories, inventory, photos, productImports, products } from "@/lib/db/schema";
 import { MAX_PHOTOS_PER_PRODUCT, mediaUrl } from "@/lib/media";
 
 export default async function EditClosetItemPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: NoticeParams }) {
@@ -18,9 +18,11 @@ export default async function EditClosetItemPage({ params, searchParams }: { par
     .leftJoin(inventory, eq(inventory.productId, products.id))
     .where(and(eq(products.id, id), eq(products.source, "closet")));
   if (!row) notFound();
-  const [cats, pics] = await Promise.all([
+  const [cats, pics, imported] = await Promise.all([
     db.select({ id: categories.id, name: categories.name }).from(categories).orderBy(asc(categories.name)),
     db.select().from(photos).where(eq(photos.productId, id)).orderBy(asc(photos.sortOrder), asc(photos.createdAt)),
+    // Admin-only: where a Depop-imported draft came from. Never rendered on public pages.
+    db.select({ url: productImports.sourceUrl }).from(productImports).where(eq(productImports.productId, id)).limit(1),
   ]);
   const p = row.p;
   const money = (c: number | null) => (c == null ? null : centsToDollars(c));
@@ -48,6 +50,11 @@ export default async function EditClosetItemPage({ params, searchParams }: { par
           <Link href={`/shop/${p.slug}`} className="btn btn-outline w-full">View in shop</Link>
         </div>
       </div>
+      {imported[0] ? (
+        <p className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900" data-testid="depop-origin">
+          Imported from Depop (admin only, never shown to shoppers): <span className="break-all">{imported[0].url}</span>. Check the title, price, condition and photos, then Publish.
+        </p>
+      ) : null}
       <AdminNotice {...await searchParams} />
 
       <section id="photos" aria-labelledby="photos-title" className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
