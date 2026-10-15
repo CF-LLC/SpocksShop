@@ -5,6 +5,9 @@ export async function register() {
   // Order-approval holds: 24h / day-5 reminders and the 6-day auto-cancel.
   const { startApprovalSweeper } = await import("./lib/approval/scheduler");
   startApprovalSweeper();
+  // Blog: up to BLOG_DRAFTS_PER_WEEK AI drafts (0 = off). Never publishes on its own.
+  const { startBlogDraftScheduler } = await import("./lib/blog/scheduler");
+  startBlogDraftScheduler();
 }
 
 /** Every server error Next.js captures (pages, route handlers, server actions) lands in error_log. */
