@@ -13,8 +13,8 @@ export default async function AffiliateImportPage({ searchParams }: { searchPara
       <p className="text-sm text-slate-600">
         Paste a JSON array (or upload a .json file). Each pick needs a <code>title</code> and an <code>asin</code> or
         <code> link</code>; optional <code>price</code>, <code>image_url</code>. Existing picks with the same ASIN or link are
-        updated, new ones are added, nothing is deleted. Links are rewritten to carry tag=mrspock-20, and prices are shown
-        as &ldquo;About $X, price may vary on Amazon&rdquo;.
+        updated, new ones are added, nothing is deleted. Links are rewritten to carry tag=mrspock-20. Prices are stored as an internal note only and
+        are never shown on the site (Amazon Associates compliance); ratings are ignored.
       </p>
       <AdminNotice {...await searchParams} />
       <form action="/api/admin/affiliate/import" method="post" encType="multipart/form-data" className="surface-panel space-y-3 rounded-2xl p-4">

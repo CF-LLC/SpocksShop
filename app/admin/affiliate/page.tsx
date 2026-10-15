@@ -16,7 +16,7 @@ function Fields({ item }: { item?: Item }) {
       <input name="amazonUrl" placeholder="Amazon URL" defaultValue={item?.amazonUrl ?? ""} className="field-input sm:col-span-2" />
       <input name="asin" placeholder="or ASIN" defaultValue={item?.asin ?? ""} className="field-input font-mono" />
       <input name="imageUrl" placeholder="Image URL" defaultValue={item?.imageUrl ?? ""} className="field-input sm:col-span-2" />
-      <input name="priceNote" placeholder="Price note, e.g. ~$25" defaultValue={item?.priceNote ?? ""} className="field-input" />
+      <input name="priceNote" placeholder="Price note (internal, never shown)" title="Stored for reference only. Not shown on the site (Amazon Associates compliance)." defaultValue={item?.priceNote ?? ""} className="field-input" />
       <select name="category" aria-label="Category" defaultValue={item?.category ?? ""} className="field-input">
         <option value="">No category (All only)</option>
         {AFFILIATE_CATEGORIES.map((c) => <option key={c.slug} value={c.slug}>{c.label}</option>)}
@@ -33,6 +33,10 @@ export default async function AdminAffiliatePage({ searchParams }: { searchParam
     <section className="space-y-6">
       <h1 className="text-2xl font-semibold">{SHOP_SECTIONS.affiliate.title}</h1>
       <p className="text-xs text-slate-500">Links always carry tag=mrspock-20. {AMAZON_ASSOCIATES_DISCLOSURE}</p>
+      <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" data-testid="price-compliance-note">
+        Prices and star ratings are hidden on the public site for Amazon Associates compliance (they may only be shown via Amazon&apos;s API).
+        The price note below is kept for your reference only.
+      </p>
       <p><Link href="/admin/affiliate/import" className="text-sm text-blue-700">Bulk import from JSON →</Link></p>
       <AdminNotice {...await searchParams} />
       <form action="/api/admin/affiliate" method="post" className="surface-panel grid gap-3 rounded-2xl p-4 sm:grid-cols-4">

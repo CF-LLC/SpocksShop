@@ -1,8 +1,9 @@
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { toPublicPick, type PublicPick } from "@/lib/shop/public-pick";
 import { affiliateItems, communityListings, photos, products, sellers } from "@/lib/db/schema";
 
-export type AffiliateCard = typeof affiliateItems.$inferSelect;
+export type AffiliateCard = PublicPick;
 export type CommunityCard = {
   id: string;
   title: string;
@@ -23,9 +24,10 @@ async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   }
 }
 
-export function activeAffiliateItems() {
+/** Public picks: price/rating are stripped here so no storefront page can render them. */
+export function activeAffiliateItems(): Promise<AffiliateCard[]> {
   return safe(
-    () => db.select().from(affiliateItems).where(eq(affiliateItems.active, true)).orderBy(asc(affiliateItems.sortOrder), asc(affiliateItems.title)),
+    async () => (await db.select().from(affiliateItems).where(eq(affiliateItems.active, true)).orderBy(asc(affiliateItems.sortOrder), asc(affiliateItems.title))).map(toPublicPick),
     [] as AffiliateCard[],
   );
 }

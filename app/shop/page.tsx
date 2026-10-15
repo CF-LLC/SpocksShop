@@ -146,7 +146,7 @@ function AmazonSection({ items, total, preview = false, filters }: { items: Pick
     <section aria-labelledby={`${s.id}-title`} id={s.id}>
       <SectionHeader id={`${s.id}-title`} title={s.title} eyebrow={preview ? "Recommended" : undefined} action={preview && total > items.length ? <Link className="btn btn-outline" href="/shop?tab=amazon">All {total}</Link> : null}>
         <p>{s.blurb}</p>
-        <p className="dim mt-1 text-sm">{AMAZON_ASSOCIATES_DISCLOSURE} Prices are approximate and may vary on Amazon.</p>
+        <p className="dim mt-1 text-sm" data-testid="amazon-disclosure">{AMAZON_ASSOCIATES_DISCLOSURE}</p>
       </SectionHeader>
       {filters && total > 0 ? <CategoryChips active={filters.active} all={filters.all} /> : null}
       {items.length ? (
