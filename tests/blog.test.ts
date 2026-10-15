@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 import { PostBody } from "../components/blog/post-body";
 import { blogCanonical, draftsPerWeek } from "../lib/blog/config";
-import { generateBlogDraft, type GenDeps, type GeneratedDraft } from "../lib/blog/generate";
+import { generateBlogDraft, lengthFix, MAX_CORRECTIVE_RETRIES, type GenDeps, type GeneratedDraft } from "../lib/blog/generate";
 import { blogHostDecision } from "../lib/blog/host";
 import { parseMarkdown } from "../lib/blog/markdown";
 import { mockBlogPost } from "../lib/blog/mock";
@@ -211,8 +211,8 @@ describe("generator (mocked AI)", () => {
     const ai = vi.fn(async () => ({ raw: bad, inputTokens: 1, outputTokens: 1 }));
     const { d, inserted } = deps({ ai });
     await expect(generateBlogDraft(d)).rejects.toThrow(/didn't pass the blog rules/);
-    expect(ai).toHaveBeenCalledTimes(2);
-    expect((ai.mock.calls[1] as unknown as [unknown, { prompt: string }])[1].prompt).toMatch(/previous attempt was rejected/);
+    expect(ai).toHaveBeenCalledTimes(3);
+    expect((ai.mock.calls[1] as unknown as [unknown, { prompt: string }])[1].prompt).toMatch(/Problems found in this version/);
     expect(inserted).toHaveLength(0);
   });
 
@@ -249,5 +249,81 @@ describe("scheduler", () => {
   });
   it("is started from instrumentation", () => {
     expect(src("instrumentation.ts")).toContain("startBlogDraftScheduler");
+  });
+});
+
+describe("generator length correction (mocked AI)", () => {
+  const base = mockBlogPost(picks, []);
+  /** A rule-clean body of exactly `n` words (as wordCount counts them), with all 4 pick markers. */
+  function bodyOf(n: number): string {
+    const markers = ids.map((id) => `[[pick:${id}]]`).join("\n\n");
+    const head = "## Choosing a gift\n\n";
+    const used = wordCount(head);
+    return `${head}${Array.from({ length: n - used }, (_, i) => (i % 12 === 11 ? "sky." : "sky")).join(" ")}\n\n${markers}`;
+  }
+  const post = (n: number, extra: Record<string, unknown> = {}) => ({ ...base, body_markdown: bodyOf(n), ...extra });
+  function run(outputs: unknown[]) {
+    const ai = vi.fn(async () => ({ raw: outputs.shift(), inputTokens: 1, outputTokens: 1 }));
+    const inserted: GeneratedDraft[] = [];
+    const d: GenDeps = {
+      cfg: { ...mockCfg, provider: "gemini", model: "gemini-test", apiKey: "k" },
+      picks: async () => picks, existing: async () => [],
+      insertDraft: async (x) => { inserted.push(x); return { id: "new", slug: x.slug }; },
+      ai,
+    };
+    const prompt = (i: number) => (ai.mock.calls[i] as unknown as [unknown, { prompt: string }])[1].prompt;
+    return { d, ai, inserted, prompt };
+  }
+
+  it("aims the first prompt at ~1100-1200 words", async () => {
+    const r = run([post(1150)]);
+    await generateBlogDraft(r.d);
+    expect(r.prompt(0)).toMatch(/1100-1200 words/);
+    expect(r.ai).toHaveBeenCalledTimes(1);
+  });
+
+  it("under length: runs an expand pass that passes", async () => {
+    expect(wordCount(bodyOf(823))).toBe(823);
+    const r = run([post(823), post(1120)]);
+    await generateBlogDraft(r.d);
+    expect(r.ai).toHaveBeenCalledTimes(2);
+    expect(r.prompt(1)).toMatch(/is 823 words/);
+    expect(r.prompt(1)).toMatch(/Expand it/);
+    expect(r.prompt(1)).toMatch(/FAQ/);
+    expect(r.prompt(1)).toMatch(/No filler/);
+    expect(r.prompt(1)).toMatch(/NEVER mention prices/);
+    expect(wordCount(r.inserted[0].bodyMd)).toBe(1120);
+  });
+
+  it("over length: runs a tighten pass that passes", async () => {
+    const r = run([post(1720), post(1180)]);
+    await generateBlogDraft(r.d);
+    expect(r.prompt(1)).toMatch(/is 1720 words/);
+    expect(r.prompt(1)).toMatch(/Tighten it/);
+    expect(r.inserted).toHaveLength(1);
+    expect(wordCount(r.inserted[0].bodyMd)).toBe(1180);
+  });
+
+  it("gives a clear error with the last word count when retries run out", async () => {
+    const r = run([post(700), post(810), post(860)]);
+    await expect(generateBlogDraft(r.d)).rejects.toThrow(/after 2 corrective retries \(last draft was 860 words; target 900–1500\).*got 860/);
+    expect(r.ai).toHaveBeenCalledTimes(1 + MAX_CORRECTIVE_RETRIES);
+    expect(r.inserted).toHaveLength(0);
+  });
+
+  it("rejects a pass that fixes the length but breaks another rule", async () => {
+    const pricey = post(1100, { body_markdown: bodyOf(1100).replace("sky sky", "only $19 sky") });
+    const r = run([post(823), pricey, pricey]);
+    await expect(generateBlogDraft(r.d)).rejects.toThrow(/Remove prices\/ratings/);
+    expect(r.inserted).toHaveLength(0);
+    expect(r.prompt(2)).toMatch(/Revise the post/);
+    expect(r.prompt(2)).toMatch(/Remove prices/);
+  });
+
+  it("classifies length fixes with the validator's bounds", () => {
+    expect(lengthFix(899)).toBe("expand");
+    expect(lengthFix(900)).toBeNull();
+    expect(lengthFix(1500)).toBeNull();
+    expect(lengthFix(1501)).toBe("tighten");
   });
 });
