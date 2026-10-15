@@ -1,0 +1,74 @@
+{
+  "slug": "space-kitchen-and-mugs",
+  "title": "Space Kitchen and Mugs",
+  "description": "Space-themed mugs and glassware: heat-changing planet mugs, constellation glasses and alien tumblers for stargazers' kitchens.",
+  "intro": "Bring a little cosmos to your morning coffee and evening nightcap. These mugs and glasses turn everyday routines into small moments of wonder, and they make easy, affordable gifts for anyone who loves the night sky.",
+  "status": "draft",
+  "updatedAt": "2026-10-15",
+  "sections": [
+    {
+      "heading": "Mugs",
+      "picks": [
+        {
+          "asin": "B07BW31JTN",
+          "title": "Heat-Changing Planet Mug",
+          "imageUrl": "https://m.media-amazon.com/images/I/71Q4g3VQ+VL._AC_SL1500_.jpg",
+          "commentary": "Add hot coffee and the planets appear: a simple bit of magic for any space-loving coffee drinker."
+        },
+        {
+          "asin": "B00B7LUVZK",
+          "title": "Heat-Changing Constellation Mug",
+          "imageUrl": "https://m.media-amazon.com/images/I/71QENUTZI1L._AC_SL1500_.jpg",
+          "commentary": "Constellations appear when it's filled. A favorite for stargazers who know their Orion from their Cassiopeia."
+        },
+        {
+          "asin": "B07GVCP5W2",
+          "title": "Antner Heat-Changing Solar System Mug",
+          "imageUrl": "https://m.media-amazon.com/images/I/81NdpmbOqnL._AC_SL1500_.jpg",
+          "commentary": "Another color-changing solar system pick at a friendly price, good for gifting in pairs."
+        },
+        {
+          "asin": "B09VBPYLKC",
+          "title": "Yalucky Astronaut Embossed Planet Mug",
+          "imageUrl": "https://m.media-amazon.com/images/I/71lpOxZy1AL._AC_SL1500_.jpg",
+          "commentary": "A cute sculpted astronaut-and-planets mug for the desk of anyone who likes their space whimsical."
+        },
+        {
+          "asin": "B08DKS6KCL",
+          "title": "SpaceX Falcon Rocket Launch Color-Changing Mug",
+          "imageUrl": "https://m.media-amazon.com/images/I/81sigEFWWsL._AC_SL1500_.jpg",
+          "commentary": "A heat-activated rocket launch for fans of modern commercial spaceflight."
+        },
+        {
+          "asin": "B081J2MY1D",
+          "title": "Peanuts Snoopy 'I Need My Space' Mug",
+          "imageUrl": "https://m.media-amazon.com/images/I/81QKJgk07wL._AC_SL1500_.jpg",
+          "commentary": "Snoopy in a space helmet saying what every introvert feels. A lighthearted gift with lots of charm."
+        }
+      ]
+    },
+    {
+      "heading": "Glassware",
+      "picks": [
+        {
+          "asin": "B07QMXLS4X",
+          "title": "Greenline Goods Constellation Whiskey Glasses",
+          "imageUrl": "https://m.media-amazon.com/images/I/91jp5sPio1L._AC_SL1500_.jpg",
+          "commentary": "Etched night-sky constellations on rocks glasses, a refined pick for the stargazer's bar cart."
+        },
+        {
+          "asin": "B0BKRV8XFK",
+          "title": "SHOSHIN Space Stemless Wine Glass Set",
+          "imageUrl": "https://m.media-amazon.com/images/I/61AqOyG5DuL._AC_SL1500_.jpg",
+          "commentary": "Hand-cut space-themed stemless wine glasses, set of four, for elegant dinners under the stars."
+        },
+        {
+          "asin": "B0BZVB5PF8",
+          "title": "Dragon Glassware Area 51 Alien Glasses",
+          "imageUrl": "https://m.media-amazon.com/images/I/91sz-xV7oGL._AC_SL1500_.jpg",
+          "commentary": "Double-wall glasses with a tiny alien suspended inside, a playful conversation starter for sci-fi fans."
+        }
+      ]
+    }
+  ]
+}

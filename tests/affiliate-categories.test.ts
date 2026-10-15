@@ -10,10 +10,21 @@ describe("affiliate categories", () => {
     expect(parseAffiliateCategory("x")).toBeNull();
     expect(parseAffiliateCategory(undefined)).toBeNull();
   });
-  it("has Spock, Necessities, Home in chip order", async () => {
+  it("has Space & Sci-Fi, Star Trek, Necessities, Home in chip order", async () => {
     const { AFFILIATE_CATEGORIES } = await import("../lib/affiliate/categories");
-    expect(AFFILIATE_CATEGORIES.map((c) => [c.slug, c.label])).toEqual([["spock", "Spock"], ["necessities", "Necessities"], ["home", "Home"]]);
+    expect(AFFILIATE_CATEGORIES.map((c) => [c.slug, c.label])).toEqual([["spock", "Space & Sci-Fi"], ["star-trek", "Star Trek"], ["necessities", "Necessities"], ["home", "Home"]]);
     expect(parseAffiliateCategory("home")).toBe("home");
+  });
+  it("keeps Star Trek separate from general space", () => {
+    expect(parseAffiliateCategory("star-trek")).toBe("star-trek");
+    expect(normalizeAffiliateCategory("Star-Trek")).toBe("star-trek");
+    expect(normalizeAffiliateCategory("startrek")).toBe("star-trek");
+    expect(normalizeAffiliateCategory("space")).toBe("spock");
+    expect(affiliateItemSchema.parse({ title: "Pick", asin: "B0D9NS9RT5", active: "on", category: "star-trek" }).category).toBe("star-trek");
+  });
+  it("maps space aliases to the spock key", () => {
+    expect(normalizeAffiliateCategory("Space")).toBe("spock");
+    expect(normalizeAffiliateCategory("sci-fi")).toBe("spock");
   });
   it("maps home-ish batch categories to home", () => {
     expect(normalizeAffiliateCategory("home")).toBe("home");

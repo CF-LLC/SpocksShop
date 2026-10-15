@@ -1,0 +1,91 @@
+{
+  "slug": "best-space-and-sci-fi-books",
+  "title": "Best Space and Sci-Fi Books",
+  "description": "The best space and science fiction books: Dune, Foundation, Project Hail Mary and The Martian, plus astronomy guides for curious readers.",
+  "intro": "Some of the best voyages happen on the page. This list pairs the science fiction classics every fan should read with modern page-turners and approachable nonfiction about the universe we actually live in.\n\nPick a novel for the imagination and an atlas for the night sky.",
+  "status": "draft",
+  "updatedAt": "2026-10-15",
+  "sections": [
+    {
+      "heading": "Science fiction classics",
+      "picks": [
+        {
+          "asin": "0441013597",
+          "title": "Dune by Frank Herbert",
+          "imageUrl": "https://m.media-amazon.com/images/I/81DMp7F91LL._SL1500_.jpg",
+          "commentary": "The desert-planet epic that shaped modern science fiction. Start here if you've only seen the films."
+        },
+        {
+          "asin": "0553382578",
+          "title": "Foundation by Isaac Asimov",
+          "imageUrl": "https://m.media-amazon.com/images/I/914HkTHV-mL._SL1500_.jpg",
+          "commentary": "Asimov's galaxy-spanning saga about predicting the fall of an empire, essential for fans of big-idea sci-fi."
+        },
+        {
+          "asin": "0553288105",
+          "title": "The Gods Themselves by Isaac Asimov",
+          "imageUrl": "https://m.media-amazon.com/images/I/81nARtXC1gL._SL1500_.jpg",
+          "commentary": "A Hugo- and Nebula-winning tale of parallel universes and an energy source too good to be true, for readers who love hard science with heart."
+        },
+        {
+          "asin": "0441011330",
+          "title": "Masterpieces: The Best Science Fiction of the 20th Century",
+          "imageUrl": "https://m.media-amazon.com/images/I/81E98cxQc0L._SL1500_.jpg",
+          "commentary": "A wide-ranging short-story anthology, a perfect sampler for new readers exploring the genre."
+        }
+      ]
+    },
+    {
+      "heading": "Modern space adventures",
+      "picks": [
+        {
+          "asin": "B0FK9YCJR4",
+          "title": "Project Hail Mary by Andy Weir",
+          "imageUrl": "https://m.media-amazon.com/images/I/91mxeWvV0bL._SL1500_.jpg",
+          "commentary": "A lone astronaut, a dying sun and an unforgettable friendship. A funny, science-packed read for almost anyone."
+        },
+        {
+          "asin": "0553418025",
+          "title": "The Martian by Andy Weir",
+          "imageUrl": "https://m.media-amazon.com/images/I/810W+zAp2DL._SL1500_.jpg",
+          "commentary": "Survival on Mars told with wit and real science, ideal for readers who like problem-solving heroes."
+        }
+      ]
+    },
+    {
+      "heading": "Real space, explained",
+      "picks": [
+        {
+          "asin": "0393609391",
+          "title": "Astrophysics for People in a Hurry",
+          "imageUrl": "https://m.media-amazon.com/images/I/914EiU2QImL._SL1500_.jpg",
+          "commentary": "Neil deGrasse Tyson's short, friendly tour of the cosmos for busy, curious minds."
+        },
+        {
+          "asin": "1465499954",
+          "title": "Universe, Third Edition (DK)",
+          "imageUrl": "https://m.media-amazon.com/images/I/71ltxB9lEOL._SL1500_.jpg",
+          "commentary": "A lavishly illustrated visual guide to the cosmos that looks right on any coffee table."
+        },
+        {
+          "asin": "0744028493",
+          "title": "The Astronomy Book (DK Big Ideas)",
+          "imageUrl": "https://m.media-amazon.com/images/I/81w-+uwOiDL._SL1500_.jpg",
+          "commentary": "The key ideas in astronomy explained simply, with diagrams, for students and lifelong learners."
+        },
+        {
+          "asin": "1426220154",
+          "title": "National Geographic Backyard Guide to the Night Sky",
+          "imageUrl": "https://m.media-amazon.com/images/I/818b60JJETL._SL1500_.jpg",
+          "commentary": "A practical stargazing companion for anyone who wants to identify what they're looking at tonight."
+        },
+        {
+          "asin": "1588348032",
+          "title": "Space Shuttle Stories",
+          "imageUrl": "https://m.media-amazon.com/images/I/71eU0F+tHzL._SL1500_.jpg",
+          "commentary": "Firsthand astronaut accounts from all 135 shuttle missions, a treasure for spaceflight history buffs."
+        }
+      ]
+    }
+  ]
+}

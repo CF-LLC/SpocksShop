@@ -1,0 +1,85 @@
+{
+  "slug": "best-space-gifts-for-adults",
+  "title": "Best Space Gifts for Adults",
+  "description": "Grown-up space gifts: LEGO rockets and rovers, moon lamps, NASA tees and desk-worthy cosmic décor for every stargazer.",
+  "intro": "Whether they followed every Apollo mission or simply can't stop looking up, these gifts are for the adult space fan in your life. We picked builds worth an evening of focus, décor that makes a room feel a little closer to orbit, and apparel that wears its fandom proudly.\n\nLive long and prosper, and happy gifting.",
+  "status": "draft",
+  "updatedAt": "2026-10-15",
+  "sections": [
+    {
+      "heading": "Build it yourself",
+      "picks": [
+        {
+          "asin": "B0CRWGX5NH",
+          "title": "LEGO Icons NASA Artemis Space Launch System",
+          "imageUrl": "https://m.media-amazon.com/images/I/81b4hg2iyRL._AC_SL1500_.jpg",
+          "commentary": "A towering display model of the rocket returning humans to the Moon. The pick for the builder who wants a showpiece."
+        },
+        {
+          "asin": "B0BSRD2CXY",
+          "title": "LEGO Technic NASA Mars Rover Perseverance",
+          "imageUrl": "https://m.media-amazon.com/images/I/81-tHOXd5eL._AC_SL1500_.jpg",
+          "commentary": "A detailed Technic take on NASA's Mars rover with working mechanisms, for engineering-minded fans of real missions."
+        },
+        {
+          "asin": "B0CGY3ZB29",
+          "title": "LEGO Technic Planet Earth and Moon in Orbit",
+          "imageUrl": "https://m.media-amazon.com/images/I/71i2E6uo-UL._AC_SL1500_.jpg",
+          "commentary": "A hand-cranked orrery that shows how Earth and the Moon move around the Sun. Satisfying to build and to explain at dinner parties."
+        },
+        {
+          "asin": "B0FJ1ZQ127",
+          "title": "ROKR Space Shuttle 3D Wooden Puzzle",
+          "imageUrl": "https://m.media-amazon.com/images/I/81FqF9gJt5L._AC_SL1500_.jpg",
+          "commentary": "A moving wooden shuttle model with a handcrafted, warm look. Great for puzzle lovers who prefer wood to plastic."
+        }
+      ]
+    },
+    {
+      "heading": "Décor for stargazers",
+      "picks": [
+        {
+          "asin": "B0CPYVFKB7",
+          "title": "LEGO Art The Milky Way Galaxy",
+          "imageUrl": "https://m.media-amazon.com/images/I/91mfBuOJtLL._AC_SL1500_.jpg",
+          "commentary": "A buildable wall piece that glows with a galaxy design, made for the fan who wants their space love on display."
+        },
+        {
+          "asin": "B07PY7GLKV",
+          "title": "BRIGHTWORLD 3D Moon Lamp",
+          "imageUrl": "https://m.media-amazon.com/images/I/81XiLITH3IL._AC_SL1500_.jpg",
+          "commentary": "A textured moon that glows in a range of colors. An easy, crowd-pleasing pick for bedrooms and reading nooks."
+        },
+        {
+          "asin": "B0BYJQVSXH",
+          "title": "IFOLAINA 3D Solar System Crystal Ball",
+          "imageUrl": "https://m.media-amazon.com/images/I/61zaZqLSXqL._AC_SL1001_.jpg",
+          "commentary": "The whole solar system laser-etched inside glass. A small, elegant desk piece for any astronomy fan."
+        }
+      ]
+    },
+    {
+      "heading": "Wear it and play it",
+      "picks": [
+        {
+          "asin": "B07BVZ1ZSM",
+          "title": "Popfunk NASA Retro Vintage Space Shuttle T-Shirt",
+          "imageUrl": "https://m.media-amazon.com/images/I/61RHIhr4RdL._AC_SL1000_.jpg",
+          "commentary": "A soft retro shuttle tee for anyone who grew up watching launches."
+        },
+        {
+          "asin": "B07CNF64J7",
+          "title": "NASA Worm Logo T-Shirt",
+          "imageUrl": "https://m.media-amazon.com/images/I/B1pppR4gVKL._CLa%7C2140%2C2000%7C71GKiYku7OL.png%7C0%2C0%2C2140%2C2000%2B0.0%2C0.0%2C2140.0%2C2000.0_AC_SL1500_.png",
+          "commentary": "The beloved 'worm' logo on a simple tee: understated style for design nerds and space fans alike."
+        },
+        {
+          "asin": "B01BSXXBZI",
+          "title": "Aquarius NASA Across the Universe Playing Cards",
+          "imageUrl": "https://m.media-amazon.com/images/I/81tuSPtxwDL._AC_SL1500_.jpg",
+          "commentary": "A deck of space-themed playing cards, a fun stocking stuffer for game nights."
+        }
+      ]
+    }
+  ]
+}
