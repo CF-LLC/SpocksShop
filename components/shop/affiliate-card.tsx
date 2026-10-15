@@ -18,6 +18,7 @@ export function AffiliateCard({ item }: { item: Item }) {
         <h3 className="line-clamp-3 font-semibold leading-snug">
           <AffiliateLink item={item} className="stretched">{item.title}<span className="sr-only"> (opens Amazon in a new tab)</span></AffiliateLink>
         </h3>
+        {item.blurb ? <p className="dim line-clamp-3 text-sm leading-snug">{item.blurb}</p> : null}
         <p className="mt-auto inline-flex items-center gap-1 pt-2 text-sm font-semibold text-[var(--sky)]">View on Amazon <ExternalIcon className="h-4 w-4" /></p>
       </div>
     </article>

@@ -9,7 +9,7 @@ describe("Amazon Associates compliance", () => {
   it("public picks never carry price or rating fields", () => {
     const row = { id: "1", title: "T", imageUrl: null, amazonUrl: null, asin: "B0ABC12345", category: null, priceNote: "About $12.24", rating: 4.9, active: true };
     const pub = toPublicPick(row);
-    expect(Object.keys(pub).sort()).toEqual(["amazonUrl", "asin", "category", "id", "imageUrl", "title"]);
+    expect(Object.keys(pub).sort()).toEqual(["amazonUrl", "asin", "blurb", "category", "id", "imageUrl", "title"]);
     expect(JSON.stringify(pub)).not.toMatch(/price|rating|12\.24/i);
   });
   it("affiliate card and public pages don't render prices or ratings", () => {
@@ -25,5 +25,14 @@ describe("Amazon Associates compliance", () => {
   });
   it("admin explains prices are hidden", () => {
     expect(src("app/admin/affiliate/page.tsx")).toMatch(/hidden on the public site for Amazon Associates compliance/);
+  });
+});
+
+import { toPublicPick as toPick } from "../lib/shop/public-pick";
+describe("public pick blurb", () => {
+  it("carries the curator blurb but still no price fields", () => {
+    const p = toPick({ id: "1", title: "T", imageUrl: null, amazonUrl: null, asin: null, category: "spock", blurb: "Nice.", priceNote: "About $5" } as never);
+    expect(p.blurb).toBe("Nice.");
+    expect(JSON.stringify(p)).not.toMatch(/price/i);
   });
 });

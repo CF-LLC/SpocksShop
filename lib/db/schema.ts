@@ -263,6 +263,10 @@ export const affiliateItems = pgTable(
     amazonUrl: text("amazon_url"),
     asin: text("asin"),
     priceNote: text("price_note"),
+    /** Full Amazon product title when `title` holds a shortened display title. */
+    fullTitle: text("full_title"),
+    /** Short curator description shown on the pick card. */
+    blurb: text("blurb"),
     /** Shop filter chip slug, e.g. "spock" | "necessities". Nullable: uncategorised picks show under "All". */
     category: text("category"),
     active: boolean("active").notNull().default(true),
