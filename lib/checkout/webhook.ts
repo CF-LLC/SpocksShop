@@ -8,6 +8,8 @@ export type FulfillOps = {
   release(orderId: string, reason: "expired" | "failed"): Promise<FulfillResult>;
   /** Manual-capture (approval) order authorized: hold the item and notify. */
   awaitApproval(orderId: string, session: Stripe.Checkout.Session): Promise<ApprovalResult>;
+  /** Delayed-settlement method (ACH) on an approval order settled or failed; the item stays held until Cooper decides. */
+  approvalAsync(orderId: string, outcome: "succeeded" | "failed"): Promise<ApprovalResult>;
 };
 
 export function isApprovalSession(session: Stripe.Checkout.Session): boolean {
@@ -36,12 +38,14 @@ export async function handleStripeEvent(event: Stripe.Event, ops: FulfillOps): P
   if (!orderId) return { handled: true, result: "not_found" };
   switch (event.type) {
     case "checkout.session.completed":
-      // Authorized, not captured: payment_status is "unpaid" until Cooper accepts.
+      // Approval: held (unpaid), captured now (paid: crypto) or still settling (unpaid: ACH). The service asks Stripe which.
       if (isApprovalSession(session)) return { handled: true, orderId, result: await ops.awaitApproval(orderId, session) };
       return { handled: true, orderId, result: session.payment_status === "unpaid" ? await ops.markProcessing(orderId) : await ops.markPaid(orderId, session) };
     case "checkout.session.async_payment_succeeded":
+      if (isApprovalSession(session)) return { handled: true, orderId, result: await ops.approvalAsync(orderId, "succeeded") };
       return { handled: true, orderId, result: await ops.markPaid(orderId, session) };
     case "checkout.session.async_payment_failed":
+      if (isApprovalSession(session)) return { handled: true, orderId, result: await ops.approvalAsync(orderId, "failed") };
       return { handled: true, orderId, result: await ops.release(orderId, "failed") };
     case "checkout.session.expired":
       return { handled: true, orderId, result: await ops.release(orderId, "expired") };

@@ -1,18 +1,18 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type Stripe from "stripe";
-import { inventory, orderItems, orders, payments, products } from "@/lib/db/schema";
+import { inventory, orderItems, orders, payments, products, refunds } from "@/lib/db/schema";
 import type { Database, Tx } from "@/lib/checkout/db";
 import { HOLDING, saveAddress, upsertCustomer } from "@/lib/checkout/fulfill";
 import { ownerEmail, sendSafe, type Mailer } from "@/lib/mail";
 import {
-  AWAITING, CAPTURING, DECLINING, HOLD_MS, PENDING_APPROVAL, holdAction,
+  AWAITING, CAPTURING, DECLINING, HOLD_MS, PENDING_APPROVAL, acceptAction, declineAction, holdAction, paymentRowStatus, paymentStateOf,
   mailCustomerConfirmed, mailCustomerDeclined, mailCustomerReceived, mailOwnerExpired, mailOwnerNewOrder, mailOwnerReminder,
-  type ApprovalResult, type OrderSummary,
+  type ApprovalResult, type OrderSummary, type PaymentState,
 } from "./core";
 
 type Env = Record<string, string | undefined>;
 export type ApprovalDeps = { db: Database; stripe: Stripe | null; mailer: Mailer; env?: Env; now?: () => Date };
-type StripeLike = Pick<Stripe, "paymentIntents">;
+type StripeLike = Pick<Stripe, "paymentIntents" | "refunds">;
 
 const nowOf = (d: ApprovalDeps) => (d.now ? d.now() : new Date());
 const originOf = (env: Env) => (env.APP_URL?.trim() || "https://spockshop.com").replace(/\/$/, "");
@@ -26,7 +26,9 @@ export async function orderSummary(database: Database | Tx, orderId: string): Pr
   const [o] = await database.select().from(orders).where(eq(orders.id, orderId));
   if (!o) return null;
   const items = await database.select().from(orderItems).where(eq(orderItems.orderId, orderId));
-  return { orderNumber: o.orderNumber, totalCents: o.totalCents, items: items.map((i) => (i.quantity > 1 ? `${i.titleSnapshot} x${i.quantity}` : i.titleSnapshot)), customerEmail: o.customerEmail, holdExpiresAt: o.holdExpiresAt, fulfillmentMethod: o.fulfillmentMethod };
+  const pays = await database.select({ status: payments.paymentStatus }).from(payments).where(eq(payments.orderId, orderId));
+  const charged = pays.some((p) => p.status === "succeeded" || p.status === "refunded");
+  return { orderNumber: o.orderNumber, totalCents: o.totalCents, items: items.map((i) => (i.quantity > 1 ? `${i.titleSnapshot} x${i.quantity}` : i.titleSnapshot)), customerEmail: o.customerEmail, holdExpiresAt: o.holdExpiresAt, fulfillmentMethod: o.fulfillmentMethod, charged };
 }
 
 /** Hide fully-held items from the shop. Called inside the transaction that took the reservation. */
@@ -74,7 +76,7 @@ const piId = (session: Stripe.Checkout.Session) => (typeof session.payment_inten
  * checkout.session.completed for a manual-capture order: card authorized, not charged.
  * Holds the item (hidden from shop), records the PaymentIntent and starts the 6-day clock. Exactly once per order.
  */
-export async function markAwaitingApproval(database: Database, orderId: string, session: Stripe.Checkout.Session, now = new Date()): Promise<ApprovalResult> {
+export async function markAwaitingApproval(database: Database, orderId: string, session: Stripe.Checkout.Session, now = new Date(), state: PaymentState = sessionPaymentState(session)): Promise<ApprovalResult> {
   return database.transaction(async (tx) => {
     const order = await lockOrder(tx, orderId);
     if (!order) return "not_found";
@@ -107,15 +109,60 @@ export async function markAwaitingApproval(database: Database, orderId: string, 
         updatedAt: now,
       })
       .where(eq(orders.id, order.id));
-    await tx.update(payments).set({ paymentStatus: "authorized", amountCents: session.amount_total ?? order.totalCents, updatedAt: now }).where(and(eq(payments.orderId, order.id), eq(payments.providerPaymentId, session.id)));
+    await tx.update(payments).set({ paymentStatus: paymentRowStatus(state), amountCents: session.amount_total ?? order.totalCents, updatedAt: now }).where(and(eq(payments.orderId, order.id), eq(payments.providerPaymentId, session.id)));
     return "updated";
   });
+}
+
+/** Best guess without calling Stripe: "paid" = captured now (crypto), otherwise a hold. */
+export function sessionPaymentState(session: Stripe.Checkout.Session): PaymentState {
+  return session.payment_status === "paid" ? "charged" : "held";
+}
+
+/** Ask Stripe where the money is (held / captured / still settling). Falls back to the session when Stripe is unreachable. */
+async function intentState(stripe: StripeLike | null, pi: string | null, session?: Stripe.Checkout.Session): Promise<PaymentState> {
+  if (stripe && pi) {
+    try {
+      return paymentStateOf((await stripe.paymentIntents.retrieve(pi)).status);
+    } catch (error) {
+      console.error("payment intent lookup failed", { error: error instanceof Error ? error.message : String(error) });
+    }
+  }
+  return session ? sessionPaymentState(session) : "unknown";
+}
+
+/**
+ * Delayed-settlement method (e.g. ACH) on an approval order settled or failed after checkout.session.completed.
+ * Succeeded: mark the payment captured (Accept then just confirms). Failed: release the item and close the order.
+ */
+export async function onApprovalAsyncPayment(deps: ApprovalDeps, orderId: string, outcome: "succeeded" | "failed"): Promise<ApprovalResult> {
+  const now = nowOf(deps);
+  if (outcome === "succeeded") {
+    const rows = await deps.db.update(payments).set({ paymentStatus: "succeeded", updatedAt: now }).where(and(eq(payments.orderId, orderId), inArray(payments.paymentStatus, ["processing", "authorized", "pending"]))).returning({ id: payments.id });
+    return rows.length ? "updated" : "duplicate";
+  }
+  const result = await deps.db.transaction(async (tx): Promise<ApprovalResult> => {
+    const order = await lockOrder(tx, orderId);
+    if (!order) return "not_found";
+    if (order.status !== AWAITING && order.status !== DECLINING) return "duplicate";
+    await releaseHeld(tx, orderId);
+    await tx.update(orders).set({ status: "declined", decidedAt: now, decisionReason: "payment_failed", updatedAt: now }).where(eq(orders.id, orderId));
+    await tx.update(payments).set({ paymentStatus: "failed", updatedAt: now }).where(and(eq(payments.orderId, orderId), inArray(payments.paymentStatus, ["processing", "authorized", "pending"])));
+    return "updated";
+  });
+  const owner = ownerEmail(deps.env ?? process.env);
+  if (result === "updated" && owner) {
+    const s = await orderSummary(deps.db, orderId);
+    if (s) await sendSafe(deps.mailer, { to: owner, tag: "approval-payment-failed", subject: `Order ${s.orderNumber}: payment failed`, text: `The buyer's bank payment for order ${s.orderNumber} failed, so the order was closed and the item(s) put back in the shop. Nothing to do.` });
+  }
+  return result;
 }
 
 /** Webhook entry: hold + emails (only on the first delivery). A lost race voids the authorization at once. */
 export async function onApprovalCheckoutCompleted(deps: ApprovalDeps, orderId: string, session: Stripe.Checkout.Session): Promise<ApprovalResult> {
   const env = deps.env ?? process.env;
-  const result = await markAwaitingApproval(deps.db, orderId, session, nowOf(deps));
+  const state = await intentState(deps.stripe, piId(session), session);
+  const result = await markAwaitingApproval(deps.db, orderId, session, nowOf(deps), state);
   if (result === "updated") {
     const summary = await orderSummary(deps.db, orderId);
     const owner = ownerEmail(env);
@@ -123,7 +170,10 @@ export async function onApprovalCheckoutCompleted(deps: ApprovalDeps, orderId: s
     if (summary?.customerEmail) await sendSafe(deps.mailer, mailCustomerReceived(summary));
   } else if (result === "conflict") {
     const pi = piId(session);
-    if (pi && deps.stripe) await voidIntent(deps.stripe, pi, orderId);
+    if (pi && deps.stripe) {
+      if (state === "charged") await refundIntent(deps.stripe, pi, orderId);
+      else await voidIntent(deps.stripe, pi, orderId);
+    }
     const summary = await orderSummary(deps.db, orderId);
     if (summary?.customerEmail) await sendSafe(deps.mailer, mailCustomerDeclined(summary, "conflict"));
   }
@@ -141,6 +191,23 @@ async function voidIntent(stripe: StripeLike, pi: string, orderId: string): Prom
     } catch { /* fall through */ }
     console.error("approval cancel failed", { orderId, error: error instanceof Error ? error.message : String(error) });
     return false;
+  }
+}
+
+/**
+ * Full refund of a captured payment. Idempotent: reuses an existing non-failed refund on the PaymentIntent,
+ * and the idempotency key makes a retried create return the same refund.
+ */
+export async function refundIntent(stripe: StripeLike, pi: string, orderId: string): Promise<{ id: string; amount: number; status: string } | null> {
+  try {
+    const existing = await stripe.refunds.list({ payment_intent: pi, limit: 10 });
+    const live = existing.data.find((r) => r.status !== "failed" && r.status !== "canceled");
+    if (live) return { id: live.id, amount: live.amount, status: live.status ?? "pending" };
+    const r = await stripe.refunds.create({ payment_intent: pi, reason: "requested_by_customer", metadata: { order_id: orderId } }, { idempotencyKey: `approval-refund-${orderId}` });
+    return { id: r.id, amount: r.amount, status: r.status ?? "pending" };
+  } catch (error) {
+    console.error("approval refund failed", { orderId, error: error instanceof Error ? error.message : String(error) });
+    return null;
   }
 }
 
@@ -183,7 +250,13 @@ export async function acceptOrder(deps: ApprovalDeps, orderId: string): Promise<
   if (!deps.stripe) return "stripe_unavailable";
   const claimed = await claim(deps.db, orderId, CAPTURING);
   if (!claimed) return settledResult(deps.db, orderId, ["paid", "paid_review"]);
-  if (!claimed.paymentIntentId || !(await captureIntent(deps.stripe, claimed.paymentIntentId, orderId))) {
+  const action = claimed.paymentIntentId ? acceptAction(await intentState(deps.stripe, claimed.paymentIntentId)) : "error";
+  if (action === "wait") {
+    await unclaim(deps.db, orderId, CAPTURING);
+    return "payment_processing";
+  }
+  // "none": already captured at checkout (crypto, settled ACH), so there's nothing to capture.
+  if (action === "error" || (action === "capture" && !(await captureIntent(deps.stripe, claimed.paymentIntentId!, orderId)))) {
     await unclaim(deps.db, orderId, CAPTURING);
     return "stripe_error";
   }
@@ -210,7 +283,7 @@ export async function acceptOrder(deps: ApprovalDeps, orderId: string): Promise<
       await tx.update(products).set({ status: "listed", updatedAt: now }).where(and(inArray(products.id, ids), eq(products.status, PENDING_APPROVAL)));
     }
     await tx.update(orders).set({ status: "paid", decidedAt: now, updatedAt: now }).where(eq(orders.id, orderId));
-    await tx.update(payments).set({ paymentStatus: "succeeded", updatedAt: now }).where(and(eq(payments.orderId, orderId), eq(payments.paymentStatus, "authorized")));
+    await tx.update(payments).set({ paymentStatus: "succeeded", updatedAt: now }).where(and(eq(payments.orderId, orderId), inArray(payments.paymentStatus, ["authorized", "processing"])));
     return "updated";
   });
   if (result === "updated") {
@@ -226,9 +299,19 @@ export async function declineOrder(deps: ApprovalDeps, orderId: string, opts: { 
   const kind = opts.kind ?? "declined";
   const claimed = await claim(deps.db, orderId, DECLINING);
   if (!claimed) return settledResult(deps.db, orderId, ["declined", "hold_expired"]);
-  if (claimed.paymentIntentId && !(await voidIntent(deps.stripe, claimed.paymentIntentId, orderId))) {
-    await unclaim(deps.db, orderId, DECLINING);
-    return "stripe_error";
+  let refund: { id: string; amount: number; status: string } | null = null;
+  if (claimed.paymentIntentId) {
+    const action = declineAction(await intentState(deps.stripe, claimed.paymentIntentId));
+    if (action === "wait") {
+      await unclaim(deps.db, orderId, DECLINING);
+      return "payment_processing";
+    }
+    if (action === "refund") refund = await refundIntent(deps.stripe, claimed.paymentIntentId, orderId);
+    const ok = action === "none" || (action === "refund" ? Boolean(refund) : await voidIntent(deps.stripe, claimed.paymentIntentId, orderId));
+    if (!ok) {
+      await unclaim(deps.db, orderId, DECLINING);
+      return "stripe_error";
+    }
   }
   const now = nowOf(deps);
   const result = await deps.db.transaction(async (tx): Promise<ApprovalResult> => {
@@ -236,6 +319,15 @@ export async function declineOrder(deps: ApprovalDeps, orderId: string, opts: { 
     if (!order || order.status !== DECLINING) return "duplicate";
     await releaseHeld(tx, orderId);
     await tx.update(orders).set({ status: kind, decidedAt: now, decisionReason: opts.reason?.slice(0, 500) || null, updatedAt: now }).where(eq(orders.id, orderId));
+    if (refund) {
+      const pays = await tx.select({ id: payments.id }).from(payments).where(and(eq(payments.orderId, orderId), eq(payments.paymentStatus, "succeeded")));
+      for (const p of pays) {
+        const [dup] = await tx.select({ id: refunds.id }).from(refunds).where(eq(refunds.providerRefundId, refund.id));
+        if (!dup) await tx.insert(refunds).values({ paymentId: p.id, amountCents: refund.amount, reason: kind, providerRefundId: refund.id, status: refund.status });
+        await tx.update(payments).set({ paymentStatus: "refunded", updatedAt: now }).where(eq(payments.id, p.id));
+        break; // one Stripe payment per order
+      }
+    }
     await tx.update(payments).set({ paymentStatus: "canceled", updatedAt: now }).where(and(eq(payments.orderId, orderId), eq(payments.paymentStatus, "authorized")));
     return "updated";
   });

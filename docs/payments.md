@@ -58,3 +58,51 @@ Before turning it on: activate Stripe Tax, set the origin address (Bentonville, 
 - `npm test`: unit tests with mocked Stripe (session params, webhook routing, real signature verification).
 - Integration (real Postgres + [stripe-mock](https://github.com/stripe/stripe-mock)):
   `INTEGRATION_DATABASE_URL=postgres://…/throwaway STRIPE_API_BASE=http://localhost:12111 npx vitest run tests/integration`
+
+## More payment methods on approval orders
+
+Closet items need Cooper's OK (`requiresApproval`). Their Checkout Sessions no longer force `allowed_payment_method_types: ["card"]`;
+they use **dynamic payment methods** (whatever the Dashboard payment method configuration enables) and hold only the methods that
+support separate authorization and capture, via `payment_method_options[<type>][capture_method]=manual`
+(`HELD_PAYMENT_METHODS` in `lib/checkout/core.ts`). There is no session-wide `payment_intent_data.capture_method` any more, because
+that would hide every method that can't be held.
+Docs: [Place a hold on a payment method](https://docs.stripe.com/payments/place-a-hold-on-a-payment-method) (per-method capture),
+[Checkout Session `payment_method_options`](https://docs.stripe.com/api/checkout/sessions/create#create_checkout_session-payment_method_options).
+
+| Method | At checkout | Accept | Decline / 6-day expiry |
+| --- | --- | --- | --- |
+| Card, Apple Pay, Google Pay (card wallets), Link, Klarna, Affirm, Afterpay, Cash App Pay, Amazon Pay | held (`requires_capture`) | capture | cancel the PaymentIntent (hold released) |
+| Stablecoins/crypto | charged now (`succeeded`) | nothing to capture; order → paid | **full refund** (recorded in `refunds`, payment → `refunded`) |
+| ACH (delayed settlement) | `processing`, item held | waits until `checkout.session.async_payment_succeeded`, then just confirms | waits while processing, refunds once settled; `async_payment_failed` relists the item and closes the order |
+
+The service asks Stripe for the PaymentIntent status before acting, so Accept/Decline are correct even if a webhook was missed.
+Everything is idempotent: capture/cancel/refund use idempotency keys (`approval-{capture|cancel|refund}-<order id>`), a refund that
+already exists on the PaymentIntent is reused, the refund row is inserted once, and the order status claim stops double clicks.
+Tax (`automatic_tax`), shipping/billing address rules and closet-only gating are unchanged. No new env vars.
+
+Holds: the app auto-cancels after 6 days, inside the shortest window (cards and Cash App Pay ~7 days; Afterpay 13; Klarna 28; Affirm 30).
+
+## Stripe Dashboard clicks for Cooper
+
+1. **Settings → Payments → Payment methods → Crypto / "Stablecoins & Crypto"**: click *Request access* (USDC etc., ~1.5% fee). Until approved it simply doesn't show at checkout.
+2. Same page (the default payment method configuration): optionally turn on **Afterpay / Clearpay** and **ACH Direct Debit**. Keep the others that are on (Apple Pay, Link, Cash App Pay, Klarna, Affirm, Amazon Pay).
+3. **Google Pay shows "unavailable"**: open Google Pay on that page and read the reason. Common causes: it's turned off in the configuration, the account needs a domain registered (Settings → Payment method domains → add `spockshop.com`; hosted Checkout normally doesn't need this), or Google Pay hasn't accepted the business yet. Also note Google Pay only appears in Chrome/Android with a saved card, so test from there.
+
+No code or env change is needed after any of these: dynamic payment methods pick them up automatically.
+
+## Bitcoin via BTCPay Server (plan only, nothing installed)
+
+**Server first.** spock-server's disk is at 81% (~18 GB free). A pruned Bitcoin node needs ~10–15 GB with `prune` plus ~5 GB for NBXplorer/Postgres/docker images and grows with logs, so free space (old images, `docker system prune`, old backups) or add an external/second disk before starting. Initial sync takes 1–3 days and lots of CPU/bandwidth.
+
+**Install (later, with approval):** BTCPay's docker deployment (`btcpayserver-docker`) with `BTCPAYGEN_CRYPTO1=btc`, `BTCPAYGEN_ADDITIONAL_FRAGMENTS=opt-save-storage-s` (pruned), no Lightning at first. Expose it at e.g. `pay.spockshop.com` through the Cloudflare Tunnel; protect the admin UI with Cloudflare Access but leave `/i/*` invoice pages and the API reachable. Wallet: hardware-wallet xpub (watch-only), so no private keys live on the server.
+
+**Existing scaffolding:** `payments.payment_provider` (`stripe | btcpay`), `btcpayConfigured()` and the admin payments page status, and the `BTCPAY_*` env names (URL, store id, API key, webhook secret) are already in place.
+
+**App work:**
+- Invoice: on checkout with "Pay with Bitcoin", reserve stock as today, create a BTCPay invoice (Greenfield API `POST /api/v1/stores/{store}/invoices`, amount in USD, `orderId` metadata, 30-min expiry matching our reservation) and redirect to the invoice page.
+- Webhook `/api/btcpay/webhook`: verify the `BTCPay-Sig` HMAC, handle `InvoiceSettled` (→ same approval flow as a captured payment: held for Cooper, Decline refunds), `InvoiceExpired`/`InvoiceInvalid` (release), `InvoiceProcessing` (keep holding, like ACH). Idempotent by invoice id.
+- Tax: BTCPay doesn't calculate tax. Before creating the invoice, call **Stripe Tax Calculations API** (`POST /v1/tax/calculations` with the line items, tax codes and customer address) and add the tax to the invoice amount; after the invoice settles, create a **Tax Transaction** (`POST /v1/tax/transactions/create_from_calculation`) so it shows in Stripe Tax reports and filings; on refund, `POST /v1/tax/transactions/create_reversal`. Addresses must be collected on our own page since there's no Stripe Checkout.
+- Refunds: BTCPay refunds are manual-ish (Greenfield `POST /invoices/{id}/refund` creates a pull payment the buyer claims with their address), at the current rate or the original amount; record in `refunds`.
+- Accounting: record USD value at settlement (BTCPay stores the rate), export BTCPay's invoice report monthly for the books; BTC held is a capital asset, so selling it later is a separate taxable event.
+
+**Effort:** ~2–4 dev days for the app (invoice, webhook, tax calc/transactions, refunds, admin UI, tests) plus server prep/sync time and Cooper's wallet setup. Fees: 0% processor fee, only on-chain network fees. Recommendation: do Stripe stablecoins first; revisit BTCPay after the disk is fixed and if buyers actually ask for BTC.

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { markPaid, markProcessing, releaseOrder } from "@/lib/checkout/fulfill";
 import { handleStripeEvent } from "@/lib/checkout/webhook";
-import { onApprovalCheckoutCompleted } from "@/lib/approval/service";
+import { onApprovalAsyncPayment, onApprovalCheckoutCompleted } from "@/lib/approval/service";
 import { getMailer } from "@/lib/mail";
 import { getStripe, stripeSettings } from "@/lib/stripe";
 import { handleAiBillingEvent } from "@/lib/ai/billing";
@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       markProcessing: (id) => markProcessing(db, id),
       release: (id, reason) => releaseOrder(db, id, reason),
       awaitApproval: (id, session) => onApprovalCheckoutCompleted({ db, stripe, mailer: getMailer() }, id, session),
+      approvalAsync: (id, outcome) => onApprovalAsyncPayment({ db, stripe, mailer: getMailer() }, id, outcome),
     });
     if (outcome.handled) console.info("stripe webhook", { type: event.type, id: event.id, result: outcome.result });
     return NextResponse.json({ received: true });

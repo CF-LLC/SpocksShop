@@ -16,7 +16,39 @@ export const DONE_APPROVAL_STATUSES = ["paid", "paid_review", "declined", "hold_
 /** Product status while an item is held for Cooper's decision: hidden from the shop, can't be bought again. */
 export const PENDING_APPROVAL = "pending_approval";
 
-export type ApprovalResult = "updated" | "duplicate" | "not_found" | "not_awaiting" | "conflict" | "stripe_error" | "stripe_unavailable";
+export type ApprovalResult = "updated" | "duplicate" | "not_found" | "not_awaiting" | "conflict" | "stripe_error" | "stripe_unavailable" | "payment_processing";
+
+/**
+ * Where the buyer's money is for an approval order:
+ * held = authorized, not captured (card/wallets/Link/BNPL); charged = captured at checkout (crypto/stablecoins, settled ACH);
+ * processing = delayed-settlement method (ACH) not settled yet; gone = canceled/failed, nothing to capture or refund.
+ */
+export type PaymentState = "held" | "charged" | "processing" | "gone" | "unknown";
+
+export function paymentStateOf(piStatus: string | null | undefined): PaymentState {
+  switch (piStatus) {
+    case "requires_capture": return "held";
+    case "succeeded": return "charged";
+    case "processing": return "processing";
+    case "canceled": return "gone";
+    default: return "unknown";
+  }
+}
+
+/** Accept: capture a hold, do nothing for money already captured, wait while it settles. */
+export function acceptAction(state: PaymentState): "capture" | "none" | "wait" | "error" {
+  return state === "held" ? "capture" : state === "charged" ? "none" : state === "processing" ? "wait" : "error";
+}
+
+/** Decline/expire: void a hold, fully refund captured money, wait while it settles; nothing to do if it's gone. */
+export function declineAction(state: PaymentState): "cancel" | "refund" | "none" | "wait" {
+  return state === "charged" ? "refund" : state === "processing" ? "wait" : state === "gone" ? "none" : "cancel";
+}
+
+/** payments.payment_status for an approval order once checkout completes. */
+export function paymentRowStatus(state: PaymentState): "authorized" | "succeeded" | "processing" {
+  return state === "charged" ? "succeeded" : state === "processing" ? "processing" : "authorized";
+}
 
 export type HoldTimes = { status: string; authorizedAt: Date | null; holdExpiresAt: Date | null; reminder24hSentAt: Date | null; reminderDay5SentAt: Date | null };
 export type HoldAction = "expire" | "remind_day5" | "remind_24h";
@@ -38,7 +70,7 @@ export function needsApproval(lines: { requiresApproval?: boolean | null }[]): b
   return lines.some((l) => Boolean(l.requiresApproval));
 }
 
-export type OrderSummary = { orderNumber: string; totalCents: number; items: string[]; customerEmail: string | null; holdExpiresAt: Date | null; fulfillmentMethod: string | null };
+export type OrderSummary = { orderNumber: string; totalCents: number; items: string[]; customerEmail: string | null; holdExpiresAt: Date | null; fulfillmentMethod: string | null; charged?: boolean };
 
 const chicago = (d: Date | null) =>
   d ? new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", dateStyle: "medium", timeStyle: "short" }).format(d) + " CT" : "soon";
@@ -49,7 +81,7 @@ export function mailOwnerNewOrder(to: string, o: OrderSummary, origin: string): 
     to,
     tag: "approval-new",
     subject: `Approve order ${o.orderNumber} (${formatCents(o.totalCents)})`,
-    text: `New order waiting for your OK. The card is authorized, not charged.\n\n${list(o)}\n\nTotal: ${formatCents(o.totalCents)} (${o.fulfillmentMethod ?? "n/a"})\nAuto-cancels: ${chicago(o.holdExpiresAt)}\n\nCheck it's still available (Depop too), then Accept or Decline:\n${origin}/admin/orders`,
+    text: `New order waiting for your OK. ${o.charged ? "This payment method can't be held, so the buyer was already charged; Decline refunds it in full." : "The payment is authorized, not charged."}\n\n${list(o)}\n\nTotal: ${formatCents(o.totalCents)} (${o.fulfillmentMethod ?? "n/a"})\nAuto-cancels: ${chicago(o.holdExpiresAt)}\n\nCheck it's still available (Depop too), then Accept or Decline:\n${origin}/admin/orders`,
   };
 }
 
@@ -71,7 +103,7 @@ export function mailCustomerReceived(o: OrderSummary): MailMessage {
     to: o.customerEmail ?? "",
     tag: "customer-received",
     subject: `Order received: ${o.orderNumber}`,
-    text: `Thanks for your order from Spock's Shop!\n\n${list(o)}\n\nTotal: ${formatCents(o.totalCents)}\n\nWe're confirming availability now. Your card is only authorized, not charged. You'll get another email once it's confirmed (usually within a day). If it's no longer available, the hold is released and you won't be charged.`,
+    text: `Thanks for your order from Spock's Shop!\n\n${list(o)}\n\nTotal: ${formatCents(o.totalCents)}\n\nWe're confirming availability now. ${o.charged ? "Your payment went through now; if the item turns out to be unavailable you'll get a full refund." : "Your payment is only authorized, not charged. If it's no longer available, the hold is released and you won't be charged."} You'll get another email once it's confirmed (usually within a day).`,
   };
 }
 
@@ -80,7 +112,7 @@ export function mailCustomerConfirmed(o: OrderSummary): MailMessage {
     to: o.customerEmail ?? "",
     tag: "customer-confirmed",
     subject: `Order confirmed: ${o.orderNumber}`,
-    text: `Good news: your order is confirmed and your card was charged ${formatCents(o.totalCents)}.\n\n${list(o)}\n\n${o.fulfillmentMethod === "pickup" ? "We'll reach out to arrange local pickup." : "We'll email you when it ships."}`,
+    text: `Good news: your order is confirmed and your payment of ${formatCents(o.totalCents)} went through.\n\n${list(o)}\n\n${o.fulfillmentMethod === "pickup" ? "We'll reach out to arrange local pickup." : "We'll email you when it ships."}`,
   };
 }
 
@@ -89,7 +121,7 @@ export function mailCustomerDeclined(o: OrderSummary, kind: "declined" | "hold_e
   return {
     to: o.customerEmail ?? "",
     tag: `customer-${kind}`,
-    subject: `Order ${o.orderNumber} canceled, you were not charged`,
-    text: `Sorry! Your order ${o.orderNumber} was canceled because ${why}.\n\n${list(o)}\n\nThe authorization on your card has been released and you were not charged. Depending on your bank it can take a few days to disappear from your statement.`,
+    subject: o.charged ? `Order ${o.orderNumber} canceled, full refund issued` : `Order ${o.orderNumber} canceled, you were not charged`,
+    text: `Sorry! Your order ${o.orderNumber} was canceled because ${why}.\n\n${list(o)}\n\n${o.charged ? `We've issued a full refund of ${formatCents(o.totalCents)} to your original payment method. It can take 5-10 business days to arrive.` : "The authorization on your payment method has been released and you were not charged. Depending on your bank it can take a few days to disappear from your statement."}`,
   };
 }

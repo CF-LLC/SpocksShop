@@ -59,6 +59,22 @@ export function taxSettings(env: Record<string, string | undefined> = process.en
   };
 }
 
+/**
+ * Approval (requiresApproval) orders use Stripe's dynamic payment methods (Dashboard payment method configuration)
+ * and put a hold ONLY on methods that support separate authorization and capture, via
+ * payment_method_options[<type>][capture_method]=manual. Methods without manual capture (stablecoins/crypto, ACH)
+ * capture immediately; Decline then refunds them in full.
+ * Docs: https://docs.stripe.com/payments/place-a-hold-on-a-payment-method ("configure capture-after-per-payment-method")
+ * and https://docs.stripe.com/api/checkout/sessions/create#create_checkout_session-payment_method_options
+ * Apple Pay and Google Pay are card wallets, so they follow `card`.
+ */
+export const HELD_PAYMENT_METHODS = ["card", "link", "klarna", "affirm", "afterpay_clearpay", "cashapp", "amazon_pay"] as const;
+
+export function heldPaymentMethodOptions(): Stripe.Checkout.SessionCreateParams.PaymentMethodOptions {
+  const manual = { capture_method: "manual" as const };
+  return { card: manual, link: manual, klarna: manual, affirm: manual, afterpay_clearpay: manual, cashapp: manual, amazon_pay: manual };
+}
+
 export type PricedLine = { productId: string; title: string; sku: string; unitPriceCents: number; quantity: number; image: string | null; requiresApproval?: boolean };
 
 /**
@@ -75,7 +91,7 @@ export function buildSessionParams(input: {
   origin: string;
   now?: Date;
   tax?: TaxSettings;
-  /** Authorize only (capture_method=manual); Cooper captures or voids it from /admin/orders. Card only. */
+  /** Hold where the method supports it (see HELD_PAYMENT_METHODS); Cooper captures/voids or refunds from /admin/orders. */
   requiresApproval?: boolean;
 }): Stripe.Checkout.SessionCreateParams {
   const now = input.now ?? new Date();
@@ -87,10 +103,9 @@ export function buildSessionParams(input: {
     metadata: { order_id: input.orderId, order_number: input.orderNumber, fulfillment: input.method, ...(input.requiresApproval ? { requires_approval: "true" } : {}) },
     payment_intent_data: {
       metadata: { order_id: input.orderId, order_number: input.orderNumber },
-      ...(input.requiresApproval ? { capture_method: "manual" as const } : {}),
     },
-    // Manual capture needs a method that supports separate auth/capture; cards do (~7 day window).
-    ...(input.requiresApproval ? { allowed_payment_method_types: ["card" as const] } : {}),
+    // Dynamic payment methods (no allowed_payment_method_types); per-method manual capture where supported.
+    ...(input.requiresApproval ? { payment_method_options: heldPaymentMethodOptions() } : {}),
     line_items: input.lines.map((l) => {
       const image = absolute(l.image);
       return {
