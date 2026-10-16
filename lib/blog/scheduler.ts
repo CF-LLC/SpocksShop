@@ -28,6 +28,8 @@ export function startBlogDraftScheduler(env: Env = process.env) {
       if (!shouldGenerate(perWeek, await aiDraftsSince(new Date(now.getTime() - WEEK_MS)), now)) return;
       const r = await generateBlogDraft(generatorDeps());
       console.info("blog draft created", { slug: r.slug });
+      const { notifyDraftReady } = await import("./notify");
+      await notifyDraftReady({ id: r.id, title: r.title, slug: r.slug }, env);
     } catch (error) {
       const { logError } = await import("@/lib/errors/log");
       await logError("blog-scheduler", error, {}).catch(() => null);
