@@ -11,7 +11,7 @@ export function draftReadyMail(draft: { id: string; title: string; slug: string 
     to,
     subject: `Blog draft ready for approval: ${draft.title}`,
     text: [
-      `A new AI blog draft is waiting for you.`,
+      `A new blog draft is waiting for you.`,
       ``,
       `Title: ${draft.title}`,
       `Slug: ${draft.slug}`,

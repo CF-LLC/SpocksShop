@@ -1,4 +1,4 @@
-import { draftsPerWeek } from "./config";
+import { draftsPerWeek, scheduledGenerationEnabled } from "./config";
 
 type Env = Record<string, string | undefined>;
 const CHECK_EVERY_MS = 6 * 3600_000;
@@ -13,8 +13,9 @@ export function shouldGenerate(perWeek: number, recent: { n: number; last: Date 
 
 let timer: ReturnType<typeof setInterval> | null = null;
 
-/** Started once from instrumentation.ts. Writes DRAFTS only; publishing always needs an admin tap. */
+/** Started once from instrumentation.ts, only when BLOG_AI_SCHEDULE=on. Writes DRAFTS only; publishing always needs an admin tap. */
 export function startBlogDraftScheduler(env: Env = process.env) {
+  if (!scheduledGenerationEnabled(env)) return; // off by default: drafts come from the API
   const perWeek = draftsPerWeek(env);
   if (timer || !perWeek || env.NEXT_PHASE === "phase-production-build") return;
   let running = false;

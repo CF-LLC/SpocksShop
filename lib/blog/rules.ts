@@ -73,7 +73,7 @@ export function findPersonalClaim(text: string): string | null {
   return null;
 }
 
-export type DraftInput = { title: string; slug: string; description: string; targetKeyword: string; bodyMd: string; affiliateItemIds: string[] };
+export type DraftInput = { title: string; slug: string; description: string; targetKeyword: string; bodyMd: string; affiliateItemIds: string[]; productLinks?: { url: string; label: string }[] };
 
 /** Returns a list of problems; empty means OK. `strictLength` is on for AI output, relaxed for Cooper's manual edits. */
 export function draftProblems(d: DraftInput, opts: { strictLength?: boolean; knownPickIds?: Set<string> } = {}): string[] {
@@ -89,7 +89,9 @@ export function draftProblems(d: DraftInput, opts: { strictLength?: boolean; kno
   if (personal) p.push(`Remove first-hand or review claims ("${personal}").`);
   const markers = [...d.bodyMd.matchAll(/\[\[pick:([^\]\s]+)\]\]/g)].map((m) => m[1]);
   const ids = [...new Set(markers)];
-  if (ids.length < MIN_PICKS || ids.length > MAX_PICKS) p.push(`Use ${MIN_PICKS}–${MAX_PICKS} Amazon Picks (found ${ids.length}).`);
+  // Product links from the draft API count toward the same 3–6 recommendations.
+  const recs = ids.length + (d.productLinks?.length ?? 0);
+  if (recs < MIN_PICKS || recs > MAX_PICKS) p.push(d.productLinks?.length ? `Use ${MIN_PICKS}–${MAX_PICKS} Amazon Picks or product links (found ${recs}).` : `Use ${MIN_PICKS}–${MAX_PICKS} Amazon Picks (found ${ids.length}).`);
   if (opts.knownPickIds) for (const id of ids) if (!opts.knownPickIds.has(id)) p.push(`Unknown or inactive pick: ${id}`);
   if (/https?:\/\/[^\s)]*amazon\.|amzn\.to/i.test(d.bodyMd)) p.push("Don't paste Amazon links; use [[pick:id]] markers so links are tagged.");
   if (opts.strictLength) {

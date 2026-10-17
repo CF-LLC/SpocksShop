@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PostBody } from "@/components/blog/post-body";
+import { PostCover, ProductLinks } from "@/components/blog/post-extras";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { blogCanonical } from "@/lib/blog/config";
 import { articleJsonLd } from "@/lib/blog/seo";
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     description: post.description,
     keywords: post.targetKeyword ? [post.targetKeyword] : undefined,
     alternates: { canonical: url },
-    openGraph: { title: post.title, description: post.description, url, type: "article", siteName: "SpockShop Blog", publishedTime: post.publishedAt?.toISOString(), modifiedTime: post.updatedAt.toISOString() },
+    openGraph: { title: post.title, description: post.description, url, type: "article", siteName: "SpockShop Blog", images: post.coverImageUrl ? [post.coverImageUrl] : undefined, publishedTime: post.publishedAt?.toISOString(), modifiedTime: post.updatedAt.toISOString() },
     twitter: { card: "summary_large_image", title: post.title, description: post.description },
   };
 }
@@ -43,7 +44,9 @@ export default async function BlogPostPage({ params }: Params) {
         <p className="dim mt-2 text-sm">Published <time dateTime={post.publishedAt?.toISOString()}>{fmt(post.publishedAt)}</time></p>
         <p className="muted mt-4">{post.description}</p>
       </header>
+      <PostCover url={post.coverImageUrl} title={post.title} />
       <PostBody bodyMd={post.bodyMd} picks={picks} />
+      <ProductLinks links={post.productLinks} />
     </article>
   );
 }

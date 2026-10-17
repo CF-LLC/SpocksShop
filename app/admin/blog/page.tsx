@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AdminNotice } from "@/components/admin/notice";
 import { aiAvailable, aiConfig } from "@/lib/ai/config";
-import { blogCanonical, draftsPerWeek } from "@/lib/blog/config";
+import { blogCanonical, draftsPerWeek, scheduledGenerationEnabled } from "@/lib/blog/config";
 import { postsByStatus, statusCounts } from "@/lib/blog/repo";
 import { draftProblems, wordCount } from "@/lib/blog/rules";
 import type { BlogPostStatus } from "@/lib/db/schema";
@@ -15,7 +15,7 @@ export default async function AdminBlogPage({ searchParams }: Props) {
   const sp = await searchParams;
   const tab = (TABS.find(([t]) => t === sp.tab)?.[0] ?? "draft") as BlogPostStatus;
   const [rows, counts] = await Promise.all([postsByStatus(tab), statusCounts()]);
-  const perWeek = draftsPerWeek();
+  const perWeek = scheduledGenerationEnabled() ? draftsPerWeek() : 0;
   const ai = aiConfig();
 
   return (
@@ -24,7 +24,7 @@ export default async function AdminBlogPage({ searchParams }: Props) {
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Blog</h1>
           <p className="text-sm text-slate-600">
-            AI writes drafts; nothing goes live until you tap Approve. {perWeek ? `Auto-drafts: up to ${perWeek}/week` : "Auto-drafts are off (BLOG_DRAFTS_PER_WEEK=0)"} · {ai.provider}:{ai.model} · <a className="underline" href={blogCanonical()} target="_blank" rel="noopener">blog.spockshop.com</a>
+            AI writes drafts; nothing goes live until you tap Approve. {perWeek ? `Auto-drafts: up to ${perWeek}/week` : "Scheduled AI drafts are off; drafts arrive via the draft API"} · {ai.provider}:{ai.model} · <a className="underline" href={blogCanonical()} target="_blank" rel="noopener">blog.spockshop.com</a>
           </p>
         </div>
         <form action="/api/admin/blog" method="post">

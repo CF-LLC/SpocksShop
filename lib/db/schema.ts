@@ -369,6 +369,10 @@ export const blogPosts = pgTable(
     kind: text("kind").notNull().default("buying_guide"),
     bodyMd: text("body_md").notNull().default(""),
     affiliateItemIds: jsonb("affiliate_item_ids").$type<string[]>().notNull().default([]),
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    coverImageUrl: text("cover_image_url"),
+    /** https links shown under the post; Amazon URLs are stored already tagged (mrspock-20). */
+    productLinks: jsonb("product_links").$type<{ url: string; label: string }[]>().notNull().default([]),
     status: text("status").$type<BlogPostStatus>().notNull().default("draft"),
     source: text("source").notNull().default("ai"),
     aiModel: text("ai_model"),

@@ -41,7 +41,7 @@ export async function savePost(store: BlogStore, id: string, input: Omit<DraftIn
   const row = await store.get(id);
   if (!row) return { ok: false, error: "Post not found." };
   const draft: DraftInput = { ...input, slug: slugify(input.slug || input.title), affiliateItemIds: pickIdsIn(input.bodyMd) };
-  const problems = draftProblems(draft, { knownPickIds: await store.activePickIds() });
+  const problems = draftProblems({ ...draft, productLinks: row.productLinks }, { knownPickIds: await store.activePickIds() });
   if (problems.length) return { ok: false, error: problems.join(" ") };
   if (draft.slug !== row.slug && row.status === "published") return { ok: false, error: "Published posts keep their URL. Change the slug while it's a draft." };
   if (await store.slugTaken(draft.slug, id)) return { ok: false, error: "Another post already uses that slug." };
