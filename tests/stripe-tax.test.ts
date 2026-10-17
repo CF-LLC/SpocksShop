@@ -5,7 +5,7 @@ const base = {
   orderId: "11111111-1111-4111-8111-111111111111",
   orderNumber: "SPK-20261013-ABC123",
   lines: [{ productId: "22222222-2222-4222-8222-222222222222", title: "Lamp", sku: "SKU-1", unitPriceCents: 2500, quantity: 1, image: null }],
-  shipping: { amountCents: 0, name: "Local pickup (Bentonville, AR)" },
+  shipping: { amountCents: 599, name: "Shipping (Up to 1 lb)" },
   origin: "https://spockshop.com",
 };
 
@@ -24,16 +24,15 @@ describe("taxSettings", () => {
 
 describe("buildSessionParams with Stripe Tax", () => {
   it("off: no automatic tax, no tax codes, no billing address", () => {
-    const p = buildSessionParams({ ...base, method: "pickup", tax: taxSettings({}) });
+    const p = buildSessionParams({ ...base, method: "ship", tax: taxSettings({}) });
     expect(p.automatic_tax).toEqual({ enabled: false });
     expect(p.billing_address_collection).toBeUndefined();
     expect(JSON.stringify(p)).not.toContain("tax_code");
     expect(JSON.stringify(p)).not.toContain("tax_behavior");
   });
-  it("on + pickup: automatic tax, exclusive prices, product + shipping codes, billing address required", () => {
-    const p = buildSessionParams({ ...base, method: "pickup", tax: taxSettings({ STRIPE_TAX_ENABLED: "true" }) });
+  it("on: automatic tax, exclusive prices, product + shipping codes", () => {
+    const p = buildSessionParams({ ...base, method: "ship", tax: taxSettings({ STRIPE_TAX_ENABLED: "true" }) });
     expect(p.automatic_tax).toEqual({ enabled: true });
-    expect(p.billing_address_collection).toBe("required");
     const li = p.line_items![0].price_data!;
     expect(li.tax_behavior).toBe("exclusive");
     expect(li.product_data!.tax_code).toBe(DEFAULT_PRODUCT_TAX_CODE);

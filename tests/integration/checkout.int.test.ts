@@ -65,15 +65,15 @@ run("checkout against Postgres + stripe-mock", () => {
     const [pay] = await db.select().from(schema.payments).where(eq(schema.payments.orderId, order.id));
     expect(pay).toMatchObject({ paymentProvider: "stripe", paymentStatus: "pending", providerPaymentId: r.sessionId, amountCents: 5199 });
 
-    await expect(createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" })).rejects.toBeInstanceOf(CheckoutError);
+    await expect(createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "ship" })).rejects.toBeInstanceOf(CheckoutError);
   });
 
   it("webhook payment commits the sale exactly once", async () => {
     const p = await product();
-    const r = await createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" });
+    const r = await createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "ship" });
     const order = await orderOf(r.orderNumber);
-    expect(order.totalCents).toBe(2500);
-    const session = paidSession(order.id, r.sessionId, 2500);
+    expect(order.totalCents).toBe(3499);
+    const session = paidSession(order.id, r.sessionId, 3499);
     expect(await markPaid(db, order.id, session)).toBe("updated");
     expect(await markPaid(db, order.id, session)).toBe("duplicate");
     expect(await stock(p.id)).toMatchObject({ quantityOnHand: 0, quantityReserved: 0, quantitySold: 1 });
@@ -89,20 +89,20 @@ run("checkout against Postgres + stripe-mock", () => {
 
   it("expiry releases the hold once, and the item can be bought again", async () => {
     const p = await product({}, 2);
-    const r = await createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 2 }], method: "pickup" });
+    const r = await createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 2 }], method: "ship" });
     const order = await orderOf(r.orderNumber);
     expect((await stock(p.id)).quantityReserved).toBe(2);
     expect(await releaseOrder(db, order.id, "expired")).toBe("updated");
     expect(await releaseOrder(db, order.id, "expired")).toBe("duplicate");
     expect(await stock(p.id)).toMatchObject({ quantityOnHand: 2, quantityReserved: 0, quantitySold: 0 });
     expect((await orderOf(r.orderNumber)).status).toBe("canceled");
-    await createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" });
+    await createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "ship" });
     expect((await stock(p.id)).quantityReserved).toBe(1);
   });
 
   it("a paid amount that differs from the order is flagged for review", async () => {
     const p = await product();
-    const r = await createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" });
+    const r = await createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "ship" });
     const order = await orderOf(r.orderNumber);
     expect(await markPaid(db, order.id, paidSession(order.id, r.sessionId, 1))).toBe("needs_review");
     expect((await orderOf(r.orderNumber)).status).toBe("paid_review");
@@ -111,7 +111,7 @@ run("checkout against Postgres + stripe-mock", () => {
   it("releases the hold when Stripe is unreachable", async () => {
     const p = await product();
     const dead = getStripe({ STRIPE_SECRET_KEY: "sk_test_dead", STRIPE_API_BASE: "http://127.0.0.1:9" }) as Stripe;
-    await expect(createCheckout({ db, stripe: dead, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" })).rejects.toMatchObject({ status: 502 });
+    await expect(createCheckout({ db, stripe: dead, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "ship" })).rejects.toMatchObject({ status: 502 });
     expect((await stock(p.id)).quantityReserved).toBe(0);
   }, 30_000);
 
@@ -119,11 +119,11 @@ run("checkout against Postgres + stripe-mock", () => {
     const tag = randomBytes(3).toString("hex");
     const [seller] = await db.insert(schema.sellers).values({ email: `it-${tag}@example.test`, displayName: "IT Seller", status: "active" }).returning();
     const p = await product({ source: "community", sellerId: seller.id });
-    await expect(createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" })).rejects.toThrow(/seller-listed Closet Picks item/);
-    const r = await createCheckout({ db, stripe, origin, env: { COMMUNITY_SELLERS_ENABLED: "true" } }, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" });
+    await expect(createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "ship" })).rejects.toThrow(/seller-listed Closet Picks item/);
+    const r = await createCheckout({ db, stripe, origin, env: { COMMUNITY_SELLERS_ENABLED: "true" } }, { items: [{ productId: p.id, quantity: 1 }], method: "ship" });
     expect(r.orderNumber).toMatch(/^SPK-/);
     const a = await product({ source: "affiliate" });
-    await expect(createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: a.id, quantity: 1 }], method: "pickup" })).rejects.toBeInstanceOf(CheckoutError);
+    await expect(createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: a.id, quantity: 1 }], method: "ship" })).rejects.toBeInstanceOf(CheckoutError);
     await db.delete(schema.products).where(eq(schema.products.id, p.id));
     created.splice(created.indexOf(p.id), 1);
     await db.delete(schema.sellers).where(eq(schema.sellers.id, seller.id));
@@ -131,7 +131,7 @@ run("checkout against Postgres + stripe-mock", () => {
 
   it("stale pending orders (missed webhook) release their stock", async () => {
     const p = await product();
-    const r = await createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" });
+    const r = await createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "ship" });
     const order = await orderOf(r.orderNumber);
     await db.update(schema.orders).set({ createdAt: new Date(Date.now() - 3 * 3600_000) }).where(eq(schema.orders.id, order.id));
     expect(await releaseStalePending(db)).toBeGreaterThanOrEqual(1);

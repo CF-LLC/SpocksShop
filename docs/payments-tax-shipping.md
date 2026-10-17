@@ -1,5 +1,7 @@
 # Payments, tax, and shipping (CFLLC / SpockShop.com)
 
+> **Update (Oct 2026):** local pickup was removed. Every Closet order ships; pickup notes below are historical.
+
 Website checkout is a CFLLC sale. Marketplace checkouts are those platforms’ sales. Books need both, separately.
 
 **Locked location (2026-09-07)**

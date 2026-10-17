@@ -11,7 +11,7 @@ export default function ContactPage() {
       <header>
         <p className="t-eyebrow">Contact</p>
         <h1 className="t-h1 mt-2">Get in touch</h1>
-        <p className="t-lead mt-4">Questions about an item, pickup, or an order? Email us and include the item name or your order number (it starts with SPK-).</p>
+        <p className="t-lead mt-4">Questions about an item, shipping, or an order? Email us and include the item name or your order number (it starts with SPK-).</p>
       </header>
       <section className="panel p-6">
         <h2 className="t-h3">Email</h2>

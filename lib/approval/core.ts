@@ -112,7 +112,7 @@ export function mailCustomerConfirmed(o: OrderSummary): MailMessage {
     to: o.customerEmail ?? "",
     tag: "customer-confirmed",
     subject: `Order confirmed: ${o.orderNumber}`,
-    text: `Good news: your order is confirmed and your payment of ${formatCents(o.totalCents)} went through.\n\n${list(o)}\n\n${o.fulfillmentMethod === "pickup" ? "We'll reach out to arrange local pickup." : "We'll email you when it ships."}`,
+    text: `Good news: your order is confirmed and your payment of ${formatCents(o.totalCents)} went through.\n\n${list(o)}\n\nWe'll email you when it ships.`,
   };
 }
 

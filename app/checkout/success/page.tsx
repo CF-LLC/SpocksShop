@@ -12,7 +12,7 @@ async function findOrder(sessionId: string) {
   if (!/^cs_[A-Za-z0-9_]{8,200}$/.test(sessionId)) return null;
   try {
     const [row] = await db
-      .select({ number: orders.orderNumber, status: orders.status, method: orders.fulfillmentMethod })
+      .select({ number: orders.orderNumber, status: orders.status })
       .from(payments)
       .innerJoin(orders, eq(orders.id, payments.orderId))
       .where(eq(payments.providerPaymentId, sessionId));
@@ -39,7 +39,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
       <h1 className="t-h1 mt-4">{paid ? "Thank you! Order confirmed." : "Thanks! We're confirming your payment."}</h1>
       <p className="muted mt-3">Order <strong className="text-[var(--text)]">{order.number}</strong>. Stripe emails your receipt.</p>
       <p className="muted mt-2">
-        {order.method === "pickup" ? "We'll email you to set a pickup time in Bentonville." : "We'll email tracking when it ships."}
+        We&apos;ll email tracking when it ships.
         {!paid ? " This page updates once Stripe confirms; refresh in a minute." : ""}
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">

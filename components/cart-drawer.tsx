@@ -94,7 +94,7 @@ export function CartDrawer() {
                 <span className="muted">Subtotal</span>
                 <span className="price text-xl">{formatCents(cart.subtotalCents)}</span>
               </div>
-              <p className="dim mt-1 text-sm">Shipping or free Bentonville pickup is chosen at checkout. Sales tax isn&apos;t collected yet.</p>
+              <p className="dim mt-1 text-sm">Shipping (by weight) and sales tax are calculated at checkout.</p>
               {cart.checkoutEnabled === false ? (
                 <>
                   <button type="button" className="btn btn-primary btn-block mt-4" aria-disabled="true" disabled>Checkout coming soon</button>
