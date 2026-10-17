@@ -86,3 +86,22 @@ export function generatorDeps(): GenDeps {
     recordUsage: (e) => db.insert(aiUsageEvents).values({ ...e, actorRole: "blog", imageCount: 0, billedVia: "free_staff" }).catch(() => null),
   };
 }
+
+export async function slugExists(slug: string): Promise<boolean> {
+  const [r] = await db.select({ id: blogPosts.id }).from(blogPosts).where(eq(blogPosts.slug, slug)).limit(1);
+  return Boolean(r);
+}
+
+/** Draft API insert. Callers build values with draftRow(), which pins status to "draft". */
+export async function insertApiDraft(values: typeof blogPosts.$inferInsert) {
+  const [row] = await db.insert(blogPosts).values({ ...values, status: "draft" }).returning({ id: blogPosts.id, slug: blogPosts.slug, title: blogPosts.title });
+  return row;
+}
+
+/** Draft API cleanup: deletes only a still-DRAFT post that the API created. Never touches AI or published posts. */
+export async function deleteApiDraft(id: string): Promise<"deleted" | "not_found" | "not_draft"> {
+  const rows = await db.delete(blogPosts).where(and(eq(blogPosts.id, id), eq(blogPosts.status, "draft"), eq(blogPosts.source, "api"))).returning({ id: blogPosts.id });
+  if (rows.length) return "deleted";
+  const [r] = await db.select({ status: blogPosts.status }).from(blogPosts).where(eq(blogPosts.id, id)).limit(1);
+  return r ? "not_draft" : "not_found";
+}

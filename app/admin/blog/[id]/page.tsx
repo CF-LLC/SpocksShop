@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PostBody } from "@/components/blog/post-body";
+import { PostCover, ProductLinks } from "@/components/blog/post-extras";
 import { AdminNotice } from "@/components/admin/notice";
 import { postById, picksByIds } from "@/lib/blog/repo";
 import { draftProblems, wordCount } from "@/lib/blog/rules";
@@ -41,10 +42,10 @@ export default async function AdminBlogPostPage({ params, searchParams }: Props)
 
       <article className="rounded-2xl border border-slate-200 bg-white p-4 md:p-8" aria-label="Preview">
         <p className="mb-4 rounded-lg border border-slate-200 p-3 text-sm">{AMAZON_ASSOCIATES_DISCLOSURE}</p>
-        <p className="text-xs uppercase tracking-wide text-slate-500">{post.kind.replace("_", " ")} · {wordCount(post.bodyMd)} words · keyword “{post.targetKeyword}”</p>
+        <p className="text-xs uppercase tracking-wide text-slate-500">{post.kind.replace("_", " ")} · {wordCount(post.bodyMd)} words · keyword “{post.targetKeyword}” · source {post.source}{post.tags.length ? ` · tags: ${post.tags.join(", ")}` : ""}</p>
         <h1 className="mt-2 text-2xl font-semibold md:text-3xl">{post.title}</h1>
         <p className="mt-2 text-slate-600">{post.description}</p>
-        <div className="mt-6"><PostBody bodyMd={post.bodyMd} picks={picks} /></div>
+        <div className="mt-6"><PostCover url={post.coverImageUrl} title={post.title} /><PostBody bodyMd={post.bodyMd} picks={picks} /><ProductLinks links={post.productLinks} /></div>
       </article>
 
       <form id="edit" action={`/api/admin/blog/${post.id}`} method="post" className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">

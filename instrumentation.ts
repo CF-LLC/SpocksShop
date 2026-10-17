@@ -5,7 +5,7 @@ export async function register() {
   // Order-approval holds: 24h / day-5 reminders and the 6-day auto-cancel.
   const { startApprovalSweeper } = await import("./lib/approval/scheduler");
   startApprovalSweeper();
-  // Blog: up to BLOG_DRAFTS_PER_WEEK AI drafts (0 = off). Never publishes on its own.
+  // Blog: scheduled AI drafts are off unless BLOG_AI_SCHEDULE=on (then up to BLOG_DRAFTS_PER_WEEK). Never publishes on its own.
   const { startBlogDraftScheduler } = await import("./lib/blog/scheduler");
   startBlogDraftScheduler();
 }

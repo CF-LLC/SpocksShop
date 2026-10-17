@@ -23,3 +23,11 @@ export function draftsPerWeek(env: Env = process.env): number {
   if (!Number.isFinite(n) || n <= 0) return 0;
   return Math.min(Math.floor(n), 14);
 }
+
+/**
+ * Scheduled AI (Gemini) drafting is OFF unless BLOG_AI_SCHEDULE=on. Drafts now arrive through
+ * POST /api/blog/drafts; the manual "Generate draft" button in /admin/blog still works.
+ */
+export function scheduledGenerationEnabled(env: Env = process.env): boolean {
+  return env.BLOG_AI_SCHEDULE?.trim().toLowerCase() === "on";
+}
