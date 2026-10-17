@@ -39,7 +39,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold">Orders</h1>
         <p className="text-sm text-slate-600">
-          {checkoutOn ? "Website checkout is on." : "Website checkout is off (STRIPE_CHECKOUT_ENABLED)."} Items that require approval are only authorized at checkout. Accept charges the card; Decline releases it. Holds auto-cancel after 6 days.
+          {checkoutOn ? "Website checkout is on." : "Website checkout is off (STRIPE_CHECKOUT_ENABLED)."} Items that require approval are held at checkout when the payment method allows it (cards, Apple/Google Pay, Link, Klarna, Affirm, Afterpay, Cash App Pay, Amazon Pay); crypto and bank payments are charged right away. Accept captures the hold (or just confirms a captured payment); Decline releases the hold or refunds in full. Orders auto-cancel after 6 days.
         </p>
       </div>
       <AdminNotice {...await searchParams} />

@@ -2,7 +2,7 @@
 
 Closet Picks are also listed on Depop, so an item can sell elsewhere between listing and checkout.
 Items with **Requires my approval** (default on for Closet Picks; checkbox on the item edit page) go through
-Stripe Checkout with `payment_intent_data.capture_method=manual`: the card is authorized, not charged.
+Stripe Checkout with dynamic payment methods and per-method `payment_method_options[<type>][capture_method]=manual`: holdable methods (card incl. Apple/Google Pay, Link, Klarna, Affirm, Afterpay, Cash App Pay, Amazon Pay) are authorized, not charged; methods that can't be held (crypto/stablecoins, ACH) are charged immediately and refunded in full on Decline. See `docs/payments.md`.
 
 Flow
 

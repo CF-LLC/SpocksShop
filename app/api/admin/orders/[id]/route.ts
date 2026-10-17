@@ -15,6 +15,7 @@ const messages: Record<ApprovalResult, { ok?: string; error?: string }> = {
   not_awaiting: { error: "This order isn't waiting for approval." },
   conflict: { error: "Item is no longer available." },
   stripe_error: { error: "Stripe didn't confirm it. Nothing changed; try again." },
+  payment_processing: { error: "The buyer's bank payment is still settling (can take a few days). Try again once it clears." },
   stripe_unavailable: { error: "Stripe isn't configured (STRIPE_SECRET_KEY), so holds can't be captured or released." },
 };
 
@@ -29,6 +30,6 @@ export const POST = adminForm<Ctx>("/admin/orders", async ({ request, form, cont
   if (intent === "accept") result = await acceptOrder(deps, id);
   else if (intent === "decline") result = await declineOrder(deps, id, { kind: "declined", reason: String(form.get("reason") ?? "").trim() || undefined });
   else throw new AdminInputError("Unknown action.");
-  const msg = result === "updated" ? { ok: intent === "accept" ? "Accepted: card charged, buyer emailed." : "Declined: hold released, item back in the shop, buyer emailed." } : messages[result];
+  const msg = result === "updated" ? { ok: intent === "accept" ? "Accepted: payment captured (or already captured), buyer emailed." : "Declined: hold released or payment fully refunded, item back in the shop, buyer emailed." } : messages[result];
   return back(request, "/admin/orders", msg);
 });
