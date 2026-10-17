@@ -10,7 +10,7 @@ export type ShippingRateRow = {
 export type ShippingQuote =
   | {
       ok: true;
-      method: "pickup" | "ship";
+      method: "ship";
       weightLb: number;
       amountCents: number;
       rateId: string | null;
@@ -19,21 +19,10 @@ export type ShippingQuote =
   | { ok: false; error: string };
 
 export function quoteShipping(input: {
-  method: "pickup" | "ship";
+  method: "ship";
   weightLb: number;
   rates: ShippingRateRow[];
 }): ShippingQuote {
-  if (input.method === "pickup") {
-    return {
-      ok: true,
-      method: "pickup",
-      weightLb: input.weightLb,
-      amountCents: 0,
-      rateId: null,
-      rateName: "Bentonville pickup",
-    };
-  }
-
   if (!(input.weightLb > 0)) {
     return { ok: false, error: "Shipment weight must be greater than zero." };
   }

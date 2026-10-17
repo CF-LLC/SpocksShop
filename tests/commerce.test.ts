@@ -19,8 +19,8 @@ describe("commerce", () => {
     expect(computeOrderTotal({ goodsSubtotalCents: 1000, shippingCents: 500, taxCents: 100 })).toBe(1600);
     expect(() => computeOrderTotal({ goodsSubtotalCents: -1, shippingCents: 0, taxCents: 0 })).toThrow();
   });
-  it("quotes pickup free and requires a matching rate", () => {
-    expect(quoteShipping({ method: "pickup", weightLb: 2, rates: [] })).toMatchObject({ ok: true, amountCents: 0 });
+  it("requires a positive weight and a matching rate (ship-only)", () => {
+    expect(quoteShipping({ method: "ship", weightLb: 0, rates: [] }).ok).toBe(false);
     expect(quoteShipping({ method: "ship", weightLb: 2, rates: [] }).ok).toBe(false);
   });
   it("charges no tax outside AR and refuses unverified rows for live", () => {

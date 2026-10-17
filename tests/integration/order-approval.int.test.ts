@@ -60,7 +60,7 @@ run("order approval against Postgres (Stripe mocked)", () => {
   /** Reserve + authorize, as checkout + webhook would. */
   async function held(at = new Date(), piState?: string) {
     const p = await product();
-    const r = await reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" }, {});
+    const r = await reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "ship" }, {});
     const s = session(r.order.id);
     // As createCheckout does after the session is created.
     await db.insert(schema.payments).values({ orderId: r.order.id, paymentProvider: "stripe", paymentStatus: "pending", providerPaymentId: s.id, amountCents: r.order.totalCents, currency: "USD" });
@@ -86,7 +86,7 @@ run("order approval against Postgres (Stripe mocked)", () => {
 
   it("reserve marks the order as needing approval", async () => {
     const p = await product();
-    const r = await reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" }, {});
+    const r = await reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "ship" }, {});
     expect(r.order.requiresApproval).toBe(true);
     expect(r.lines[0].requiresApproval).toBe(true);
   });
@@ -107,19 +107,19 @@ run("order approval against Postgres (Stripe mocked)", () => {
 
   it("double-purchase guard: a held item can't be checked out again, even concurrently", async () => {
     const { p } = await held();
-    await expect(reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" }, {})).rejects.toBeInstanceOf(CheckoutError);
+    await expect(reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "ship" }, {})).rejects.toBeInstanceOf(CheckoutError);
     const q = await product();
-    const results = await Promise.allSettled(Array.from({ length: 5 }, () => reserveOrder(db, { items: [{ productId: q.id, quantity: 1 }], method: "pickup" }, {})));
+    const results = await Promise.allSettled(Array.from({ length: 5 }, () => reserveOrder(db, { items: [{ productId: q.id, quantity: 1 }], method: "ship" }, {})));
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
     expect((await stock(q.id)).quantityReserved).toBe(1);
   });
 
   it("late webhook after the hold lapsed and someone else bought it: voids the auth, emails the buyer, no double hold", async () => {
     const p = await product();
-    const first = await reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" }, {});
+    const first = await reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "ship" }, {});
     await db.update(schema.orders).set({ createdAt: new Date(Date.now() - 3 * 3600_000) }).where(eq(schema.orders.id, first.order.id));
     await releaseStalePending(db);
-    const second = await reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" }, {});
+    const second = await reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "ship" }, {});
     expect(await onApprovalCheckoutCompleted(deps(), second.order.id, session(second.order.id))).toBe("updated");
     sent.length = 0;
     const late = session(first.order.id, "pi_late");
@@ -132,7 +132,7 @@ run("order approval against Postgres (Stripe mocked)", () => {
 
   it("late webhook after the hold lapsed but item still free: re-takes the hold", async () => {
     const p = await product();
-    const r = await reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" }, {});
+    const r = await reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "ship" }, {});
     await db.update(schema.orders).set({ createdAt: new Date(Date.now() - 3 * 3600_000) }).where(eq(schema.orders.id, r.order.id));
     await releaseStalePending(db);
     expect(await onApprovalCheckoutCompleted(deps(), r.order.id, session(r.order.id))).toBe("updated");
@@ -189,7 +189,7 @@ run("order approval against Postgres (Stripe mocked)", () => {
     expect(await declineOrder(deps(), orderId)).toBe("duplicate");
     expect(await acceptOrder(deps(), orderId)).toBe("not_awaiting");
     expect(stripe.paymentIntents.cancel).toHaveBeenCalledTimes(1);
-    await expect(reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "pickup" }, {})).resolves.toBeTruthy();
+    await expect(reserveOrder(db, { items: [{ productId: p.id, quantity: 1 }], method: "ship" }, {})).resolves.toBeTruthy();
   });
 
   it("decline treats an already-canceled PaymentIntent as done", async () => {

@@ -14,7 +14,7 @@ export const checkoutInputSchema = z.object({
     .array(z.object({ productId: z.uuid(), quantity: z.number().int().min(1).max(MAX_QTY) }))
     .min(1, "Your cart is empty.")
     .max(MAX_LINES),
-  method: z.enum(["pickup", "ship"]),
+  method: z.literal("ship").default("ship"),
 });
 export type CheckoutInput = z.infer<typeof checkoutInputSchema>;
 
@@ -80,13 +80,13 @@ export type PricedLine = { productId: string; title: string; sku: string; unitPr
 /**
  * Build the Checkout Session request. Every amount comes from the database lines passed in, never from the client.
  * Tax: off by default. With STRIPE_TAX_ENABLED=true, Stripe Tax computes it (prices are tax-exclusive) and
- * needs a customer address: shipping address for "ship", billing address for "pickup".
+ * uses the shipping address (every order ships; local pickup was removed).
  */
 export function buildSessionParams(input: {
   orderId: string;
   orderNumber: string;
   lines: PricedLine[];
-  method: "pickup" | "ship";
+  method: "ship";
   shipping: { amountCents: number; name: string };
   origin: string;
   now?: Date;
@@ -128,9 +128,8 @@ export function buildSessionParams(input: {
         },
       },
     ],
-    ...(input.method === "ship" ? { shipping_address_collection: { allowed_countries: ["US"] } } : {}),
+    shipping_address_collection: { allowed_countries: ["US"] },
     automatic_tax: { enabled: Boolean(tax) },
-    ...(tax && input.method === "pickup" ? { billing_address_collection: "required" as const } : {}),
     phone_number_collection: { enabled: false },
     expires_at: Math.floor(now.getTime() / 1000) + SESSION_TTL_MINUTES * 60,
     success_url: `${input.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,

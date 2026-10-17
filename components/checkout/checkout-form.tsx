@@ -8,7 +8,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 
 export function CheckoutForm({ checkoutEnabled, shippingRates }: { checkoutEnabled: boolean; shippingRates: { name: string; amountCents: number }[] }) {
   const cart = useCart();
-  const [method, setMethod] = useState<"pickup" | "ship">("pickup");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -32,7 +31,7 @@ export function CheckoutForm({ checkoutEnabled, shippingRates }: { checkoutEnabl
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ items: cart.lines, method }),
+        body: JSON.stringify({ items: cart.lines, method: "ship" }),
       });
       const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
       if (res.ok && data.url) {
@@ -69,27 +68,21 @@ export function CheckoutForm({ checkoutEnabled, shippingRates }: { checkoutEnabl
           })}
         </ul>
 
-        <fieldset className="mt-6">
-          <legend className="t-h3 mb-3">How do you want it?</legend>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className={`panel flex min-h-[44px] cursor-pointer gap-3 p-4 ${method === "pickup" ? "border-[var(--gold)]" : ""}`}>
-              <input type="radio" name="method" value="pickup" checked={method === "pickup"} onChange={() => setMethod("pickup")} className="mt-1 h-5 w-5 accent-[var(--gold)]" />
-              <span><span className="block font-semibold">Local pickup · Free</span><span className="muted text-sm">Bentonville, AR. We&apos;ll email to set a time.</span></span>
-            </label>
-            <label className={`panel flex min-h-[44px] cursor-pointer gap-3 p-4 ${method === "ship" ? "border-[var(--gold)]" : ""}`}>
-              <input type="radio" name="method" value="ship" checked={method === "ship"} onChange={() => setMethod("ship")} className="mt-1 h-5 w-5 accent-[var(--gold)]" />
-              <span><span className="block font-semibold">Ship to me (US)</span><span className="muted text-sm">{shippingRates.length ? `By weight: ${shippingRates.map((r) => `${r.name} ${formatCents(r.amountCents)}`).join(", ")}.` : "Rate by weight, shown on the payment page."}</span></span>
-            </label>
+        <section className="mt-6" aria-labelledby="delivery-title">
+          <h2 id="delivery-title" className="t-h3 mb-3">Delivery</h2>
+          <div className="panel flex min-h-[44px] gap-3 border-[var(--gold)] p-4" data-testid="shipping-info">
+            <span aria-hidden="true">📦</span>
+            <span><span className="block font-semibold">Ships to you (US)</span><span className="muted text-sm">{shippingRates.length ? `By weight: ${shippingRates.map((r) => `${r.name} ${formatCents(r.amountCents)}`).join(", ")}.` : "Rate by weight, shown on the payment page."}</span></span>
           </div>
-        </fieldset>
+        </section>
       </section>
 
       <aside className="panel h-fit p-5" aria-labelledby="summary-title">
         <h2 id="summary-title" className="t-h3 mb-3">Summary</h2>
         <dl className="grid gap-2 text-sm">
           <div className="flex justify-between"><dt className="muted">Items</dt><dd>{formatCents(cart.subtotalCents)}</dd></div>
-          <div className="flex justify-between"><dt className="muted">{method === "pickup" ? "Pickup" : "Shipping"}</dt><dd>{method === "pickup" ? "Free" : "Calculated next"}</dd></div>
-          <div className="flex justify-between"><dt className="muted">Sales tax</dt><dd>Not collected</dd></div>
+          <div className="flex justify-between"><dt className="muted">Shipping</dt><dd>Calculated next</dd></div>
+          <div className="flex justify-between"><dt className="muted">Sales tax</dt><dd>Calculated next</dd></div>
         </dl>
         {checkoutEnabled ? (
           <>
@@ -101,7 +94,7 @@ export function CheckoutForm({ checkoutEnabled, shippingRates }: { checkoutEnabl
         ) : (
           <div className="mt-5" data-testid="checkout-coming-soon">
             <button type="button" className="btn btn-primary btn-block" disabled aria-disabled="true">Checkout coming soon</button>
-            <p className="muted mt-3 text-sm">Online payment is almost ready. Your cart is saved on this device. Want an item now? <Link className="link" href="/contact">Contact us</Link> to arrange pickup.</p>
+            <p className="muted mt-3 text-sm">Online payment is almost ready. Your cart is saved on this device. Want an item now? <Link className="link" href="/contact">Contact us</Link> to ask about it.</p>
           </div>
         )}
         {unavailable.length ? <p className="mt-3 text-sm text-[var(--warn)]">Remove items marked not available to continue.</p> : null}

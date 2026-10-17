@@ -17,7 +17,7 @@ export default function AboutPage() {
 
       <section className="grid gap-4">
         {[
-          { s: SHOP_SECTIONS.closet, href: "/shop?tab=closet", body: "Each item is a single, real piece with its own photos and condition notes. Buy online with Stripe or pick up locally." },
+          { s: SHOP_SECTIONS.closet, href: "/shop?tab=closet", body: "Each item is a single, real piece with its own photos and condition notes. Buy online with Stripe and we ship it to you." },
           { s: SHOP_SECTIONS.affiliate, href: "/shop?tab=amazon", body: `These link to Amazon, where you buy directly from Amazon. ${AMAZON_ASSOCIATES_DISCLOSURE} Prices shown are approximate and can change on Amazon.` },
         ].map(({ s, href, body }) => (
           <Link key={s.id} href={href} className="panel block p-6 hover:border-[var(--line-strong)]">
@@ -30,7 +30,7 @@ export default function AboutPage() {
       <section className="panel p-6">
         <h2 className="t-h2">Buying from Closet Picks</h2>
         <ul className="muted mt-3 grid list-disc gap-2 pl-5">
-          <li>Free local pickup in Bentonville, AR, or US shipping priced by weight.</li>
+          <li>US shipping priced by weight, shipped from Bentonville, AR.</li>
           <li>Payments are processed by Stripe. We never see your card number.</li>
           <li>Items are held for you for 30 minutes while you pay.</li>
           <li>Sales tax isn&apos;t collected online yet.</li>

@@ -1,5 +1,7 @@
 # Self-host plan: mini PC, inventory, marketplaces
 
+> **Update (Oct 2026):** local pickup was removed. Every Closet order ships; pickup notes below are historical.
+
 **Decision:** Run Spock's Resale Shop on hardware you own. Pay only for things you cannot replace: domain, electricity, Stripe/crypto network fees when a site sale happens, and marketplace selling fees.
 
 **Locked choices (2026-09-05 / 2026-09-07)**

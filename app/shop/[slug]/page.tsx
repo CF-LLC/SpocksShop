@@ -113,11 +113,10 @@ export default async function ProductPage({ params }: Params) {
           ) : null}
 
           <section className="panel p-5">
-            <h2 className="t-h3 mb-2">Pickup &amp; shipping</h2>
+            <h2 className="t-h3 mb-2">Shipping</h2>
             <ul className="muted grid gap-1 text-sm">
-              <li>Free local pickup in Bentonville, Arkansas.</li>
               <li>{fromRate != null ? `US shipping by weight, from ${formatCents(fromRate)}.` : "US shipping by weight, quoted at checkout."}</li>
-              <li>Sales tax isn&apos;t collected online yet.</li>
+              <li>Sales tax is calculated at checkout.</li>
             </ul>
             <p className="mt-3 text-sm"><Link href="/contact" className="link">Questions about this item?</Link></p>
           </section>

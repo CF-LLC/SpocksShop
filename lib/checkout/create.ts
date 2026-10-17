@@ -57,7 +57,7 @@ export async function reserveOrder(database: Database, input: CheckoutInput, env
     const rates = await tx.select().from(shippingRates);
     const quote = quoteShipping({ method: input.method, weightLb: Math.round(weight * 100) / 100, rates });
     if (!quote.ok) {
-      throw new CheckoutError(input.method === "ship" ? "We can't quote shipping for this cart yet. Choose local pickup or contact us." : quote.error, 409);
+      throw new CheckoutError("We can't quote shipping for this cart yet. Please contact us and we'll sort it out.", 409);
     }
 
     const subtotal = priced.reduce((s, l) => s + l.unitPriceCents * l.quantity, 0);
@@ -87,7 +87,7 @@ export async function reserveOrder(database: Database, input: CheckoutInput, env
         .set({ quantityReserved: sql`${inventory.quantityReserved} + ${l.quantity}`, updatedAt: new Date() })
         .where(eq(inventory.productId, l.productId));
     }
-    return { order, lines: priced, shipping: { amountCents: quote.amountCents, name: quote.method === "pickup" ? "Local pickup (Bentonville, AR)" : `Shipping (${quote.rateName})` } };
+    return { order, lines: priced, shipping: { amountCents: quote.amountCents, name: `Shipping (${quote.rateName})` } };
   });
 }
 

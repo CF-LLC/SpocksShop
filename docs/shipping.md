@@ -2,7 +2,7 @@
 
 Two fulfillment methods:
 
-- **Pickup (Bentonville):** shipping amount is always `$0`. Pickup location is stored on the order.
+- **Local pickup was removed (Oct 2026).** Every order ships; checkout only accepts `method: "ship"`. Older orders may still show `pickup` in `fulfillment_method`.
 - **Ship:** server sums item weights and matches the admin weight table.
 
 The browser never decides the shipping charge.

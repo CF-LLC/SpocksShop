@@ -32,8 +32,7 @@ describe("checkout session for approval items", () => {
     const ship = buildSessionParams({ ...base, requiresApproval: true, tax });
     expect(ship.automatic_tax).toEqual({ enabled: true });
     expect(ship.shipping_address_collection).toEqual({ allowed_countries: ["US"] });
-    const pickup = buildSessionParams({ ...base, method: "pickup", requiresApproval: true, tax });
-    expect(pickup.billing_address_collection).toBe("required");
+    expect(ship.billing_address_collection).toBeUndefined();
   });
   it("normal items keep automatic capture", () => {
     const p = buildSessionParams(base);

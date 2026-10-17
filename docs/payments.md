@@ -21,13 +21,13 @@ The API version is pinned in `lib/stripe.ts` (`2026-09-30.endive`, the version s
 
 `STRIPE_TAX_ENABLED=true` turns on `automatic_tax`. Prices and shipping are sent as tax-exclusive, with tax codes
 `STRIPE_PRODUCT_TAX_CODE` (default `txcd_99999999`, general tangible goods) and `STRIPE_SHIPPING_TAX_CODE` (default `txcd_92010001`).
-Stripe needs a customer location, so shipped orders use the shipping address and pickup orders require a billing address.
+Stripe needs a customer location, so every order ships, so it uses the shipping address (local pickup was removed).
 The webhook accepts `amount_total = order total + amount_tax` and records the tax on the order.
 Before turning it on: activate Stripe Tax, set the origin address (Bentonville, AR) and add the Arkansas registration in the dashboard.
 
 ## Flow
 
-1. `/checkout`: the shopper picks **local pickup** (free, Bentonville) or **ship** (US, rate by total weight from `shipping_rates`).
+1. `/checkout`: every order ships (US, rate by total weight from `shipping_rates`); local pickup was removed.
 2. `POST /api/checkout` (same-origin only) takes product ids + quantities only. In one transaction it locks inventory rows, prices every line from the DB, creates a `pending` order + `order_items`, and increments `quantity_reserved`.
 3. A Checkout Session is created with those DB prices, one fixed shipping option, `automatic_tax` off (the tax row is unverified), and `expires_at` = 30 minutes. If Stripe fails, the hold is released.
 4. `POST /api/stripe/webhook` verifies the `Stripe-Signature` on the raw body, then:
