@@ -5,7 +5,7 @@ import type { db as Db } from "@/lib/db";
 import { inventory, photos, productImports, products } from "@/lib/db/schema";
 import { autoSku, slugify } from "@/lib/admin/forms";
 import { MAX_PHOTOS, MAX_PHOTO_BYTES, deleteMedia, savePhoto, sniffImage, CONTENT_TYPES } from "@/lib/media";
-import { FetchError, isUserFacing, MAX_PAGE_BYTES, POLITE_DELAY_MS, httpFetch, sleep, type Fetcher } from "./fetch";
+import { FetchError, isBlocked, isUserFacing, MAX_PAGE_BYTES, POLITE_DELAY_MS, httpFetch, sleep, type Fetcher } from "./fetch";
 import { DepopParseError, parseDepopListing, type DepopListing } from "./parse";
 import { isAllowedPhotoUrl, parseLinkList } from "./url";
 
@@ -26,7 +26,13 @@ export type ImportDeps = {
   removePhoto?: (relative: string) => Promise<void>;
   delayMs?: number;
   wait?: (ms: number) => Promise<void>;
+  /** Called after each link is handled (bulk jobs use it for live progress). */
+  onResult?: (r: LinkResult) => void;
+  /** Max links read from the text (default 20). */
+  maxLinks?: number;
 };
+
+export const BLOCKED_SKIP = "Not tried: Depop asked us to slow down, so the import stopped. Paste this link again later or add it by hand.";
 
 async function defaultSave(bytes: Uint8Array, ext: string, folder: string) {
   const type = CONTENT_TYPES[ext];
@@ -34,24 +40,27 @@ async function defaultSave(bytes: Uint8Array, ext: string, folder: string) {
 }
 
 /** Import each pasted link in order, one page at a time with a polite pause between requests. */
-export async function importDepopLinks(text: string, deps: ImportDeps): Promise<{ results: LinkResult[]; tooMany: boolean }> {
+export async function importDepopLinks(text: string, deps: ImportDeps): Promise<{ results: LinkResult[]; tooMany: boolean; stopped: boolean }> {
   const fetcher = deps.fetcher ?? httpFetch;
   const wait = deps.wait ?? sleep;
   const delay = deps.delayMs ?? POLITE_DELAY_MS;
   const save = deps.savePhotoBytes ?? defaultSave;
   const remove = deps.removePhoto ?? deleteMedia;
-  const { lines, tooMany } = parseLinkList(text);
+  const { lines, tooMany } = parseLinkList(text, deps.maxLinks);
   const validUrls = lines.flatMap((l) => (l.check.ok ? [l.check.url] : []));
   const existing = validUrls.length ? await deps.store.existing([...new Set(validUrls)]) : new Map();
   const seen = new Set<string>();
   const results: LinkResult[] = [];
+  const push = (r: LinkResult) => { results.push(r); deps.onResult?.(r); };
   let requested = false;
+  let stopped = false;
 
   for (const { input, check } of lines) {
-    if (!check.ok) { results.push({ input, status: "error", error: check.error }); continue; }
+    if (stopped) { push({ input, status: "error", error: BLOCKED_SKIP }); continue; }
+    if (!check.ok) { push({ input, status: "error", error: check.error }); continue; }
     const dup = existing.get(check.url);
-    if (dup) { results.push({ input, status: "duplicate", id: dup.id, title: dup.title }); continue; }
-    if (seen.has(check.url)) { results.push({ input, status: "duplicate", id: null, title: "Listed twice in this paste" }); continue; }
+    if (dup) { push({ input, status: "duplicate", id: dup.id, title: dup.title }); continue; }
+    if (seen.has(check.url)) { push({ input, status: "duplicate", id: null, title: "Listed twice in this paste" }); continue; }
     seen.add(check.url);
 
     if (requested) await wait(delay);
@@ -78,15 +87,16 @@ export async function importDepopLinks(text: string, deps: ImportDeps): Promise<
       }
       await deps.store.create({ id, listing, url: check.url, photoPaths: saved });
       const notes = [skipped ? `${skipped} photo${skipped === 1 ? "" : "s"} skipped` : "", listing.currency && listing.currency.toUpperCase() !== "USD" ? `price was in ${listing.currency}, check it` : ""].filter(Boolean);
-      results.push({ input, status: "imported", id, title: listing.title, photos: saved.length, ...(notes.length ? { note: notes.join("; ") } : {}) });
+      push({ input, status: "imported", id, title: listing.title, photos: saved.length, ...(notes.length ? { note: notes.join("; ") } : {}) });
     } catch (e) {
       await Promise.all(saved.map((p) => remove(p)));
       const error = isUserFacing(e) ? e.message : "Unexpected error while importing (logged).";
       if (!isUserFacing(e)) await logError("depop-import", e, { url: check.url });
-      results.push({ input, status: "error", error });
+      if (isBlocked(e)) stopped = true;
+      push({ input, status: "error", error });
     }
   }
-  return { results, tooMany };
+  return { results, tooMany, stopped };
 }
 
 /** Draft description: Depop text plus size, so nothing is lost; Cooper edits it in the item editor. */

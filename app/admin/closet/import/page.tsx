@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { AdminNotice } from "@/components/admin/notice";
 import { decodeResults } from "@/lib/depop/results";
-import { MAX_LINKS_PER_SUBMIT } from "@/lib/depop/url";
+import { MAX_LINKS_PER_JOB, MAX_LINKS_PER_SUBMIT } from "@/lib/depop/url";
+import { bookmarkletHref } from "@/lib/depop/bookmarklet";
+import { BookmarkletButton, BulkImporter } from "./bulk-importer";
 import type { LinkResult } from "@/lib/depop/import";
 
 const BADGE: Record<LinkResult["status"], string> = {
@@ -21,11 +23,20 @@ export default async function DepopImportPage({ searchParams }: { searchParams: 
       <Link href="/admin/closet" className="inline-flex min-h-[44px] items-center text-sm text-slate-600">← All closet items</Link>
       <h1 className="text-2xl font-semibold">Import from Depop links</h1>
       <p className="text-sm text-slate-600">
-        Paste links to <strong>your own</strong> Depop listings, one per line (up to {MAX_LINKS_PER_SUBMIT}). Each page is fetched once, one at a time,
+        Paste links to <strong>your own</strong> Depop listings, one per line. Each page is fetched once, one at a time,
         and becomes a <strong>draft</strong> Closet Pick that needs approval: title, photos, price, size, condition and description.
         Nothing goes live until you review and publish it. The Depop link is kept internally for duplicate checks and is never shown to shoppers.
       </p>
       <AdminNotice ok={sp.ok} error={sp.error} />
+
+      <section aria-labelledby="bulk-title" className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4" data-testid="depop-bulk">
+        <h2 id="bulk-title" className="text-lg font-semibold">Bulk import your whole Depop shop</h2>
+        <BookmarkletButton href={bookmarkletHref()} />
+        <p className="text-sm text-slate-600">Drag the button to your bookmarks bar, open depop.com/spock13, click the bookmark, wait for the count, then paste the copied links below.</p>
+        <BulkImporter maxLinks={MAX_LINKS_PER_JOB} />
+      </section>
+
+      <h2 className="text-lg font-semibold">Or import up to {MAX_LINKS_PER_SUBMIT} links at once</h2>
 
       {results && counts ? (
         <section aria-labelledby="results-title" className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3 sm:p-4" data-testid="depop-results">
