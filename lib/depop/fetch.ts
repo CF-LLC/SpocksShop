@@ -6,7 +6,17 @@ export const POLITE_DELAY_MS = 2_500;
 /** Error whose message is safe to show Cooper. Checked by flag, not instanceof, so it survives duplicate module copies. */
 export class FetchError extends Error {
   readonly userFacing = true;
+  /** HTTP status when Depop answered with an error (403/429 mean "back off": the bulk importer stops). */
+  constructor(message: string, readonly httpStatus?: number) {
+    super(message);
+  }
 }
+
+/** True when Depop is refusing or rate-limiting us; the importer must stop instead of retrying more links. */
+export const isBlocked = (e: unknown): boolean => {
+  const s = (e as { httpStatus?: number } | null)?.httpStatus;
+  return s === 403 || s === 429;
+};
 
 export const isUserFacing = (e: unknown): e is Error => e instanceof Error && (e as { userFacing?: boolean }).userFacing === true;
 
@@ -30,7 +40,7 @@ export const httpFetch: Fetcher = async (url, { maxBytes, accept }) => {
   }
   if (res.status >= 300 && res.status < 400) throw new FetchError("Depop redirected that link (the listing may be sold, removed or private).");
   if (res.status === 404 || res.status === 410) throw new FetchError("Depop says that listing doesn't exist.");
-  if (res.status === 403 || res.status === 429) throw new FetchError(`Depop refused the request (HTTP ${res.status}). Try again later or add this item by hand.`);
+  if (res.status === 403 || res.status === 429) throw new FetchError(`Depop refused the request (HTTP ${res.status}). Try again later or add this item by hand.`, res.status);
   if (!res.ok) throw new FetchError(`Depop returned HTTP ${res.status}.`);
   const declared = Number(res.headers.get("content-length") ?? "0");
   if (declared > maxBytes) throw new FetchError("Response is too large.");

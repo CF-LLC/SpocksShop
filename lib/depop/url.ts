@@ -1,4 +1,7 @@
 export const MAX_LINKS_PER_SUBMIT = 20;
+/** Bulk paste (bookmarklet output): up to ~200 links, processed in batches of MAX_LINKS_PER_SUBMIT. */
+export const MAX_LINKS_PER_JOB = 200;
+export const BATCH_SIZE = MAX_LINKS_PER_SUBMIT;
 
 export type LinkCheck = { ok: true; url: string } | { ok: false; error: string };
 
@@ -26,12 +29,12 @@ export function normalizeDepopUrl(input: string): LinkCheck {
 
 export type ParsedLinks = { lines: { input: string; check: LinkCheck }[]; tooMany: boolean };
 
-/** Split the textarea into non-empty lines and validate each. */
-export function parseLinkList(text: string): ParsedLinks {
-  const inputs = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+/** Split the textarea into links (newlines, spaces or commas) and validate each. */
+export function parseLinkList(text: string, max: number = MAX_LINKS_PER_SUBMIT): ParsedLinks {
+  const inputs = text.split(/[\s,]+/).map((l) => l.trim()).filter(Boolean);
   return {
-    lines: inputs.slice(0, MAX_LINKS_PER_SUBMIT).map((input) => ({ input, check: normalizeDepopUrl(input) })),
-    tooMany: inputs.length > MAX_LINKS_PER_SUBMIT,
+    lines: inputs.slice(0, max).map((input) => ({ input, check: normalizeDepopUrl(input) })),
+    tooMany: inputs.length > max,
   };
 }
 
