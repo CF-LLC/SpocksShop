@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { isSameOrigin } from "@/lib/same-origin";
 import { dbStore } from "@/lib/depop/import";
+import { MAX_PAYLOAD_CHARS } from "@/lib/depop/payload";
 import { JobBusyError, runningJob, startImportJob } from "@/lib/depop/jobs";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Send JSON: { links }." }, { status: 400 });
   }
   if (!text.trim()) return NextResponse.json({ error: "Paste at least one Depop listing link." }, { status: 400 });
-  if (text.length > 100_000) return NextResponse.json({ error: "That's too much text. Paste up to 200 links." }, { status: 413 });
+  if (text.length > MAX_PAYLOAD_CHARS) return NextResponse.json({ error: "That's too much text. Paste up to 200 links." }, { status: 413 });
   try {
     const { job } = startImportJob(text, { store: dbStore(db) });
     return NextResponse.json({ id: job.id, total: job.total, tooMany: job.tooMany }, { status: 202 });

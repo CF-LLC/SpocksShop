@@ -32,7 +32,7 @@ export default async function DepopImportPage({ searchParams }: { searchParams: 
       <section aria-labelledby="bulk-title" className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4" data-testid="depop-bulk">
         <h2 id="bulk-title" className="text-lg font-semibold">Bulk import your whole Depop shop</h2>
         <BookmarkletButton href={bookmarkletHref()} />
-        <p className="text-sm text-slate-600">Drag the button to your bookmarks bar, open depop.com/spock13, click the bookmark, wait for the count, then paste the copied links below.</p>
+        <p className="text-sm text-slate-600">Drag the button to your bookmarks bar, open depop.com/spock13, click the bookmark, wait while it reads each listing in your browser (about a second each), then paste what it copied below. If you added the bookmark before Oct 20, 2026 evening, delete it and drag this button again.</p>
         <BulkImporter maxLinks={MAX_LINKS_PER_JOB} />
       </section>
 
