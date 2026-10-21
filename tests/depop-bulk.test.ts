@@ -95,7 +95,7 @@ describe("bookmarklet", () => {
   const run = async (host: string, anchors: string[][], clipboardOk: boolean) => {
     let page = 0;
     const els: unknown[] = [];
-    const mk = () => { const el: Record<string, unknown> = { children: [] as unknown[], setAttribute() {}, appendChild(c: unknown) { (el.children as unknown[]).push(c); }, remove() {}, focus() {}, select() {} }; els.push(el); return el; };
+    const mk = () => { const attrs: Record<string, string> = {}; const el: Record<string, unknown> = { children: [] as unknown[], setAttribute(k: string, v: string) { attrs[k] = v; }, get outerHTML() { return `<meta property="${attrs.property}" content="${attrs.content}">`; }, appendChild(c: unknown) { (el.children as unknown[]).push(c); }, remove() {}, focus() {}, select() {} }; els.push(el); return el; };
     let copied: string | null = null;
     const alerts: string[] = [];
     const doc = {
@@ -107,21 +107,35 @@ describe("bookmarklet", () => {
     const win = { scrollTo: () => { page = Math.min(page + 1, anchors.length - 1); } };
     const nav = { clipboard: { writeText: async (t: string) => { if (!clipboardOk) throw new Error("denied"); copied = t; } } };
     const fakeTimeout = (fn: () => void) => { fn(); return 0; };
-    const f = new Function("window", "document", "location", "navigator", "alert", "setTimeout", `return ${BOOKMARKLET_SOURCE};`);
-    const count = await f(win, doc, new URL(`https://${host}/spock13/`), nav, (m: string) => alerts.push(m), fakeTimeout);
+    const fetched: string[] = [];
+    const fakeFetch = async (u: string) => { fetched.push(u); return u.endsWith("-c/") ? { ok: false, status: 404 } : { ok: true, text: async () => u }; };
+    class FakeParser { parseFromString(u: string) { return {
+      querySelectorAll: (sel: string) => sel.startsWith("script") ? [{ textContent: `{"@type":"Product","name":"${u}"}` }] : [{ getAttribute: (k: string) => (k === "property" ? "og:title" : k === "content" ? "T" : null) }, { getAttribute: (k: string) => (k === "name" ? "viewport" : null) }],
+      querySelector: () => ({ textContent: "Title | Depop" }),
+    }; } }
+    const f = new Function("window", "document", "location", "navigator", "alert", "setTimeout", "fetch", "DOMParser", `return ${BOOKMARKLET_SOURCE};`);
+    const count = await f(win, doc, new URL(`https://${host}/spock13/`), nav, (m: string) => alerts.push(m), fakeTimeout, fakeFetch, FakeParser);
     const texts = els.map((e) => (e as { value?: string }).value).filter(Boolean);
-    return { count, copied, alerts, texts };
+    return { count, copied, alerts, texts, fetched };
   };
 
   it("scrolls until nothing new loads and copies unique normalized product links", async () => {
     const r = await run("www.depop.com", [["/products/spock13-a/", "/products/spock13-a/?x=1", "/spock13/"], ["https://www.depop.com/products/SPOCK13-B"], ["/products/spock13-c/"]], true);
     expect(r.count).toBe(3);
-    expect(r.copied).toBe(["a", "b", "c"].map((x) => `https://www.depop.com/products/spock13-${x}/`).join("\n"));
+    const urls = ["a", "b", "c"].map((x) => `https://www.depop.com/products/spock13-${x}/`);
+    expect(r.fetched).toEqual(urls);
+    const p = JSON.parse(r.copied!);
+    expect(p.kind).toBe("spockshop-depop");
+    expect(p.items.map((i: { url: string }) => i.url)).toEqual(urls);
+    expect(p.items[0].html).toContain('<script type="application/ld+json">{"@type":"Product","name":"https://www.depop.com/products/spock13-a/"}</script>');
+    expect(p.items[0].html).toContain('<meta property="og:title" content="T">');
+    expect(p.items[0].html).not.toContain("viewport");
+    expect(p.items[2]).toEqual({ url: urls[2], error: "HTTP 404" });
   });
   it("falls back to a textarea when clipboard access is denied", async () => {
     const r = await run("www.depop.com", [["/products/spock13-a/"]], false);
     expect(r.copied).toBeNull();
-    expect(r.texts).toContain("https://www.depop.com/products/spock13-a/");
+    expect(r.texts.join("")).toContain('"url":"https://www.depop.com/products/spock13-a/"');
   });
   it("refuses to run off Depop", async () => {
     const r = await run("spockshop.com", [["/products/x/"]], true);

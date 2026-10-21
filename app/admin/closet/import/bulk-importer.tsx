@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ImportJob } from "@/lib/depop/jobs";
+import { countPasted } from "@/lib/depop/payload";
 
 const POLL_MS = 2000;
 
@@ -23,7 +24,7 @@ export function BulkImporter({ maxLinks }: { maxLinks: number }) {
   const [job, setJob] = useState<ImportJob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const count = text.split(/[\s,]+/).filter(Boolean).length;
+  const count = countPasted(text);
 
   // Pick up a job that is still running after a page reload.
   useEffect(() => {
@@ -78,7 +79,7 @@ export function BulkImporter({ maxLinks }: { maxLinks: number }) {
       <div className="surface-panel space-y-3 rounded-2xl p-4">
         <label className="block text-sm font-medium" htmlFor="bulk-links">Depop listing links (up to {maxLinks})</label>
         <textarea id="bulk-links" rows={8} value={text} onChange={(e) => setText(e.target.value)} disabled={running}
-          placeholder={"Paste what the bookmark copied, one link per line"} className="field-input w-full font-mono text-xs" />
+          placeholder={"Paste exactly what the bookmark copied"} className="field-input w-full font-mono text-xs" />
         <p className="text-xs text-slate-500">{count} link{count === 1 ? "" : "s"} pasted{count > maxLinks ? ` (only the first ${maxLinks} will be imported)` : ""}. Duplicates and items you already imported are skipped. Imports run on the server in batches of 20 with a ~2.5 second pause per listing (about 10 minutes for 200), so you can leave this page open or come back later.</p>
         <button type="button" onClick={start} disabled={busy || running || !count} className="btn btn-primary w-full sm:w-auto">{running ? "Importing…" : "Import all as drafts"}</button>
         {error ? <p role="alert" className="text-sm text-red-800">{error}</p> : null}

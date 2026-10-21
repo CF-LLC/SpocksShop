@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
 import { logError } from "@/lib/errors/log";
 import { BLOCKED_SKIP, importDepopLinks, type ImportDeps, type LinkResult } from "./import";
-import { POLITE_DELAY_MS, sleep } from "./fetch";
+import { httpFetch, POLITE_DELAY_MS, sleep } from "./fetch";
+import { capturedFetcher, readPaste } from "./payload";
 import { BATCH_SIZE, MAX_LINKS_PER_JOB, parseLinkList } from "./url";
 
 /**
@@ -45,7 +46,9 @@ export function startImportJob(text: string, deps: Omit<ImportDeps, "onResult" |
   sweep();
   const busy = runningJob();
   if (busy) throw new JobBusyError(busy.id);
-  const { lines, tooMany } = parseLinkList(text, MAX_LINKS_PER_JOB);
+  const pasted = readPaste(text);
+  if (pasted.captured) deps = { ...deps, fetcher: capturedFetcher(pasted.captured, deps.fetcher ?? httpFetch) };
+  const { lines, tooMany } = parseLinkList(pasted.text, MAX_LINKS_PER_JOB);
   const job: ImportJob = { id: randomUUID(), state: "running", total: lines.length, processed: 0, batches: 0, batch: 0, tooMany, results: [], startedAt: Date.now(), finishedAt: null };
   const add = (r: LinkResult) => { job.results.push(r); job.processed++; };
 
