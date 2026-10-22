@@ -8,6 +8,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { BottomNav } from "@/components/bottom-nav";
 import { CartDrawer } from "@/components/cart-drawer";
 import { communitySellersEnabled } from "@/lib/features";
+import { EventTracker } from "@/components/analytics";
+
+// Cloudflare Web Analytics (free, cookieless). Public site token, not a secret.
+const CF_BEACON_TOKEN = "08ec89e094ba4f04b285654afdfe320c";
 
 // Feature flags and Stripe keys are read at request time, not baked in at build.
 export const dynamic = "force-dynamic";
@@ -42,7 +46,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           </div>
           <BottomNav sellersEnabled={communitySellersEnabled()} isAdmin={isAdmin} />
           <CartDrawer />
+          {isAdmin ? null : <EventTracker />}
         </Providers>
+        {isAdmin ? null : (
+          <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={JSON.stringify({ token: CF_BEACON_TOKEN })} />
+        )}
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigserial,
   boolean,
   check,
   date,
@@ -285,6 +286,8 @@ export const photos = pgTable(
     communityListingId: uuid("community_listing_id").references(() => communityListings.id, { onDelete: "cascade" }),
     // Path relative to the media volume (/var/spocks/media).
     storagePath: text("storage_path").notNull(),
+    // Set while a background-removed cut-out replaces the photo; Revert restores this file.
+    originalStoragePath: text("original_storage_path"),
     alt: text("alt").notNull().default(""),
     width: integer("width"),
     height: integer("height"),
@@ -399,3 +402,12 @@ export const productImports = pgTable(
   },
   (t) => [check("product_imports_source_valid", sql`${t.source} in ('depop')`)],
 );
+
+/** First-party, cookieless event counts. Stores no IPs, user ids or other personal data. */
+export const analyticsEvents = pgTable("analytics_events", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  name: text("name").notNull(),
+  path: text("path"),
+  ref: text("ref"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
