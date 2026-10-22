@@ -13,6 +13,7 @@ function isStaffRole(role: string) {
 const schema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+  remember: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -26,6 +27,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
-  await createSession({ userId: user.id, email: user.email, role: user.role as "admin" | "staff" });
+  await createSession({
+    userId: user.id,
+    email: user.email,
+    role: user.role as "admin" | "staff",
+    sessionVersion: user.sessionVersion,
+    remember: body.data.remember === true,
+  });
   return NextResponse.json({ ok: true });
 }

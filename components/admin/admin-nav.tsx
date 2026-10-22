@@ -14,9 +14,14 @@ export function AdminNav({ links, email }: { links: readonly (readonly [string, 
         </Link>
       ))}
       {email ? (
-        <form action="/api/admin/logout" method="post" className="ml-auto">
-          <button className="font-medium text-slate-600 hover:bg-slate-100" type="submit">Sign out</button>
-        </form>
+        <div className="ml-auto flex items-center">
+          <form action="/api/admin/logout" method="post">
+            <button className="font-medium text-slate-600 hover:bg-slate-100" type="submit">Sign out</button>
+          </form>
+          <form action="/api/admin/logout-all" method="post">
+            <button className="font-medium text-slate-500 hover:bg-slate-100" type="submit" title="Signs out every device, including this one">Sign out everywhere</button>
+          </form>
+        </div>
       ) : null}
     </nav>
   );
