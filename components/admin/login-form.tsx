@@ -15,6 +15,7 @@ export function AdminLoginForm() {
       body: JSON.stringify({
         email: form.get("email"),
         password: form.get("password"),
+        remember: form.get("remember") === "on",
       }),
     });
     if (!response.ok) {
@@ -34,6 +35,11 @@ export function AdminLoginForm() {
         Password
         <input name="password" type="password" required className="field-input mt-1 w-full" />
       </label>
+      <label className="flex items-center gap-2 text-sm">
+        <input name="remember" type="checkbox" defaultChecked />
+        Remember this device for 90 days
+      </label>
+      <p className="text-xs text-slate-500">Unchecked, you stay signed in for 30 days of activity. Only use this on your own device.</p>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
       <button className="btn btn-primary" type="submit">
         Sign in

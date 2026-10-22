@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jwtVerify } from "jose";
+import { ADMIN_COOKIE, cookieOptions, shouldRefresh, signAdminToken, verifyAdminToken, secretKey } from "@/lib/auth/admin-token";
+import { isSessionCurrent } from "@/lib/auth/revocation";
 import { blogHostDecision, hostOf } from "@/lib/blog/host";
 import { blogHost } from "@/lib/blog/config";
 
@@ -22,25 +23,38 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("spocks_admin")?.value;
+  const token = request.cookies.get(ADMIN_COOKIE)?.value;
   const secret = process.env.SESSION_SECRET;
-  if (!token || !secret) {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    return NextResponse.redirect(new URL("/admin/login", request.url));
-  }
+  const deny = () => {
+    const res = pathname.startsWith("/api/")
+      ? NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      : NextResponse.redirect(new URL("/admin/login", request.url));
+    if (token) res.cookies.set(ADMIN_COOKIE, "", { ...cookieOptions(false), maxAge: 0 });
+    return res;
+  };
+  if (!token || !secret) return deny();
 
   try {
-    // Audience must match lib/auth/session.ts so seller tokens can't open /admin.
-    await jwtVerify(token, new TextEncoder().encode(secret), { audience: "spocks:admin" });
-    return NextResponse.next();
+    // Audience must match lib/auth/admin-token.ts so seller tokens can't open /admin.
+    const key = secretKey(secret);
+    const claims = await verifyAdminToken(token, key);
+    // Server-side revocation ("log out everywhere", role removed, user deleted).
+    if (!(await isSessionCurrent(claims.userId, claims.sv))) return deny();
+    const res = NextResponse.next();
+    // Sliding refresh: active use keeps the 30d / 90d session alive.
+    if (shouldRefresh(claims)) {
+      const fresh = await signAdminToken({ userId: claims.userId, email: claims.email, role: claims.role, sv: claims.sv, rm: claims.rm }, key);
+      res.cookies.set(ADMIN_COOKIE, fresh, cookieOptions(claims.rm));
+    }
+    return res;
   } catch {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    return deny();
   }
 }
 
 export const config = {
+  // Node runtime so the middleware can check session revocation in Postgres.
+  runtime: "nodejs",
   // Everything except static build assets: the blog host rewrite needs to see page paths.
   matcher: ["/((?!_next/static|_next/image).*)"],
 };

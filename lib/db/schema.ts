@@ -22,6 +22,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["admin", "staff", "seller"] }).notNull().default("admin"),
+  /** Bumped by "log out everywhere"; admin tokens carry the version they were issued under. */
+  sessionVersion: integer("session_version").notNull().default(0),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
