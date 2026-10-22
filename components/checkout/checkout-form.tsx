@@ -1,5 +1,7 @@
 "use client";
 
+import { track } from "@/components/analytics";
+
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/contexts/cart-context";
@@ -25,6 +27,7 @@ export function CheckoutForm({ checkoutEnabled, shippingRates }: { checkoutEnabl
   const unavailable = cart.lines.filter((l) => cart.verified[l.productId] && !cart.verified[l.productId].purchasable);
 
   async function pay() {
+    track("checkout_start");
     setBusy(true);
     setError(null);
     try {

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AdminNotice, type NoticeParams } from "@/components/admin/notice";
 import { ClosetForm } from "@/components/admin/closet-form";
 import { PhotoUploader } from "@/components/admin/photo-uploader";
+import { PhotoBgTools } from "@/components/admin/photo-bg-tools";
 import { centsToDollars, formatCents } from "@/lib/commerce/money";
 import { db } from "@/lib/db";
 import { categories, inventory, photos, productImports, products } from "@/lib/db/schema";
@@ -66,6 +67,7 @@ export default async function EditClosetItemPage({ params, searchParams }: { par
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={mediaUrl(ph.storagePath)} alt={ph.alt} className="checker aspect-square w-full rounded-lg object-contain" />
                 {i === 0 ? <p className="mt-1 text-center text-xs font-semibold text-amber-800">Cover photo</p> : null}
+                <PhotoBgTools photoId={ph.id} src={mediaUrl(ph.storagePath)} hasOriginal={!!ph.originalStoragePath} />
                 <div className="mt-1 grid grid-cols-3 gap-1">
                   <form action={`/api/admin/photos/${ph.id}`} method="post"><input type="hidden" name="intent" value="up" /><button className="btn btn-outline w-full px-0" disabled={i === 0} aria-label="Move earlier">↑</button></form>
                   <form action={`/api/admin/photos/${ph.id}`} method="post"><input type="hidden" name="intent" value="down" /><button className="btn btn-outline w-full px-0" disabled={i === pics.length - 1} aria-label="Move later">↓</button></form>

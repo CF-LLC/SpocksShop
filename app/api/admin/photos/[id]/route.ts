@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { photos } from "@/lib/db/schema";
 import { AdminInputError, adminForm, back } from "@/lib/admin/http";
 import { reorder } from "@/lib/admin/forms";
-import { deleteMedia } from "@/lib/media";
+import { NextResponse } from "next/server";
+import { MediaError, deleteMedia, photoFiles, savePhoto } from "@/lib/media";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -17,7 +18,33 @@ export const POST = adminForm<Ctx>("/admin/closet", async ({ request, form, cont
   if (intent === "delete") {
     await db.delete(photos).where(eq(photos.id, id));
     await deleteMedia(photo.storagePath);
+    if (photo.originalStoragePath) await deleteMedia(photo.originalStoragePath);
     return back(request, page, { ok: "Photo deleted." });
+  }
+  // Replace the photo with a background-removed cut-out made in the admin's browser; keep the original.
+  if (intent === "cutout") {
+    const json = (request.headers.get("accept") ?? "").includes("application/json");
+    const fail = (error: string) => (json ? NextResponse.json({ error }, { status: 400 }) : back(request, page, { error }));
+    const [file] = photoFiles(form, "photo");
+    if (!file) return fail("No cut-out image was sent.");
+    let saved: string;
+    try {
+      saved = await savePhoto(file, `closet/${photo.productId}`);
+    } catch (e) {
+      if (e instanceof MediaError) return fail(e.message);
+      throw e;
+    }
+    const keep = photo.originalStoragePath ?? photo.storagePath;
+    await db.update(photos).set({ storagePath: saved, originalStoragePath: keep }).where(eq(photos.id, id));
+    // A previous cut-out (not the original) is no longer needed.
+    if (photo.originalStoragePath) await deleteMedia(photo.storagePath);
+    return json ? NextResponse.json({ ok: "Background removed." }) : back(request, page, { ok: "Background removed." });
+  }
+  if (intent === "revert") {
+    if (!photo.originalStoragePath) throw new AdminInputError("This photo is already the original.");
+    await db.update(photos).set({ storagePath: photo.originalStoragePath, originalStoragePath: null }).where(eq(photos.id, id));
+    await deleteMedia(photo.storagePath);
+    return back(request, page, { ok: "Original photo restored." });
   }
   if (intent !== "up" && intent !== "down") throw new AdminInputError("Unknown action.");
 

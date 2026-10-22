@@ -56,8 +56,8 @@ export async function normalizePhoto(file: Blob): Promise<{ blob: Blob; bitmap: 
   return { blob, bitmap: await createImageBitmap(c) };
 }
 
-/** Returns a cut-out (transparent background) PNG/WebP of the photo. */
-export async function removeBackground(bitmap: ImageBitmap): Promise<Blob> {
+/** Returns a cut-out of the photo: transparent (WebP/PNG) by default, or flattened onto white (JPEG). */
+export async function removeBackground(bitmap: ImageBitmap, background: "transparent" | "white" = "transparent"): Promise<Blob> {
   const { ort, session } = await loadSession();
   const small = canvas(SIZE, SIZE);
   const sctx = small.getContext("2d", { willReadFrequently: true })!;
@@ -90,6 +90,14 @@ export async function removeBackground(bitmap: ImageBitmap): Promise<Blob> {
   octx.globalCompositeOperation = "destination-in";
   octx.imageSmoothingQuality = "high";
   octx.drawImage(small, 0, 0, w, h);
+  if (background === "white") {
+    const flat = canvas(w, h);
+    const fctx = flat.getContext("2d")!;
+    fctx.fillStyle = "#ffffff";
+    fctx.fillRect(0, 0, w, h);
+    fctx.drawImage(outC, 0, 0);
+    return toBlob(flat, "image/jpeg", 0.9);
+  }
   // WebP keeps alpha and is far smaller than PNG; Safari falls back to PNG.
   const webp = await toBlob(outC, "image/webp", 0.9);
   return webp.type === "image/webp" ? webp : toBlob(outC, "image/png");
