@@ -76,7 +76,7 @@ export function ClosetManager({ rows, trash, returnTo, total }: { rows: ManagerR
   const bulkButtons: Action[] = trash ? ["restore", "purge"] : ["publish", "unpublish", "mark_sold", "archive", "trash"];
 
   return (
-    <div className="space-y-3 pb-24 sm:pb-0">
+    <div className="space-y-3 pb-40 sm:pb-0">
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 text-sm" data-testid="bulk-bar">
         <label className="flex min-h-[44px] items-center gap-2 px-2">
           <input type="checkbox" className="h-5 w-5" checked={allOn} onChange={() => setSel(allOn ? new Set() : new Set(ids))} aria-label="Select all shown" />
@@ -166,7 +166,7 @@ export function ClosetManager({ rows, trash, returnTo, total }: { rows: ManagerR
       </ul>
 
       {selected.length ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 overflow-x-auto border-t border-slate-200 bg-white p-2 shadow-lg sm:hidden" data-testid="mobile-bulk-bar">
+        <div style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }} className="fixed inset-x-2 z-[60] flex rounded-2xl border gap-2 overflow-x-auto border-slate-300 bg-white p-2 shadow-xl sm:hidden" data-testid="mobile-bulk-bar">
           <span className="self-center whitespace-nowrap px-1 text-sm font-semibold">{selected.length}</span>
           {bulkButtons.map((a) => (
             <button key={a} type="button" onClick={() => run(a, selected)} className={`btn whitespace-nowrap px-3 text-sm ${a === "trash" || a === "purge" ? "border-red-700 text-red-700" : "btn-outline"}`}>{VERB[a]}</button>
