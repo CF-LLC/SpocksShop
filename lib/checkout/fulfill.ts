@@ -118,7 +118,10 @@ export async function upsertCustomer(tx: Parameters<Parameters<Database["transac
 }
 
 export async function saveAddress(tx: Parameters<Parameters<Database["transaction"]>[0]>[0], customerId: string | null, session: Stripe.Checkout.Session): Promise<string | null> {
-  const ship = session.collected_information?.shipping_details;
+  // Current API puts it under collected_information; older API versions used session.shipping_details.
+  type Ship = { name?: string | null; address?: Stripe.Address | null } | null | undefined;
+  const legacy = (session as unknown as { shipping_details?: Ship }).shipping_details;
+  const ship: Ship = session.collected_information?.shipping_details ?? legacy;
   const a = ship?.address;
   if (!a?.line1 || !a.city || !a.state || !a.postal_code) return null;
   const [row] = await tx
