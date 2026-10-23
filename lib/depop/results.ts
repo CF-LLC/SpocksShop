@@ -5,6 +5,7 @@ const schema = z.array(
   z.discriminatedUnion("status", [
     z.object({ input: z.string().max(500), status: z.literal("imported"), id: z.string().uuid(), title: z.string().max(200), photos: z.number().int().min(0), note: z.string().max(200).optional() }),
     z.object({ input: z.string().max(500), status: z.literal("duplicate"), id: z.string().uuid().nullable(), title: z.string().max(200).nullable() }),
+    z.object({ input: z.string().max(500), status: z.literal("updated"), id: z.string().uuid(), title: z.string().max(200), changes: z.array(z.string().max(400)).max(10) }),
     z.object({ input: z.string().max(500), status: z.literal("sold"), title: z.string().max(200) }),
     z.object({ input: z.string().max(500), status: z.literal("error"), error: z.string().max(300) }),
   ]),

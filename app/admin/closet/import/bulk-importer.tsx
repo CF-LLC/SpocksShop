@@ -68,11 +68,27 @@ export function BulkImporter({ maxLinks }: { maxLinks: number }) {
     }
   }, [text]);
 
+  const syncShop = useCallback(async () => {
+    setError(null); setBusy(true); setJob(null);
+    try {
+      const r = await fetch("/api/admin/depop/shop-sync", { method: "POST" });
+      const d = await r.json();
+      if (r.status === 409 && d.id) { setJobId(d.id); return; }
+      if (!r.ok) { setError(d.error ?? `HTTP ${r.status}`); return; }
+      setJobId(d.id);
+    } catch {
+      setError("Couldn't start the sync. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }, []);
+
   const running = job?.state === "running";
   const imported = job?.results.filter((r) => r.status === "imported") ?? [];
   const dupes = job?.results.filter((r) => r.status === "duplicate") ?? [];
   const failed = job?.results.filter((r) => r.status === "error") ?? [];
   const sold = job?.results.filter((r) => r.status === "sold") ?? [];
+  const updated = job?.results.filter((r) => r.status === "updated") ?? [];
   const pct = job && job.total ? Math.round((job.processed / job.total) * 100) : 0;
 
   return (
@@ -81,7 +97,8 @@ export function BulkImporter({ maxLinks }: { maxLinks: number }) {
         <label className="block text-sm font-medium" htmlFor="bulk-links">Depop listing links (up to {maxLinks})</label>
         <textarea id="bulk-links" rows={8} value={text} onChange={(e) => setText(e.target.value)} disabled={running}
           placeholder={"Paste exactly what the bookmark copied"} className="field-input w-full font-mono text-xs" />
-        <p className="text-xs text-slate-500">{count} link{count === 1 ? "" : "s"} pasted{count > maxLinks ? ` (only the first ${maxLinks} will be imported)` : ""}. Sold listings, duplicates and items you already imported are skipped. Imports run on the server in batches of 20 with a ~2.5 second pause per listing (about 10 minutes for 200), so you can leave this page open or come back later.</p>
+        <p className="text-xs text-slate-500">{count} link{count === 1 ? "" : "s"} pasted{count > maxLinks ? ` (only the first ${maxLinks} will be imported)` : ""}. Items you already imported are updated from Depop (price, title, description, size, photos; sold ones get marked Sold). New links that already sold and unchanged items are skipped. Imports run on the server in batches of 20 with a ~2.5 second pause per listing (about 10 minutes for 200), so you can leave this page open or come back later.</p>
+        <button type="button" onClick={syncShop} disabled={busy || running} className="btn btn-outline w-full sm:w-auto" data-testid="shop-sync">🔄 Sync from my Depop shop</button>
         <button type="button" onClick={start} disabled={busy || running || !count} className="btn btn-primary w-full sm:w-auto">{running ? "Importing…" : "Import all as drafts"}</button>
         {error ? <p role="alert" className="text-sm text-red-800">{error}</p> : null}
       </div>
@@ -90,18 +107,23 @@ export function BulkImporter({ maxLinks }: { maxLinks: number }) {
         <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4" data-testid="bulk-progress" aria-live="polite">
           <h2 className="text-lg font-semibold">{running ? "Importing…" : job.state === "done" ? "Import finished" : job.state === "stopped" ? "Import stopped: Depop asked us to slow down" : "Import failed (logged)"}</h2>
           <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200"><div className="h-full bg-emerald-600 transition-all" style={{ width: `${pct}%` }} /></div>
-          <p className="text-sm text-slate-700">{job.processed} of {job.total} handled{job.batches ? ` · batch ${job.batch || 1} of ${job.batches}` : ""} · {imported.length} imported as drafts · {sold.length} skipped: sold · {dupes.length} skipped: already imported · {failed.length} not imported</p>
+          <p className="text-sm text-slate-700">{job.processed} of {job.total} handled{job.batches ? ` · batch ${job.batch || 1} of ${job.batches}` : ""} · {imported.length} imported as drafts · {updated.length} updated · {sold.length} skipped: sold · {dupes.length} skipped: duplicate (no changes) · {failed.length} not imported</p>
           {job.tooMany ? <p className="text-sm text-amber-800">Only the first {maxLinks} links were taken. Paste the rest after this finishes.</p> : null}
           {imported.length ? (
             <details open={!running}><summary className="cursor-pointer text-sm font-semibold">Drafts to review ({imported.length})</summary>
               <ul className="mt-2 space-y-1 text-sm">{imported.map((r) => r.status === "imported" ? <li key={r.id}><Link href={`/admin/closet/${r.id}`} className="text-blue-700 underline">{r.title}</Link> <span className="text-slate-500">· {r.photos} photo{r.photos === 1 ? "" : "s"}{r.note ? ` · ${r.note}` : ""}</span></li> : null)}</ul>
             </details>
           ) : null}
+          {updated.length ? (
+            <details open={!running} data-testid="bulk-updated"><summary className="cursor-pointer text-sm font-semibold">Updated existing items ({updated.length})</summary>
+              <ul className="mt-2 space-y-1 text-sm">{updated.map((r, i) => r.status === "updated" ? <li key={`u${i}`}><span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-900">Updated</span> <Link href={`/admin/closet/${r.id}`} className="text-blue-700 underline">{r.title}</Link>: {r.changes.join("; ")}</li> : null)}</ul>
+            </details>
+          ) : null}
           {sold.length || dupes.length ? (
             <details data-testid="bulk-skipped"><summary className="cursor-pointer text-sm font-semibold">Skipped ({sold.length + dupes.length})</summary>
               <ul className="mt-2 space-y-1 text-sm">
                 {sold.map((r, i) => r.status === "sold" ? <li key={`s${i}`}><span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-900">Skipped: sold</span> {r.title}</li> : null)}
-                {dupes.map((r, i) => r.status === "duplicate" ? <li key={`d${i}`}><span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">Skipped: already imported</span> {r.id ? <Link href={`/admin/closet/${r.id}`} className="text-blue-700 underline">{r.title}</Link> : r.title}</li> : null)}
+                {dupes.map((r, i) => r.status === "duplicate" ? <li key={`d${i}`}><span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">Skipped: duplicate</span> {r.id ? <Link href={`/admin/closet/${r.id}`} className="text-blue-700 underline">{r.title}</Link> : r.title}</li> : null)}
               </ul>
             </details>
           ) : null}
