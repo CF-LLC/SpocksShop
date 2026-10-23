@@ -47,7 +47,7 @@ export function startImportJob(text: string, deps: Omit<ImportDeps, "onResult" |
   const busy = runningJob();
   if (busy) throw new JobBusyError(busy.id);
   const pasted = readPaste(text);
-  if (pasted.captured) deps = { ...deps, fetcher: capturedFetcher(pasted.captured, deps.fetcher ?? httpFetch) };
+  if (pasted.captured) deps = { ...deps, refreshExisting: true, fetcher: capturedFetcher(pasted.captured, deps.fetcher ?? httpFetch) };
   const { lines, tooMany } = parseLinkList(pasted.text, MAX_LINKS_PER_JOB);
   const job: ImportJob = { id: randomUUID(), state: "running", total: lines.length, processed: 0, batches: 0, batch: 0, tooMany, results: [], startedAt: Date.now(), finishedAt: null };
   const add = (r: LinkResult) => { job.results.push(r); job.processed++; };
