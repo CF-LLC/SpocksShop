@@ -105,6 +105,9 @@ export const products = pgTable(
   requiresApproval: boolean("requires_approval").notNull().default(false),
   images: jsonb("images").notNull().default(sql`'[]'::jsonb`),
   tags: jsonb("tags").notNull().default(sql`'[]'::jsonb`),
+  // Soft-delete Trash (admin only): status becomes 'trashed'; restore puts this status back.
+  trashedAt: timestamp("trashed_at", { withTimezone: true }),
+  trashedFromStatus: text("trashed_from_status"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
   },
