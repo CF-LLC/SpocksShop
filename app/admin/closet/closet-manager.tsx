@@ -47,7 +47,7 @@ export function ClosetManager({ rows, trash, returnTo, total }: { rows: ManagerR
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
-      if (confirm || e.metaKey || e.ctrlKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) {
+      if (confirm || e.metaKey || e.ctrlKey || e.altKey || /^(TEXTAREA|SELECT)$/.test(t.tagName) || (t.tagName === "INPUT" && (t as HTMLInputElement).type !== "checkbox")) {
         if (e.key === "Escape" && t.tagName === "INPUT" && t.hasAttribute("data-closet-search")) t.blur();
         return;
       }
