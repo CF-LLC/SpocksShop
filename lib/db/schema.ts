@@ -183,6 +183,32 @@ export const orders = pgTable("orders", {
   reminderDay5SentAt: timestamp("reminder_day5_sent_at", { withTimezone: true }),
   decidedAt: timestamp("decided_at", { withTimezone: true }),
   decisionReason: text("decision_reason"),
+  // Shipping labels (lib/shipping). Bought only by an explicit admin click.
+  shippedAt: timestamp("shipped_at", { withTimezone: true }),
+  trackingNumber: text("tracking_number"),
+  trackingCarrier: text("tracking_carrier"),
+  trackingUrl: text("tracking_url"),
+  trackingEmailSentAt: timestamp("tracking_email_sent_at", { withTimezone: true }),
+  shippingQuote: jsonb("shipping_quote"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const shippingLabels = pgTable("shipping_labels", {
+  id: id(),
+  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("purchasing"), // purchasing | purchased | failed
+  provider: text("provider").notNull().default("shippo"),
+  rateId: text("rate_id").notNull(),
+  transactionId: text("transaction_id"),
+  carrier: text("carrier"),
+  service: text("service"),
+  amountCents: integer("amount_cents"),
+  labelUrl: text("label_url"),
+  trackingNumber: text("tracking_number"),
+  trackingUrl: text("tracking_url"),
+  error: text("error"),
+  createdBy: uuid("created_by"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

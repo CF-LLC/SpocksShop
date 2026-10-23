@@ -19,7 +19,7 @@ function timeLeft(expires: Date | null, now: Date) {
 
 const statusLabel: Record<string, string> = {
   awaiting_approval: "Awaiting approval", capturing: "Charging…", declining: "Releasing…", paid: "Paid", paid_review: "Paid (review)",
-  declined: "Declined", hold_expired: "Auto-canceled", canceled: "Canceled", pending: "In checkout", processing: "Processing",
+  declined: "Declined", hold_expired: "Auto-canceled", canceled: "Canceled", pending: "In checkout", processing: "Processing", shipped: "Shipped",
 };
 
 export default async function AdminOrdersPage({ searchParams }: { searchParams: NoticeParams }) {
@@ -51,7 +51,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
             {queue.map((o) => (
               <li key={o.id} className="space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-4" data-testid="approval-card">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="font-mono text-sm font-semibold">{o.orderNumber}</span>
+                  <Link href={`/admin/orders/${o.id}`} className="font-mono text-sm font-semibold underline">{o.orderNumber}</Link>
                   <span className="text-lg font-semibold">{formatCents(o.totalCents)}</span>
                 </div>
                 <ul className="text-sm">
@@ -93,7 +93,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
             <ul className="space-y-2 sm:hidden">
               {rest.map((r) => (
                 <li key={r.id} className="rounded-xl border border-slate-200 p-3 text-sm">
-                  <div className="flex justify-between"><span className="font-mono">{r.orderNumber}</span><span>{formatCents(r.totalCents)}</span></div>
+                  <div className="flex justify-between"><Link href={`/admin/orders/${r.id}`} className="font-mono underline">{r.orderNumber}</Link><span>{formatCents(r.totalCents)}</span></div>
                   <div className="text-slate-600">{statusLabel[r.status] ?? r.status} · {r.salesChannel}</div>
                 </li>
               ))}
@@ -103,7 +103,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
               <tbody>
                 {rest.map((row) => (
                   <tr key={row.id} className="border-t">
-                    <td className="p-2 font-mono">{row.orderNumber}</td>
+                    <td className="p-2 font-mono"><Link className="underline" href={`/admin/orders/${row.id}`}>{row.orderNumber}</Link></td>
                     <td className="p-2">{row.salesChannel}</td>
                     <td className="p-2">{statusLabel[row.status] ?? row.status}</td>
                     <td className="p-2">{when(row.decidedAt)}</td>
