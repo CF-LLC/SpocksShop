@@ -9,14 +9,15 @@ import type { LinkResult } from "@/lib/depop/import";
 const BADGE: Record<LinkResult["status"], string> = {
   imported: "bg-emerald-100 text-emerald-900",
   duplicate: "bg-amber-100 text-amber-900",
+  sold: "bg-sky-100 text-sky-900",
   error: "bg-red-100 text-red-900",
 };
-const LABEL: Record<LinkResult["status"], string> = { imported: "Imported as draft", duplicate: "Already imported", error: "Not imported" };
+const LABEL: Record<LinkResult["status"], string> = { imported: "Imported as draft", duplicate: "Skipped: already imported", sold: "Skipped: sold", error: "Not imported" };
 
 export default async function DepopImportPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string; r?: string }> }) {
   const sp = await searchParams;
   const results = decodeResults(sp.r);
-  const counts = results ? { imported: results.filter((r) => r.status === "imported").length, duplicate: results.filter((r) => r.status === "duplicate").length, error: results.filter((r) => r.status === "error").length } : null;
+  const counts = results ? { imported: results.filter((r) => r.status === "imported").length, duplicate: results.filter((r) => r.status === "duplicate").length, sold: results.filter((r) => r.status === "sold").length, error: results.filter((r) => r.status === "error").length } : null;
 
   return (
     <section className="mx-auto max-w-3xl space-y-5">
@@ -32,7 +33,7 @@ export default async function DepopImportPage({ searchParams }: { searchParams: 
       <section aria-labelledby="bulk-title" className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4" data-testid="depop-bulk">
         <h2 id="bulk-title" className="text-lg font-semibold">Bulk import your whole Depop shop</h2>
         <BookmarkletButton href={bookmarkletHref()} />
-        <p className="text-sm text-slate-600">Drag the button to your bookmarks bar, open depop.com/spock13, click the bookmark, wait while it reads each listing in your browser (about a second each), then paste what it copied below. If you added the bookmark before Oct 20, 2026 evening, delete it and drag this button again.</p>
+        <p className="text-sm text-slate-600">Drag the button to your bookmarks bar, open depop.com/spock13, click the bookmark, wait while it reads each listing in your browser (about a second each), then paste what it copied below. If you added the bookmark before Oct 23, 2026, delete it and drag this button again so it also flags sold listings.</p>
         <BulkImporter maxLinks={MAX_LINKS_PER_JOB} />
       </section>
 
@@ -41,7 +42,7 @@ export default async function DepopImportPage({ searchParams }: { searchParams: 
       {results && counts ? (
         <section aria-labelledby="results-title" className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3 sm:p-4" data-testid="depop-results">
           <h2 id="results-title" className="text-lg font-semibold">Results</h2>
-          <p className="text-sm text-slate-700">{counts.imported} imported · {counts.duplicate} already imported · {counts.error} not imported</p>
+          <p className="text-sm text-slate-700">{counts.imported} imported · {counts.duplicate} already imported · {counts.sold} sold · {counts.error} not imported</p>
           <ul className="space-y-2">
             {results.map((r, i) => (
               <li key={i} className="rounded-xl border border-slate-200 p-3 text-sm">
@@ -54,6 +55,8 @@ export default async function DepopImportPage({ searchParams }: { searchParams: 
                     <Link href={`/admin/closet/${r.id}`} className="font-semibold text-blue-700 underline">{r.title}</Link>
                     <span className="text-slate-600"> · {r.photos} photo{r.photos === 1 ? "" : "s"}{r.note ? ` · ${r.note}` : ""}</span>
                   </p>
+                ) : r.status === "sold" ? (
+                  <p className="mt-1 text-slate-700">Skipped: sold on Depop, no draft made ({r.title})</p>
                 ) : r.status === "duplicate" ? (
                   <p className="mt-1 text-slate-700">{r.id ? <>Skipped, already a draft or item: <Link href={`/admin/closet/${r.id}`} className="font-semibold text-blue-700 underline">{r.title}</Link></> : r.title}</p>
                 ) : (

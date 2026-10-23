@@ -95,19 +95,11 @@ export default async function EditClosetItemPage({ params, searchParams }: { par
         {reserved > 0 ? (
           <p className="mt-1 text-sm text-red-900">This item is in an open checkout, so it can&apos;t be deleted right now.</p>
         ) : (
-          <details className="mt-2" data-testid="delete-confirm">
-            <summary className="btn btn-outline cursor-pointer list-none text-red-700">Delete…</summary>
-            <form action={`/api/admin/closet/${id}`} method="post" className="mt-3 space-y-3">
-              <input type="hidden" name="intent" value="delete" />
-              <p className="text-sm text-red-900">
-                Permanently delete <strong>{p.title}</strong>, its inventory and {pics.length} photo{pics.length === 1 ? "" : "s"}? Past orders keep their own copy of the title and price. This can&apos;t be undone. Tip: <em>Unpublish</em> hides it without deleting.
-              </p>
-              <label className="flex min-h-[44px] items-center gap-3 text-sm text-red-900">
-                <input type="checkbox" name="confirm" value="delete" required className="h-5 w-5" /> Yes, delete this item
-              </label>
-              <button type="submit" className="btn w-full border-red-700 bg-red-700 text-white">Delete permanently</button>
-            </form>
-          </details>
+          <form action={`/api/admin/closet/${id}`} method="post" className="mt-2 space-y-2" data-testid="delete-confirm">
+            <input type="hidden" name="intent" value="trash" />
+            <p className="text-sm text-red-900">Moves <strong>{p.title}</strong> to Trash and hides it from the shop. You can undo or restore it from Closet Picks → Trash; only &ldquo;Empty trash&rdquo; deletes it for good.</p>
+            <button type="submit" className="btn w-full border-red-700 bg-red-700 text-white sm:w-auto">🗑 Move to Trash</button>
+          </form>
         )}
       </section>
     </section>

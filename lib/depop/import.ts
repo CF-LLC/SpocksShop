@@ -12,6 +12,7 @@ import { isAllowedPhotoUrl, parseLinkList } from "./url";
 export type LinkResult =
   | { input: string; status: "imported"; id: string; title: string; photos: number; note?: string }
   | { input: string; status: "duplicate"; id: string | null; title: string | null }
+  | { input: string; status: "sold"; title: string }
   | { input: string; status: "error"; error: string };
 
 export type ImportStore = {
@@ -70,6 +71,8 @@ export async function importDepopLinks(text: string, deps: ImportDeps): Promise<
       const page = await fetcher(check.url, { maxBytes: MAX_PAGE_BYTES, accept: "text/html" });
       if (!/html/i.test(page.contentType)) throw new FetchError("Depop didn't return a web page.");
       const listing = parseDepopListing(new TextDecoder().decode(page.bytes));
+      // Already sold on Depop: no draft, no photo downloads.
+      if (listing.sold) { push({ input, status: "sold", title: listing.title }); continue; }
       if (listing.priceCents == null) throw new DepopParseError("Couldn't find a price on that page.");
       const id = randomUUID();
       const photoUrls = listing.photos.filter(isAllowedPhotoUrl).slice(0, MAX_PHOTOS);

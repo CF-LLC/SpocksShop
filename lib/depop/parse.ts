@@ -10,7 +10,31 @@ export type DepopListing = {
   conditionLabel: string | null;
   brand: string | null;
   photos: string[];
+  /** True when the page says the listing already sold (skip it on import). */
+  sold: boolean;
 };
+
+const SOLD_AVAIL = /(SoldOut|OutOfStock|Discontinued|out[ _-]?of[ _-]?stock|^oos$|^sold$)/i;
+/** Sold markers for THIS listing only: its JSON-LD Product offer availability and its meta tags. */
+export function soldFromHtml(html: string): boolean {
+  for (const k of ["product:availability", "og:availability", "product:sold"]) {
+    const v = meta(html, k);
+    if (v && (SOLD_AVAIL.test(v) || /^true$/i.test(v))) return true;
+  }
+  for (const s of scripts(html, /type\s*=\s*["']application\/ld\+json["']/i)) {
+    const data = tryJson(s);
+    const nodes = Array.isArray(data) ? data : isObj(data) && Array.isArray(data["@graph"]) ? (data["@graph"] as unknown[]) : [data];
+    for (const n of nodes) {
+      if (!isObj(n)) continue;
+      const type = n["@type"];
+      if (!(type === "Product" || (Array.isArray(type) && type.includes("Product")))) continue;
+      const offers = Array.isArray(n.offers) ? n.offers : [n.offers];
+      const avail = offers.map((o) => (isObj(o) ? str(o.availability) : null)).filter((x): x is string => !!x);
+      return avail.length > 0 && avail.every((v) => SOLD_AVAIL.test(v.replace(/^https?:\/\/schema\.org\//i, "")));
+    }
+  }
+  return false;
+}
 
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -192,6 +216,7 @@ export function parseDepopListing(html: string): DepopListing {
     conditionLabel: conditionRaw ? conditionRaw.replace(/^https?:\/\/schema\.org\//i, "") : null,
     brand: pick("brand") ?? null,
     photos,
+    sold: soldFromHtml(html),
   };
 }
 
