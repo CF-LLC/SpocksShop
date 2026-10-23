@@ -17,7 +17,7 @@ export const POST = adminForm<Ctx>("/admin/orders", async ({ request, form, cont
   if (intent === "rates") {
     const parcel = parseParcel(Object.fromEntries(form));
     if (!parcel) return back(request, path, { error: "Enter the box size (inches, up to 108) and weight (lb, up to 70)." });
-    const r = await getRates(deps, id, parcel);
+    const r = await getRates(deps, id, parcel, session.userId ?? null);
     return back(request, path, r.ok ? { ok: `Got ${r.quote.rates.length} USPS rates. Pick one and buy the label.` } : { error: r.error });
   }
   if (intent === "buy") {
