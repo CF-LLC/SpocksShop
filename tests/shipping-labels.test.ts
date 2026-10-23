@@ -1,12 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 import { buildSessionParams } from "../lib/checkout/core";
-import { shipFrom, shippoMode, trackingEmailEnabled } from "../lib/shipping/config";
+import { shippoMode, trackingEmailEnabled, type ShipAddress } from "../lib/shipping/config";
+import { shipFromSchema } from "../lib/shipping/ship-from";
 import { getShippo } from "../lib/shipping";
 import { createShippoClient, uspsTrackingUrl, type ShippoClient } from "../lib/shipping/shippo";
 import { buyLabel, getRates, NOT_CONFIGURED, parseParcel, trackingEmail, type ShippingDeps } from "../lib/shipping/service";
 import { logMailer } from "../lib/mail";
 
-const FROM = { SHIP_FROM_NAME: "Test Shop", SHIP_FROM_STREET1: "1 Test St", SHIP_FROM_CITY: "Testville", SHIP_FROM_STATE: "AR", SHIP_FROM_ZIP: "72701" };
+// Fake test address only.
+const FROM_ADDR: ShipAddress = { name: "Test Shop", street1: "1 Test St", city: "Testville", state: "ZZ", zip: "00000", country: "US" };
+const saved = async () => ({ ok: true as const, address: FROM_ADDR, owner: { userId: "u1" } });
+const unsaved = async () => ({ ok: false as const, owner: { userId: "u1" }, error: "Save your return address in Settings before buying labels." });
+const FROM = {};
 const ORDER = "44444444-4444-4444-8444-444444444444";
 
 /** Fake drizzle db: enough of select/insert/update chains for the service. */
@@ -67,6 +72,8 @@ describe("checkout collects a US shipping address", () => {
   });
 });
 
+const paid0 = () => ({ id: ORDER, orderNumber: "SPK-1", status: "paid", customerEmail: "buyer@example.com", shippingQuote: { shipmentId: "shp_1", rates, parcel, fetchedAt: "2026-10-23T00:00:00Z" } });
+
 describe("shipping config", () => {
   it("reports not configured without a key, and test vs live", () => {
     expect(shippoMode({})).toBe("not_configured");
@@ -74,10 +81,18 @@ describe("shipping config", () => {
     expect(shippoMode({ SHIPPO_API_KEY: "shippo_test_abc" })).toBe("test");
     expect(shippoMode({ SHIPPO_API_KEY: "shippo_live_abc" })).toBe("live");
   });
-  it("needs every required SHIP_FROM_* field; nothing hardcoded", () => {
-    expect(shipFrom({})).toEqual({ ok: false, missing: ["SHIP_FROM_NAME", "SHIP_FROM_STREET1", "SHIP_FROM_CITY", "SHIP_FROM_STATE", "SHIP_FROM_ZIP"] });
-    const r = shipFrom(FROM);
-    expect(r.ok && r.address).toMatchObject({ name: "Test Shop", zip: "72701", country: "US" });
+  it("validates per-account return addresses", () => {
+    expect(shipFromSchema.safeParse({ name: "Test Shop", street1: "1 Test St", city: "Testville", state: "zz", zip: "00000" })).toMatchObject({ success: true, data: { state: "ZZ", street2: null, phone: null } });
+    expect(shipFromSchema.safeParse({ name: "", street1: "1 Test St", city: "T", state: "ZZ", zip: "00000" }).success).toBe(false);
+    expect(shipFromSchema.safeParse({ name: "A", street1: "1 Test St", city: "T", state: "Zed", zip: "00000" }).success).toBe(false);
+    expect(shipFromSchema.safeParse({ name: "A", street1: "1 Test St", city: "T", state: "ZZ", zip: "123" }).success).toBe(false);
+  });
+  it("no SHIP_FROM_* env is read", async () => {
+    const shippo = mockShippo();
+    const { db } = fakeDb(paid0(), addr);
+    const r = await buyLabel({ db, shippo, mailer: logMailer, env: { SHIP_FROM_NAME: "x", SHIP_FROM_STREET1: "x", SHIP_FROM_CITY: "x", SHIP_FROM_STATE: "ZZ", SHIP_FROM_ZIP: "00000" }, shipFrom: unsaved }, ORDER, "r1", "u1");
+    expect(r).toMatchObject({ ok: false });
+    expect(shippo.buy).not.toHaveBeenCalled();
   });
   it("tracking email is off by default", () => {
     expect(trackingEmailEnabled({})).toBe(false);
@@ -99,9 +114,7 @@ describe("shippo client (mocked fetch)", () => {
       return new Response(JSON.stringify({ status: "SUCCESS", object_id: "tx", label_url: "https://l/x.pdf", tracking_number: "940", tracking_url_provider: "https://t/940" }));
     }) as unknown as typeof fetch;
     const c = createShippoClient("shippo_test_k", fetchImpl);
-    const from = shipFrom(FROM);
-    if (!from.ok) throw new Error();
-    const r = await c.rates(from.address, { ...from.address, name: "B" }, parcel);
+    const r = await c.rates(FROM_ADDR, { ...FROM_ADDR, name: "B" }, parcel);
     expect(r.rates).toEqual([{ id: "a", carrier: "USPS", service: "Ground Advantage", amountCents: 545, currency: "USD", days: 4 }]);
     expect((calls[0].init.headers as Record<string, string>).authorization).toBe("ShippoToken shippo_test_k");
     const b = await c.buy("a", "label-1");
@@ -119,22 +132,25 @@ describe("label service", () => {
 
   it("degrades gracefully without a Shippo key", async () => {
     const { db } = fakeDb(paid(), addr);
-    const deps = { db, shippo: null, mailer: logMailer, env: FROM };
+    const deps = { db, shippo: null, mailer: logMailer, env: FROM, shipFrom: saved };
     expect(await getRates(deps, ORDER, parcel)).toEqual({ ok: false, error: NOT_CONFIGURED });
     expect(await buyLabel(deps, ORDER, "r1", null)).toEqual({ ok: false, error: NOT_CONFIGURED });
   });
-  it("blocks purchase until the return address is set", async () => {
+  it("blocks purchase and rates until the selling account saved a return address", async () => {
     const shippo = mockShippo();
     const { db } = fakeDb(paid(), addr);
-    const r = await buyLabel({ db, shippo, mailer: logMailer, env: {} }, ORDER, "r1", null);
+    const r = await buyLabel({ db, shippo, mailer: logMailer, env: {}, shipFrom: unsaved }, ORDER, "r1", "u1");
     expect(r.ok).toBe(false);
-    expect(!r.ok && r.error).toMatch(/Return address not set/);
+    expect(!r.ok && r.error).toMatch(/Save your return address/);
+    expect(await getRates({ db, shippo, mailer: logMailer, shipFrom: unsaved }, ORDER, parcel, "u1")).toMatchObject({ ok: false });
+    expect(shippo.rates).not.toHaveBeenCalled();
     expect(shippo.buy).not.toHaveBeenCalled();
   });
-  it("getting rates never buys and stores them cheapest first", async () => {
+  it("getting rates never buys and stores them cheapest first, from the saved address", async () => {
     const shippo = mockShippo();
     const { db } = fakeDb(paid(), addr);
-    const r = await getRates({ db, shippo, mailer: logMailer, env: FROM }, ORDER, parcel);
+    const r = await getRates({ db, shippo, mailer: logMailer, env: FROM, shipFrom: saved }, ORDER, parcel, "u1");
+    expect(shippo.rates).toHaveBeenCalledWith(FROM_ADDR, expect.anything(), parcel);
     expect(r.ok && r.quote.rates.map((x) => x.id)).toEqual(["r1", "r2"]);
     expect(shippo.buy).not.toHaveBeenCalled();
   });
@@ -143,7 +159,7 @@ describe("label service", () => {
     const order = paid();
     const { db } = fakeDb(order, addr);
     const send = vi.fn(async () => ({ ok: true }));
-    const deps = { db, shippo, mailer: { name: "t", send }, env: FROM };
+    const deps = { db, shippo, mailer: { name: "t", send }, env: FROM, shipFrom: saved };
     const r = await buyLabel(deps, ORDER, "r1", "u1");
     expect(r).toEqual({ ok: true, trackingNumber: "9400100000000000000000", labelUrl: "https://shippo-delivery.test/label.pdf", emailed: false });
     expect(order).toMatchObject({ status: "shipped", trackingCarrier: "USPS", trackingNumber: "9400100000000000000000", trackingUrl: uspsTrackingUrl("9400100000000000000000") });
@@ -158,7 +174,7 @@ describe("label service", () => {
     const gate = new Promise<void>((r) => (release = r));
     const shippo = mockShippo({ buy: vi.fn(async () => { await gate; return { ok: true as const, transactionId: "tx", labelUrl: "u", trackingNumber: "9", trackingUrl: null }; }) });
     const { db } = fakeDb(paid(), addr);
-    const deps = { db, shippo, mailer: logMailer, env: FROM };
+    const deps = { db, shippo, mailer: logMailer, env: FROM, shipFrom: saved };
     const first = buyLabel(deps, ORDER, "r1", null);
     await new Promise((r) => setTimeout(r, 0));
     const second = await buyLabel(deps, ORDER, "r1", null);
@@ -170,20 +186,20 @@ describe("label service", () => {
   it("failed purchase frees the slot so Cooper can retry", async () => {
     const shippo = mockShippo({ buy: vi.fn(async () => ({ ok: false as const, error: "Address invalid" })) });
     const { db, labels } = fakeDb(paid(), addr);
-    const r = await buyLabel({ db, shippo, mailer: logMailer, env: FROM }, ORDER, "r1", null);
+    const r = await buyLabel({ db, shippo, mailer: logMailer, env: FROM, shipFrom: saved }, ORDER, "r1", null);
     expect(r).toEqual({ ok: false, error: "Label not bought: Address invalid" });
     expect(labels[0].status).toBe("failed");
   });
   it("rejects unknown rates and unpaid orders", async () => {
     const shippo = mockShippo();
-    expect(await buyLabel({ db: fakeDb(paid(), addr).db, shippo, mailer: logMailer, env: FROM }, ORDER, "nope", null)).toMatchObject({ ok: false });
-    expect(await buyLabel({ db: fakeDb({ ...paid(), status: "awaiting_approval" }, addr).db, shippo, mailer: logMailer, env: FROM }, ORDER, "r1", null)).toMatchObject({ ok: false });
+    expect(await buyLabel({ db: fakeDb(paid(), addr).db, shippo, mailer: logMailer, env: FROM, shipFrom: saved }, ORDER, "nope", null)).toMatchObject({ ok: false });
+    expect(await buyLabel({ db: fakeDb({ ...paid(), status: "awaiting_approval" }, addr).db, shippo, mailer: logMailer, env: FROM, shipFrom: saved }, ORDER, "r1", null)).toMatchObject({ ok: false });
     expect(shippo.buy).not.toHaveBeenCalled();
   });
   it("emails tracking only when the flag is on", async () => {
     const send = vi.fn(async () => ({ ok: true }));
     const { db } = fakeDb(paid(), addr);
-    const r = await buyLabel({ db, shippo: mockShippo(), mailer: { name: "t", send }, env: { ...FROM, SHIPPING_TRACKING_EMAIL_ENABLED: "true" } }, ORDER, "r1", null);
+    const r = await buyLabel({ db, shippo: mockShippo(), mailer: { name: "t", send }, env: { SHIPPING_TRACKING_EMAIL_ENABLED: "true" }, shipFrom: saved }, ORDER, "r1", null);
     expect(r).toMatchObject({ ok: true, emailed: true });
     expect(send).toHaveBeenCalledWith(expect.objectContaining({ to: "buyer@example.com", tag: "order-shipped" }));
   });

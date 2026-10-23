@@ -5,7 +5,9 @@ import { AdminNotice } from "@/components/admin/notice";
 import { db } from "@/lib/db";
 import { addresses, orderItems, orders } from "@/lib/db/schema";
 import { formatCents } from "@/lib/commerce/money";
-import { SHIPPABLE_STATUSES, shipFrom, shippoMode, trackingEmailEnabled } from "@/lib/shipping/config";
+import { SHIPPABLE_STATUSES, shippoMode, trackingEmailEnabled } from "@/lib/shipping/config";
+import { resolveShipFrom } from "@/lib/shipping/ship-from";
+import { getSession } from "@/lib/auth/session";
 import { labelsFor, NOT_CONFIGURED, type StoredQuote } from "@/lib/shipping/service";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +24,8 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
   const labels = await labelsFor(db, id);
   const bought = labels.find((l) => l.status === "purchased");
   const mode = shippoMode();
-  const from = shipFrom();
+  const session = await getSession();
+  const from = await resolveShipFrom(db, id, session?.userId ?? null);
   const quote = o.shippingQuote as StoredQuote | null;
   const shippable = (SHIPPABLE_STATUSES as readonly string[]).includes(o.status);
   const weight = quote?.parcel.weightLb ?? "";
@@ -53,7 +56,9 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
             <span className="rounded-full bg-white px-2 py-0.5 text-xs" data-testid="shippo-mode">{mode === "not_configured" ? "Shippo: not configured" : mode === "test" ? "Shippo: TEST mode" : "Shippo: live"}</span>
           </div>
           {mode === "not_configured" ? <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-sm text-amber-900" data-testid="shippo-not-configured">{NOT_CONFIGURED}</p> : null}
-          {!from.ok ? <p className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-sm text-amber-900" data-testid="shipfrom-missing">Return address not set: {from.missing.join(", ")}. Label purchase is blocked until it is.</p> : <p className="text-xs text-slate-600">Ships from: {from.address.city}, {from.address.state} {from.address.zip}</p>}
+          {!from.ok ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-sm text-amber-900" data-testid="shipfrom-missing">{from.error} Label purchase is blocked until it is. {from.owner && "userId" in from.owner ? <Link className="font-semibold underline" href="/admin/settings#ship-from">Add return address →</Link> : null}</p>
+          ) : <p className="text-xs text-slate-600" data-testid="shipfrom-set">Return address: saved on {"sellerId" in from.owner ? "the seller's account" : "your account"} ✓ <Link className="underline" href="/admin/settings#ship-from">Edit</Link></p>}
 
           {o.trackingNumber ? (
             <div className="space-y-2" data-testid="tracking">

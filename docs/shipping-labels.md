@@ -10,7 +10,8 @@
 - Buyer tracking email is prepared (lib/shipping/service.ts `trackingEmail`) but only sent when
   `SHIPPING_TRACKING_EMAIL_ENABLED=true`.
 
-Env: `SHIPPO_API_KEY` (test key `shippo_test_...` buys free test labels), `SHIP_FROM_NAME`, `SHIP_FROM_STREET1`,
-`SHIP_FROM_STREET2` (opt), `SHIP_FROM_CITY`, `SHIP_FROM_STATE`, `SHIP_FROM_ZIP`, `SHIP_FROM_PHONE` (opt),
-`SHIP_FROM_EMAIL` (opt), `SHIPPING_TRACKING_EMAIL_ENABLED`. `SHIPPO_API_BASE` is for tests/mocks only.
+Env: `SHIPPO_API_KEY` (one shared key; test key `shippo_test_...` buys free test labels) and `SHIPPING_TRACKING_EMAIL_ENABLED`.
+Return addresses are per account (table `ship_from_addresses`): admins save theirs in Admin → Settings, community
+sellers in their dashboard. Labels use the selling account (seller for seller-listed items, otherwise the signed-in
+admin); buying is blocked until that account has one saved. `SHIP_FROM_*` env vars are no longer used. `SHIPPO_API_BASE` is for tests/mocks only.
 Without a key the panel shows "Shippo key not configured" and buttons are disabled.

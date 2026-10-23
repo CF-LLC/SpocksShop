@@ -3,11 +3,16 @@ import { addresses, orders, shippingLabels } from "@/lib/db/schema";
 import type { Database } from "@/lib/checkout/db";
 import { isUniqueViolation } from "@/lib/admin/db-errors";
 import { sendSafe, type Mailer } from "@/lib/mail";
-import { SHIPPABLE_STATUSES, shipFrom, trackingEmailEnabled, type ShipAddress } from "./config";
+import { SHIPPABLE_STATUSES, trackingEmailEnabled, type ShipAddress } from "./config";
+import { resolveShipFrom, type FromResult } from "./ship-from";
 import { uspsTrackingUrl, type Parcel, type Rate, type ShippoClient } from "./shippo";
 
 type Env = Record<string, string | undefined>;
-export type ShippingDeps = { db: Database; shippo: ShippoClient | null; mailer: Mailer; env?: Env; now?: () => Date };
+export type ShippingDeps = {
+  db: Database; shippo: ShippoClient | null; mailer: Mailer; env?: Env; now?: () => Date;
+  /** Selling account's saved return address; defaults to resolveShipFrom. */
+  shipFrom?: (orderId: string, adminUserId: string | null) => Promise<FromResult>;
+};
 export type StoredQuote = { shipmentId: string; rates: Rate[]; parcel: Parcel; fetchedAt: string };
 
 export type RatesResult = { ok: true; quote: StoredQuote } | { ok: false; error: string };
@@ -25,6 +30,8 @@ export function parseParcel(input: Record<string, unknown>): Parcel | null {
   return p;
 }
 
+const fromFor = (deps: ShippingDeps, orderId: string, adminUserId: string | null) => (deps.shipFrom ?? ((o, u) => resolveShipFrom(deps.db, o, u)))(orderId, adminUserId);
+
 async function loadOrder(db: Database, orderId: string) {
   const [row] = await db.select({ o: orders, a: addresses }).from(orders).leftJoin(addresses, eq(addresses.id, orders.shippingAddressId)).where(eq(orders.id, orderId));
   return row;
@@ -35,10 +42,10 @@ function toAddress(a: typeof addresses.$inferSelect, email: string | null): Ship
 }
 
 /** Fetch USPS rates and remember them on the order. Never buys anything. */
-export async function getRates(deps: ShippingDeps, orderId: string, parcel: Parcel): Promise<RatesResult> {
+export async function getRates(deps: ShippingDeps, orderId: string, parcel: Parcel, adminUserId: string | null = null): Promise<RatesResult> {
   if (!deps.shippo) return { ok: false, error: NOT_CONFIGURED };
-  const from = shipFrom(deps.env);
-  if (!from.ok) return { ok: false, error: `Return address not set (${from.missing.join(", ")}). Add it before getting rates.` };
+  const from = await fromFor(deps, orderId, adminUserId);
+  if (!from.ok) return { ok: false, error: from.error };
   const row = await loadOrder(deps.db, orderId);
   if (!row) return { ok: false, error: "Order not found." };
   if (!(SHIPPABLE_STATUSES as readonly string[]).includes(row.o.status)) return { ok: false, error: "Only paid orders that haven't shipped can get labels." };
@@ -56,8 +63,8 @@ export async function getRates(deps: ShippingDeps, orderId: string, parcel: Parc
  */
 export async function buyLabel(deps: ShippingDeps, orderId: string, rateId: string, userId: string | null): Promise<BuyResult> {
   if (!deps.shippo) return { ok: false, error: NOT_CONFIGURED };
-  const from = shipFrom(deps.env);
-  if (!from.ok) return { ok: false, error: `Return address not set (${from.missing.join(", ")}). Label purchase is blocked until it is.` };
+  const from = await fromFor(deps, orderId, userId);
+  if (!from.ok) return { ok: false, error: `Label purchase blocked: ${from.error}` };
   const row = await loadOrder(deps.db, orderId);
   if (!row) return { ok: false, error: "Order not found." };
   if (row.o.status === "shipped") return { ok: false, duplicate: true, error: "Label already bought. Nothing changed." };

@@ -213,6 +213,22 @@ export const shippingLabels = pgTable("shipping_labels", {
   updatedAt: updatedAt(),
 });
 
+/** Return address per selling account (admin user or community seller). Private: never rendered publicly or logged. */
+export const shipFromAddresses = pgTable("ship_from_addresses", {
+  id: id(),
+  userId: uuid("user_id").unique().references(() => users.id, { onDelete: "cascade" }),
+  sellerId: uuid("seller_id").unique().references(() => sellers.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  street1: text("street1").notNull(),
+  street2: text("street2"),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  zip: text("zip").notNull(),
+  phone: text("phone"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
 export const orderItems = pgTable("order_items", {
   id: id(),
   orderId: uuid("order_id")

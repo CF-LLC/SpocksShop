@@ -7,6 +7,8 @@ import { db } from "@/lib/db";
 import { communityListings, sellers } from "@/lib/db/schema";
 import { MAX_PHOTOS } from "@/lib/media";
 import { productConditions } from "@/lib/types";
+import { ShipFromForm } from "@/components/shipping/ship-from-form";
+import { getShipFrom } from "@/lib/shipping/ship-from";
 
 export default async function SellerDashboardPage({
   searchParams,
@@ -23,6 +25,7 @@ export default async function SellerDashboardPage({
     .where(eq(communityListings.sellerId, seller.id))
     .orderBy(desc(communityListings.createdAt));
   const { error, submitted } = await searchParams;
+  const shipFrom = await getShipFrom(db, { sellerId: seller.id });
 
   return (
     <section className="space-y-6">
@@ -79,6 +82,10 @@ export default async function SellerDashboardPage({
           </table>
         )}
       </div>
+      <section className="space-y-3 rounded-2xl border border-slate-200 p-4">
+        <h2 className="font-semibold">Your return address</h2>
+        <ShipFromForm action="/api/sell/ship-from" saved={shipFrom} />
+      </section>
     </section>
   );
 }
