@@ -37,7 +37,7 @@ export default async function AdminClosetPage({ searchParams }: { searchParams: 
   const tab = (label: string, status: string, n: number) => {
     const active = !q.trash && q.status === status;
     const href = status === "all" ? "/admin/closet" : `/admin/closet?status=${status}`;
-    return <Link key={status} href={href} className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm ${active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300 bg-white"}`}>{label} <span className="opacity-70">{n}</span></Link>;
+    return <Link key={status} href={href} style={active ? { background: "#0f172a", color: "#fff", borderColor: "#0f172a" } : undefined} aria-current={active ? "page" : undefined} className="whitespace-nowrap rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm">{label} <span className="opacity-70">{n}</span></Link>;
   };
 
   return (
@@ -69,7 +69,7 @@ export default async function AdminClosetPage({ searchParams }: { searchParams: 
         {tab("Live", "listed", counts.listed)}
         {tab("Sold", "sold", counts.sold)}
         {tab("Archived", "archived", counts.archived)}
-        <Link href="/admin/closet?view=trash" className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm ${q.trash ? "border-red-800 bg-red-800 text-white" : "border-slate-300 bg-white"}`}>🗑 Trash <span className="opacity-70">{counts[TRASHED]}</span></Link>
+        <Link href="/admin/closet?view=trash" style={q.trash ? { background: "#991b1b", color: "#fff", borderColor: "#991b1b" } : undefined} aria-current={q.trash ? "page" : undefined} className="whitespace-nowrap rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm">🗑 Trash <span className="opacity-70">{counts[TRASHED]}</span></Link>
       </nav>
 
       <form method="get" action="/admin/closet" className="grid gap-2 rounded-2xl border border-slate-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]" data-testid="closet-filters">
