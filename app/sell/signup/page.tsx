@@ -13,6 +13,10 @@ export default async function SellerSignupPage({ searchParams }: { searchParams:
         <label className="block text-sm">Display name<input name="displayName" required minLength={2} maxLength={60} className="field-input mt-1 w-full" /></label>
         <label className="block text-sm">Email<input name="email" type="email" required className="field-input mt-1 w-full" /></label>
         <label className="block text-sm">Password (10+ characters)<input name="password" type="password" required minLength={10} className="field-input mt-1 w-full" /></label>
+        <label className="flex items-start gap-2 text-sm">
+          <input name="acceptTerms" type="checkbox" value="yes" required className="mt-1" />
+          <span>I have read and agree to the <Link href="/sell/terms" target="_blank" className="text-blue-700 underline">seller terms</Link> (5% fee with a $1 minimum, payouts 3 days after delivery, refunds and chargebacks).</span>
+        </label>
         <button type="submit" className="btn btn-primary">Create seller account</button>
       </form>
       <p className="text-sm">Already a seller? <Link href="/sell/login" className="text-blue-700">Sign in</Link></p>
