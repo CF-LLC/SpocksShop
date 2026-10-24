@@ -8,6 +8,7 @@ import { buildSessionParams, CheckoutError, mergeLines, newOrderNumber, STALE_PE
 import type { Database } from "./db";
 import { releaseOrder } from "./fulfill";
 import { needsApproval } from "@/lib/approval/core";
+import { cartSeller, sellerCanSell, transferGroupFor } from "@/lib/marketplace/core";
 
 type Env = Record<string, string | undefined>;
 
@@ -31,7 +32,7 @@ export async function reserveOrder(database: Database, input: CheckoutInput, env
     // Lock in id order so concurrent checkouts can't deadlock.
     const stock = await tx.select().from(inventory).where(inArray(inventory.productId, ids)).orderBy(asc(inventory.productId)).for("update");
     const rows = await tx
-      .select({ p: products, sellerStatus: sellers.status })
+      .select({ p: products, sellerStatus: sellers.status, sellerTransfers: sellers.transfersActive, sellerAccount: sellers.stripeAccountId })
       .from(products)
       .leftJoin(sellers, eq(sellers.id, products.sellerId))
       .where(inArray(products.id, ids));
@@ -43,7 +44,8 @@ export async function reserveOrder(database: Database, input: CheckoutInput, env
       const row = rows.find((r) => r.p.id === line.productId);
       const inv = stock.find((s) => s.productId === line.productId);
       if (!row || !inv || row.p.status !== "listed" || row.p.source === "affiliate") throw new CheckoutError("An item in your cart is no longer available.", 409);
-      if (row.p.source === "community" && (!communitySellersEnabled(env) || row.sellerStatus !== "active")) {
+      const sellerReady = sellerCanSell(row.sellerStatus ? { status: row.sellerStatus, transfersActive: Boolean(row.sellerTransfers), stripeAccountId: row.sellerAccount } : null);
+      if (row.p.source === "community" && (!communitySellersEnabled(env) || !sellerReady)) {
         throw new CheckoutError(`"${row.p.title}" is a seller-listed Closet Picks item. Checkout for those isn't open yet.`, 409);
       }
       if (inv.quantityOnHand - inv.quantityReserved < line.quantity) throw new CheckoutError(`"${row.p.title}" just sold out or is in someone else's checkout.`, 409);
@@ -53,6 +55,10 @@ export async function reserveOrder(database: Database, input: CheckoutInput, env
       priced.push({ productId: row.p.id, title: row.p.title, sku: row.p.sku, unitPriceCents: row.p.priceCents, quantity: line.quantity, image: pic ? mediaUrl(pic.storagePath) : stored, requiresApproval: row.p.requiresApproval });
       weight += (row.p.weightLb ? Number(row.p.weightLb) : 0) * line.quantity;
     }
+
+    // One seller per order (or shop-only): one ship-from, one label, one Transfer.
+    const owner = cartSeller(lines.map((l) => { const r = rows.find((x) => x.p.id === l.productId)!; return { source: r.p.source, sellerId: r.p.sellerId }; }));
+    if (!owner.ok) throw new CheckoutError("Closet Picks items from different sellers (or with shop items) need separate checkouts. Please check out one seller at a time.", 409);
 
     const rates = await tx.select().from(shippingRates);
     const quote = quoteShipping({ method: input.method, weightLb: Math.round(weight * 100) / 100, rates });
@@ -69,6 +75,7 @@ export async function reserveOrder(database: Database, input: CheckoutInput, env
         status: "pending",
         requiresApproval: needsApproval(priced),
         fulfillmentMethod: input.method,
+        sellerId: owner.sellerId,
         subtotalCents: subtotal,
         shippingCents: quote.amountCents,
         taxCents: 0,
@@ -87,7 +94,7 @@ export async function reserveOrder(database: Database, input: CheckoutInput, env
         .set({ quantityReserved: sql`${inventory.quantityReserved} + ${l.quantity}`, updatedAt: new Date() })
         .where(eq(inventory.productId, l.productId));
     }
-    return { order, lines: priced, shipping: { amountCents: quote.amountCents, name: `Shipping (${quote.rateName})` } };
+    return { order, sellerId: owner.sellerId, lines: priced, shipping: { amountCents: quote.amountCents, name: `Shipping (${quote.rateName})` } };
   });
 }
 
@@ -99,7 +106,7 @@ export async function createCheckout(deps: { db: Database; stripe: Stripe; origi
   let session: Stripe.Checkout.Session;
   try {
     session = await deps.stripe.checkout.sessions.create(
-      buildSessionParams({ orderId: order.id, orderNumber: order.orderNumber, lines: reserved.lines, method: input.method, shipping: reserved.shipping, origin: deps.origin, tax: taxSettings(deps.env), requiresApproval: order.requiresApproval }),
+      buildSessionParams({ orderId: order.id, orderNumber: order.orderNumber, lines: reserved.lines, method: input.method, shipping: reserved.shipping, origin: deps.origin, tax: taxSettings(deps.env), requiresApproval: order.requiresApproval, transferGroup: reserved.sellerId ? transferGroupFor(order.id) : undefined }),
       { idempotencyKey: `checkout-${order.id}` },
     );
   } catch (error) {

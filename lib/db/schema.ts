@@ -71,8 +71,14 @@ export const sellers = pgTable(
   email: text("email").notNull().unique(),
   displayName: text("display_name").notNull(),
   status: text("status", { enum: ["pending", "active", "suspended"] }).notNull().default("pending"),
-  // Payout placeholder only. No Stripe Connect yet.
+  // Legacy placeholder (unused). Payouts go through Stripe Connect (lib/marketplace).
   payoutMethod: text("payout_method"),
+  // Stripe Connect (Accounts v2, Express dashboard, recipient configuration). Synced from webhooks.
+  stripeAccountId: text("stripe_account_id"),
+  connectStatus: text("connect_status").notNull().default("not_started"), // not_started | pending | restricted | active | rejected
+  transfersActive: boolean("transfers_active").notNull().default(false),
+  requirementsDue: integer("requirements_due").notNull().default(0),
+  connectSyncedAt: timestamp("connect_synced_at", { withTimezone: true }),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
   },
@@ -190,6 +196,10 @@ export const orders = pgTable("orders", {
   trackingUrl: text("tracking_url"),
   trackingEmailSentAt: timestamp("tracking_email_sent_at", { withTimezone: true }),
   shippingQuote: jsonb("shipping_quote"),
+  // Marketplace: null = shop-owned order. One seller per order (see lib/marketplace).
+  sellerId: uuid("seller_id").references(() => sellers.id, { onDelete: "set null" }),
+  platformFeeCents: integer("platform_fee_cents").notNull().default(0),
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -460,4 +470,29 @@ export const analyticsEvents = pgTable("analytics_events", {
   path: text("path"),
   ref: text("ref"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** One held payout per seller order. Paid by a Transfer (separate charges and transfers) after delivery. */
+export const sellerPayouts = pgTable("seller_payouts", {
+  id: id(),
+  orderId: uuid("order_id").notNull().unique().references(() => orders.id, { onDelete: "restrict" }),
+  sellerId: uuid("seller_id").notNull().references(() => sellers.id, { onDelete: "restrict" }),
+  grossCents: integer("gross_cents").notNull(),
+  feeCents: integer("fee_cents").notNull(),
+  amountCents: integer("amount_cents").notNull(),
+  currency: text("currency").notNull().default("usd"),
+  status: text("status", { enum: ["held", "disputed", "transferred", "canceled"] }).notNull().default("held"),
+  holdReason: text("hold_reason"),
+  paymentIntentId: text("payment_intent_id"),
+  chargeId: text("charge_id"),
+  transferGroup: text("transfer_group").notNull(),
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  deliveredSource: text("delivered_source"),
+  releaseAfter: timestamp("release_after", { withTimezone: true }),
+  transferId: text("transfer_id"),
+  transferredAt: timestamp("transferred_at", { withTimezone: true }),
+  needsReview: boolean("needs_review").notNull().default(false),
+  lastError: text("last_error"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
 });

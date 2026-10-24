@@ -8,6 +8,8 @@ export type Purchase = { ok: true; transactionId: string; labelUrl: string; trac
 export interface ShippoClient {
   rates(from: ShipAddress, to: ShipAddress, parcel: Parcel): Promise<{ shipmentId: string; rates: Rate[] }>;
   buy(rateId: string, idempotencyKey: string): Promise<Purchase>;
+  /** Current tracking status from Shippo (used to confirm delivery; never trust a webhook body alone). */
+  track?(carrier: string, trackingNumber: string): Promise<{ status: string; deliveredAt: Date | null }>;
 }
 
 export class ShippoError extends Error {}
@@ -25,7 +27,20 @@ export function createShippoClient(apiKey: string, fetchImpl: typeof fetch = fet
     if (!res.ok) throw new ShippoError(`Shippo ${res.status}: ${String(json.detail ?? json.message ?? "request failed").slice(0, 200)}`);
     return json;
   }
+  async function get(path: string) {
+    const res = await fetchImpl(`${base.replace(/\/$/, "")}${path}`, { headers: { authorization: `ShippoToken ${apiKey}` } });
+    const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) throw new ShippoError(`Shippo ${res.status}: ${String(json.detail ?? json.message ?? "request failed").slice(0, 200)}`);
+    return json;
+  }
   return {
+    async track(carrier, trackingNumber) {
+      const json = await get(`/tracks/${encodeURIComponent(carrier.toLowerCase())}/${encodeURIComponent(trackingNumber)}`);
+      const ts = (json.tracking_status as { status?: string; status_date?: string } | undefined) ?? {};
+      const status = String(ts.status ?? "UNKNOWN").toUpperCase();
+      const when = status === "DELIVERED" && ts.status_date ? new Date(ts.status_date) : null;
+      return { status, deliveredAt: when && !Number.isNaN(when.getTime()) ? when : null };
+    },
     async rates(from, to, parcel) {
       const json = await call("/shipments/", {
         address_from: from,

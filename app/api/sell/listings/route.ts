@@ -6,6 +6,7 @@ import { dollarsToCents } from "@/lib/commerce/money";
 import { MAX_PHOTOS, MediaError, deleteMedia, photoFiles, savePhoto, validatePhoto } from "@/lib/media";
 import { notFoundResponse, redirectTo, sellersDisabled } from "@/lib/sell/http";
 import { listingSchema } from "@/lib/sell/validation";
+import { sellerCanSell } from "@/lib/marketplace/core";
 
 export async function POST(request: Request) {
   if (sellersDisabled()) return notFoundResponse();
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
   if (!seller || seller.status !== "active") {
     return redirectTo(request, "/sell/dashboard", "Your seller account must be approved before you can submit listings.");
   }
+  if (!sellerCanSell(seller)) return redirectTo(request, "/sell/dashboard", "Finish setting up payouts with Stripe before you list.");
 
   const form = await request.formData();
   const parsed = listingSchema.safeParse({

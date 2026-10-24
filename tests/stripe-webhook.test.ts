@@ -54,6 +54,8 @@ describe("handleStripeEvent", () => {
 const fulfill = vi.hoisted(() => ({ markPaid: vi.fn(), markProcessing: vi.fn(), releaseOrder: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/lib/checkout/fulfill", () => fulfill);
+const market = vi.hoisted(() => ({ onChargeEvent: vi.fn(async () => ({ handled: false })), recordSellerPayout: vi.fn(async () => "not_seller_order") }));
+vi.mock("@/lib/marketplace/service", () => market);
 
 describe("POST /api/stripe/webhook", () => {
   const secret = "whsec_test_secret";
@@ -75,6 +77,7 @@ describe("POST /api/stripe/webhook", () => {
     const res = await post(payload, sig);
     expect(res.status).toBe(200);
     expect(fulfill.markPaid).toHaveBeenCalledWith({}, ORDER, expect.objectContaining({ id: "cs_test_2" }));
+    expect(market.recordSellerPayout).toHaveBeenCalledWith(expect.anything(), ORDER, null);
   });
   it("rejects a missing or forged signature without touching orders", async () => {
     expect((await post(payload)).status).toBe(400);

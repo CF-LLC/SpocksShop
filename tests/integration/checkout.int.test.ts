@@ -117,7 +117,7 @@ run("checkout against Postgres + stripe-mock", () => {
 
   it("community items are blocked until the seller flag is on; affiliate rows are never sellable", async () => {
     const tag = randomBytes(3).toString("hex");
-    const [seller] = await db.insert(schema.sellers).values({ email: `it-${tag}@example.test`, displayName: "IT Seller", status: "active" }).returning();
+    const [seller] = await db.insert(schema.sellers).values({ email: `it-${tag}@example.test`, displayName: "IT Seller", status: "active", stripeAccountId: `acct_test_${tag}`, transfersActive: true, connectStatus: "active" }).returning();
     const p = await product({ source: "community", sellerId: seller.id });
     await expect(createCheckout({ db, stripe, origin, env: {} }, { items: [{ productId: p.id, quantity: 1 }], method: "ship" })).rejects.toThrow(/seller-listed Closet Picks item/);
     const r = await createCheckout({ db, stripe, origin, env: { COMMUNITY_SELLERS_ENABLED: "true" } }, { items: [{ productId: p.id, quantity: 1 }], method: "ship" });
