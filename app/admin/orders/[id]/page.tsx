@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { AdminNotice } from "@/components/admin/notice";
 import { db } from "@/lib/db";
-import { addresses, orderItems, orders } from "@/lib/db/schema";
+import { addresses, orderItems, orders, sellerPayouts, sellers } from "@/lib/db/schema";
 import { formatCents } from "@/lib/commerce/money";
 import { SHIPPABLE_STATUSES, shippoMode, trackingEmailEnabled } from "@/lib/shipping/config";
 import { resolveShipFrom } from "@/lib/shipping/ship-from";
@@ -27,6 +27,7 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
   const session = await getSession();
   const from = await resolveShipFrom(db, id, session?.userId ?? null);
   const quote = o.shippingQuote as StoredQuote | null;
+  const [payout] = o.sellerId ? await db.select({ p: sellerPayouts, name: sellers.displayName }).from(sellerPayouts).innerJoin(sellers, eq(sellers.id, sellerPayouts.sellerId)).where(eq(sellerPayouts.orderId, id)) : [];
   const shippable = (SHIPPABLE_STATUSES as readonly string[]).includes(o.status);
   const weight = quote?.parcel.weightLb ?? "";
 
@@ -60,6 +61,9 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
             <p className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-sm text-amber-900" data-testid="shipfrom-missing">{from.error} Label purchase is blocked until it is. {from.owner && "userId" in from.owner ? <Link className="font-semibold underline" href="/admin/settings#ship-from">Add return address →</Link> : null}</p>
           ) : <p className="text-xs text-slate-600" data-testid="shipfrom-set">Return address: saved on {"sellerId" in from.owner ? "the seller's account" : "your account"} ✓ <Link className="underline" href="/admin/settings#ship-from">Edit</Link></p>}
 
+          {payout ? (
+            <p className="rounded-lg border border-slate-200 p-2 text-sm" data-testid="seller-payout">Seller order ({payout.name}): payout {formatCents(payout.p.amountCents)} after {formatCents(payout.p.feeCents)} fee · <strong>{payout.p.status}</strong>{payout.p.releaseAfter && payout.p.status === "held" ? ` · releases ${when(payout.p.releaseAfter)}` : ""}{payout.p.needsReview ? " · needs review" : ""} <Link className="underline" href="/admin/sellers/payouts">All payouts →</Link></p>
+          ) : null}
           {o.trackingNumber ? (
             <div className="space-y-2" data-testid="tracking">
               <p className="text-sm">Shipped {when(o.shippedAt)} · {o.trackingCarrier} <a className="font-mono underline" href={o.trackingUrl ?? "#"} target="_blank" rel="noreferrer">{o.trackingNumber}</a></p>
@@ -70,6 +74,10 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
                 </>
               ) : null}
               <p className="text-xs text-slate-600">Buyer tracking email: {o.trackingEmailSentAt ? `sent ${when(o.trackingEmailSentAt)}` : trackingEmailEnabled() ? "not sent" : "off (SHIPPING_TRACKING_EMAIL_ENABLED)"}</p>
+              <p className="text-sm" data-testid="delivered">Delivered: {o.deliveredAt ? when(o.deliveredAt) : "not yet"}</p>
+              {!o.deliveredAt && o.sellerId ? (
+                <form action={`/api/admin/orders/${o.id}/delivered`} method="post"><button className="btn btn-outline" type="submit">Mark delivered (starts seller payout hold)</button></form>
+              ) : null}
             </div>
           ) : !shippable ? (
             <p className="text-sm text-slate-600">Labels can be bought once the order is paid.</p>

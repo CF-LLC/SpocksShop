@@ -8,6 +8,7 @@ import { getStripe, stripeSettings } from "@/lib/stripe";
 import { handleAiBillingEvent } from "@/lib/ai/billing";
 import { aiBillingOps } from "@/lib/ai/billing-db";
 import { sellerBillingEnabled } from "@/lib/ai/entitlement";
+import { onChargeEvent, recordSellerPayout } from "@/lib/marketplace/service";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -43,8 +44,21 @@ export async function POST(request: Request) {
         return NextResponse.json({ received: true });
       }
     }
+    // Marketplace: refunds/disputes on seller orders hold or cancel the pending payout (no-op for shop orders).
+    const charge = await onChargeEvent({ db, stripe }, event);
+    if (charge.handled) {
+      console.info("stripe webhook charge", { type: event.type, id: event.id, result: charge.result });
+      return NextResponse.json({ received: true });
+    }
     const outcome = await handleStripeEvent(event, {
-      markPaid: (id, session) => markPaid(db, id, session),
+      markPaid: async (id, session) => {
+        const r = await markPaid(db, id, session);
+        if (r === "updated") {
+          const pi = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null;
+          await recordSellerPayout({ db, stripe }, id, pi);
+        }
+        return r;
+      },
       markProcessing: (id) => markProcessing(db, id),
       release: (id, reason) => releaseOrder(db, id, reason),
       awaitApproval: (id, session) => onApprovalCheckoutCompleted({ db, stripe, mailer: getMailer() }, id, session),

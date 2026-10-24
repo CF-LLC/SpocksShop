@@ -93,6 +93,8 @@ export function buildSessionParams(input: {
   tax?: TaxSettings;
   /** Hold where the method supports it (see HELD_PAYMENT_METHODS); Cooper captures/voids or refunds from /admin/orders. */
   requiresApproval?: boolean;
+  /** Seller orders: groups the charge with the later payout Transfer (separate charges and transfers). */
+  transferGroup?: string;
 }): Stripe.Checkout.SessionCreateParams {
   const now = input.now ?? new Date();
   const tax = input.tax?.enabled ? input.tax : null;
@@ -103,6 +105,7 @@ export function buildSessionParams(input: {
     metadata: { order_id: input.orderId, order_number: input.orderNumber, fulfillment: input.method, ...(input.requiresApproval ? { requires_approval: "true" } : {}) },
     payment_intent_data: {
       metadata: { order_id: input.orderId, order_number: input.orderNumber },
+      ...(input.transferGroup ? { transfer_group: input.transferGroup } : {}),
     },
     // Dynamic payment methods (no allowed_payment_method_types); per-method manual capture where supported.
     ...(input.requiresApproval ? { payment_method_options: heldPaymentMethodOptions() } : {}),

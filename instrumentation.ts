@@ -8,6 +8,9 @@ export async function register() {
   // Blog: scheduled AI drafts are off unless BLOG_AI_SCHEDULE=on (then up to BLOG_DRAFTS_PER_WEEK). Never publishes on its own.
   const { startBlogDraftScheduler } = await import("./lib/blog/scheduler");
   startBlogDraftScheduler();
+  // Marketplace seller payouts: no-op unless COMMUNITY_SELLERS_ENABLED=true.
+  const { startPayoutSweeper } = await import("./lib/marketplace/scheduler");
+  startPayoutSweeper();
 }
 
 /** Every server error Next.js captures (pages, route handlers, server actions) lands in error_log. */
