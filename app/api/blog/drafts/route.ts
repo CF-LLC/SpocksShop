@@ -1,6 +1,6 @@
 import { MAX_BODY_BYTES, draftRow, parseDraftRequest, readLimited, reviewUrl, uniqueSlug } from "@/lib/blog/api";
 import { guard, json } from "@/lib/blog/api-guard";
-import { notifyDraftReady } from "@/lib/blog/notify";
+import { draftEmailEnabled, notifyDraftReady } from "@/lib/blog/notify";
 import { insertApiDraft, slugExists } from "@/lib/blog/repo";
 import { draftProblems } from "@/lib/blog/rules";
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     row = await insertApiDraft({ ...values, slug: await uniqueSlug(`${slug}-2`, slugExists) });
   }
   const notified = await notifyDraftReady({ id: row.id, title: row.title, slug: row.slug });
-  console.info("blog api draft created", { id: row.id, slug: row.slug, notifyAttempted: true, notified });
+  console.info("blog api draft created", { id: row.id, slug: row.slug, notifyAttempted: draftEmailEnabled(), notified });
   // What still blocks Approve & publish (fix in /admin/blog/<id>); the draft is saved either way.
   const problems = draftProblems({ ...values, productLinks: values.productLinks });
   return json({ id: row.id, slug: row.slug, status: "draft", reviewUrl: reviewUrl(row.id), notified, problems }, 201);
