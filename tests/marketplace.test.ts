@@ -26,6 +26,36 @@ describe("fee math (5% default, transfer-the-rest)", () => {
   });
 });
 
+describe("fee minimum ($1 per order, capped at subtotal)", () => {
+  const s = marketplaceSettings({});
+  const fee = (g: number) => payoutSplit(g, s.feeBps, s.feeMinCents);
+  it("defaults SELLER_FEE_MIN_CENTS to 100 and reads overrides", () => {
+    expect(s.feeMinCents).toBe(100);
+    expect(marketplaceSettings({ SELLER_FEE_MIN_CENTS: "250" }).feeMinCents).toBe(250);
+  });
+  it("small item under $1: fee capped at subtotal, payout 0 (never negative)", () => {
+    expect(fee(50)).toEqual({ grossCents: 50, feeCents: 50, amountCents: 0 });
+    expect(fee(1)).toEqual({ grossCents: 1, feeCents: 1, amountCents: 0 });
+  });
+  it("exact $1 edge and the min/pct crossover", () => {
+    expect(fee(100)).toEqual({ grossCents: 100, feeCents: 100, amountCents: 0 });
+    expect(fee(2000).feeCents).toBe(100); // 5% == min
+    expect(fee(2010).feeCents).toBe(101); // 5% wins just above $20
+  });
+  it("typical item uses the minimum; large item uses 5%", () => {
+    expect(fee(1000)).toEqual({ grossCents: 1000, feeCents: 100, amountCents: 900 });
+    expect(fee(4000)).toEqual({ grossCents: 4000, feeCents: 200, amountCents: 3800 });
+    expect(fee(250000)).toEqual({ grossCents: 250000, feeCents: 12500, amountCents: 237500 });
+  });
+  it("cap: a big minimum never exceeds the subtotal; payout always >= 0 and sums match", () => {
+    expect(payoutSplit(300, 500, 1000)).toEqual({ grossCents: 300, feeCents: 300, amountCents: 0 });
+    for (const g of [0, 1, 99, 100, 101, 1999, 2000, 2001, 99999]) { const x = fee(g); expect(x.amountCents).toBeGreaterThanOrEqual(0); expect(x.feeCents + x.amountCents).toBe(g); }
+  });
+  it("partial refunds still come off the seller amount (unchanged)", () => {
+    expect(decidePayout(held({ amountCents: 900, grossCents: 1000 }), charge({ amountRefunded: 300 }), ACTIVE, NOW)).toEqual({ action: "transfer", amountCents: 600 });
+  });
+});
+
 describe("Connect readiness (Accounts v2 recipient)", () => {
   const acct = (status?: string, due: string[] = []) => ({
     configuration: { recipient: { capabilities: { stripe_balance: { stripe_transfers: status ? { status } : undefined } } } },

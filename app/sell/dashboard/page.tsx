@@ -36,7 +36,7 @@ export default async function SellerDashboardPage({
     .limit(50);
   const canSell = sellerCanSell(seller);
   const blocked = sellerBlockReason(seller);
-  const { feeBps, holdDaysAfterDelivery } = marketplaceSettings();
+  const { feeBps, feeMinCents, holdDaysAfterDelivery } = marketplaceSettings();
   const pct = (feeBps / 100).toFixed(feeBps % 100 ? 2 : 0);
   const shipFrom = await getShipFrom(db, { sellerId: seller.id });
 
@@ -58,7 +58,7 @@ export default async function SellerDashboardPage({
         <p className="text-sm">Stripe setup: <strong>{({ not_started: "Not started", pending: "In progress", restricted: "Needs more information", active: "Ready", rejected: "Not approved by Stripe" } as Record<string, string>)[seller.connectStatus] ?? seller.connectStatus}</strong>
           {seller.requirementsDue > 0 ? <> · {seller.requirementsDue} item(s) due</> : null}</p>
         {connect === "returned" && !seller.transfersActive ? <p className="text-sm text-amber-800">Thanks. Stripe is still reviewing or needs a few more details. Check back here later; we update it when Stripe finishes.</p> : null}
-        <p className="text-sm text-slate-600">We charge buyers, then send your share by Stripe transfer {holdDaysAfterDelivery} day(s) after the package is delivered. Spock&apos;s Shop keeps a {pct}% fee on your item price; shipping and sales tax are handled by Spock&apos;s Shop.</p>
+        <p className="text-sm text-slate-600">We charge buyers, then send your share by Stripe transfer {holdDaysAfterDelivery} day(s) after the package is delivered. Spock&apos;s Shop keeps a {pct}% fee on your item price per order (minimum {formatCents(feeMinCents)}, never more than the item total); shipping and sales tax are handled by Spock&apos;s Shop.</p>
         <div className="flex flex-wrap gap-2">
           {seller.status !== "suspended" && !seller.transfersActive ? (
             <form action="/api/sell/connect/onboard" method="post"><button className="btn btn-primary" type="submit">{seller.stripeAccountId ? "Continue Stripe setup" : "Set up payouts with Stripe"}</button></form>

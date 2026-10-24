@@ -27,7 +27,7 @@ export default async function AdminPayoutsPage() {
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between"><h1 className="text-2xl font-semibold">Seller fees &amp; payouts</h1><Link className="underline text-sm" href="/admin/sellers">← Sellers</Link></div>
-      <p className="text-sm text-slate-600">Fee {(s.feeBps / 100).toFixed(2)}% (SELLER_FEE_BPS) · payout {s.holdDaysAfterDelivery} day(s) after delivery (SELLER_PAYOUT_HOLD_DAYS) · not delivered after {s.reviewAfterShippedDays} days → review (SELLER_PAYOUT_REVIEW_DAYS). Stripe processing fees on seller sales are paid by the platform out of the fee.</p>
+      <p className="text-sm text-slate-600">Fee {(s.feeBps / 100).toFixed(2)}% (SELLER_FEE_BPS), min {formatCents(s.feeMinCents)} per order (SELLER_FEE_MIN_CENTS), capped at the item subtotal · payout {s.holdDaysAfterDelivery} day(s) after delivery (SELLER_PAYOUT_HOLD_DAYS) · not delivered after {s.reviewAfterShippedDays} days → review (SELLER_PAYOUT_REVIEW_DAYS). Stripe processing fees on seller sales are paid by the platform out of the fee.</p>
       <div className="grid gap-3 sm:grid-cols-4" data-testid="payout-totals">
         {[["Platform fees", formatCents(t.fees)], ["Held for sellers", formatCents(t.held)], ["Transferred", formatCents(t.paid)], ["Needs review", String(t.review)]].map(([k, v]) => (
           <div key={k} className="surface-panel rounded-xl p-3"><p className="text-xs text-slate-500">{k}</p><p className="text-lg font-semibold">{v}</p></div>

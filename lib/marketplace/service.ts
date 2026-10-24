@@ -98,7 +98,7 @@ export async function recordSellerPayout(deps: MarketDeps, orderId: string, paym
   const settings = deps.settings ?? marketplaceSettings();
   const [order] = await deps.db.select().from(orders).where(eq(orders.id, orderId));
   if (!order?.sellerId) return "not_seller_order" as const;
-  const split = payoutSplit(order.subtotalCents, settings.feeBps);
+  const split = payoutSplit(order.subtotalCents, settings.feeBps, settings.feeMinCents);
   const inserted = await deps.db
     .insert(sellerPayouts)
     .values({
