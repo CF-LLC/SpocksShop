@@ -79,7 +79,7 @@ A draft is always stored with `status: "draft"` and `source: "api"`.
   { "id": "<uuid>", "slug": "gift-ideas-for-star-trek-fans", "status": "draft",
     "reviewUrl": "https://spockshop.com/admin/blog/<uuid>", "notified": true, "problems": [] }
   ```
-  - `notified` tells you whether the draft-ready email went out.
+  - `notified` tells you whether the draft-ready email went out. It is off by default (always `false`) unless `BLOG_DRAFT_EMAIL_ENABLED=true`.
   - `problems` lists the editorial rules that would block **Approve & publish**. Cooper can fix
     these in the admin editor, and the draft is saved either way. The rules: excerpt of 50–170
     chars, 3–6 Amazon Picks and/or product links in total, no prices or star ratings, no first-hand

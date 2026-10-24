@@ -24,8 +24,15 @@ export function draftReadyMail(draft: { id: string; title: string; slug: string 
   };
 }
 
-/** Never throws: a mail outage must not break the scheduler. */
-export async function notifyDraftReady(draft: { id: string; title: string; slug: string }, env: Env = process.env, mailer: Mailer = getMailer(env)): Promise<boolean> {
+/** Draft-ready emails are off unless BLOG_DRAFT_EMAIL_ENABLED=true (Cooper reviews drafts on the site). */
+export function draftEmailEnabled(env: Env = process.env): boolean {
+  return env.BLOG_DRAFT_EMAIL_ENABLED?.trim().toLowerCase() === "true";
+}
+
+/** Never throws: a mail outage must not break the scheduler. Sends nothing unless enabled. */
+export async function notifyDraftReady(draft: { id: string; title: string; slug: string }, env: Env = process.env, mailer?: Mailer): Promise<boolean> {
+  if (!draftEmailEnabled(env)) return false;
+  mailer ??= getMailer(env);
   const msg = draftReadyMail(draft, env);
   return msg ? sendSafe(mailer, msg) : false;
 }

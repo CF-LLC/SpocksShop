@@ -13,15 +13,21 @@ describe("blog draft notification", () => {
     expect(m.tag).toBe("blog-draft");
   });
   it("falls back to ADMIN_EMAIL and skips when no address", () => {
-    expect(draftReadyMail(draft, { ADMIN_EMAIL: "a@example.com" })!.to).toBe("a@example.com");
+    expect(draftReadyMail(draft, { ADMIN_EMAIL: "a@example.com", BLOG_DRAFT_EMAIL_ENABLED: "true" })!.to).toBe("a@example.com");
     expect(draftReadyMail(draft, {})).toBeNull();
   });
   it("sends through the mailer and never throws on failure", async () => {
     const sent: MailMessage[] = [];
     const ok: Mailer = { name: "t", send: async (m) => (sent.push(m), { ok: true }) };
-    expect(await notifyDraftReady(draft, { ADMIN_EMAIL: "a@example.com" }, ok)).toBe(true);
+    expect(await notifyDraftReady(draft, { ADMIN_EMAIL: "a@example.com", BLOG_DRAFT_EMAIL_ENABLED: "true" }, ok)).toBe(true);
     expect(sent).toHaveLength(1);
     const bad: Mailer = { name: "t", send: async () => { throw new Error("down"); } };
-    expect(await notifyDraftReady(draft, { ADMIN_EMAIL: "a@example.com" }, bad)).toBe(false);
+    expect(await notifyDraftReady(draft, { ADMIN_EMAIL: "a@example.com", BLOG_DRAFT_EMAIL_ENABLED: "true" }, bad)).toBe(false);
+  });
+  it("sends nothing by default (flag off)", async () => {
+    let calls = 0;
+    const spy = { send: async () => { calls++; return { ok: true } } } as any;
+    expect(await notifyDraftReady(draft, { ADMIN_EMAIL: "a@example.com" }, spy)).toBe(false);
+    expect(calls).toBe(0);
   });
 });

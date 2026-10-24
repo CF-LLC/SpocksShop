@@ -11,7 +11,7 @@ vi.mock("@/lib/blog/repo", () => ({
   insertApiDraft: vi.fn(async (v: { slug: string; title: string; status: string }) => ({ id: "11111111-2222-4333-8444-555555555555", slug: v.slug, title: v.title })),
   deleteApiDraft: vi.fn(async (id: string) => (id === "11111111-2222-4333-8444-555555555555" ? "deleted" : id === "99999999-2222-4333-8444-555555555555" ? "not_draft" : "not_found")),
 }));
-vi.mock("@/lib/blog/notify", () => ({ notifyDraftReady: vi.fn(async () => true) }));
+vi.mock("@/lib/blog/notify", () => ({ notifyDraftReady: vi.fn(async () => true), draftEmailEnabled: vi.fn(() => false) }));
 
 describe("bearer auth", () => {
   it("accepts only the exact token, constant-time, and is off when unset or short", () => {
