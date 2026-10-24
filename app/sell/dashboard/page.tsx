@@ -57,7 +57,7 @@ export default async function SellerDashboardPage({
         <h2 className="text-lg font-semibold">Payouts</h2>
         <p className="text-sm">Stripe setup: <strong>{({ not_started: "Not started", pending: "In progress", restricted: "Needs more information", active: "Ready", rejected: "Not approved by Stripe" } as Record<string, string>)[seller.connectStatus] ?? seller.connectStatus}</strong>
           {seller.requirementsDue > 0 ? <> · {seller.requirementsDue} item(s) due</> : null}</p>
-        {connect === "returned" && !seller.transfersActive ? <p className="text-sm text-amber-800">Thanks. Stripe is still reviewing or needs a few more details. This page updates automatically.</p> : null}
+        {connect === "returned" && !seller.transfersActive ? <p className="text-sm text-amber-800">Thanks. Stripe is still reviewing or needs a few more details. Check back here later; we update it when Stripe finishes.</p> : null}
         <p className="text-sm text-slate-600">We charge buyers, then send your share by Stripe transfer {holdDaysAfterDelivery} day(s) after the package is delivered. Spock&apos;s Shop keeps a {pct}% fee on your item price; shipping and sales tax are handled by Spock&apos;s Shop.</p>
         <div className="flex flex-wrap gap-2">
           {seller.status !== "suspended" && !seller.transfersActive ? (
@@ -126,7 +126,7 @@ export default async function SellerDashboardPage({
                   <td className="p-2">{formatCents(o.subtotalCents)}</td>
                   <td className="p-2">{p ? formatCents(p.feeCents) : "–"}</td>
                   <td className="p-2">{p ? formatCents(p.amountCents) : "–"}</td>
-                  <td className="p-2">{!p ? "awaiting payment" : p.status === "held" ? (p.releaseAfter ? `held until ${p.releaseAfter.toISOString().slice(0, 10)}` : "held until delivery") : p.status}</td>
+                  <td className="p-2">{!p ? "awaiting payment" : p.status === "held" ? (p.releaseAfter ? `held until ${p.releaseAfter.toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric" })}` : "held until delivery") : p.status}</td>
                 </tr>
               ))}
             </tbody>
