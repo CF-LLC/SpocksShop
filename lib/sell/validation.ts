@@ -4,6 +4,7 @@ export const sellerSignupSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(200),
   displayName: z.string().trim().min(2).max(60),
   password: z.string().min(10).max(200),
+  acceptTerms: z.literal("yes"),
 });
 
 export const listingSchema = z.object({

@@ -46,3 +46,18 @@ describe("buildSessionParams with Stripe Tax", () => {
     expect(p.billing_address_collection).toBeUndefined();
   });
 });
+
+describe("seller (community marketplace) orders are taxed like shop orders", () => {
+  it("keeps automatic tax, product and shipping tax codes when a transfer group is set", () => {
+    const p = buildSessionParams({
+      orderId: "o1", orderNumber: "SS-1", method: "ship", origin: "https://spockshop.com",
+      lines: [{ productId: "p1", title: "Seller item", sku: "s1", unitPriceCents: 2000, quantity: 1, image: null }],
+      shipping: { amountCents: 500, name: "USPS" }, tax: taxSettings({ STRIPE_TAX_ENABLED: "true" }), transferGroup: "order_o1",
+    });
+    expect(p.automatic_tax).toEqual({ enabled: true });
+    expect(p.payment_intent_data!.transfer_group).toBe("order_o1");
+    expect((p.payment_intent_data as Record<string, unknown>).on_behalf_of).toBeUndefined();
+    expect(p.line_items![0].price_data!.product_data!.tax_code).toBe("txcd_99999999");
+    expect(p.shipping_options![0].shipping_rate_data).toMatchObject({ tax_behavior: "exclusive", tax_code: "txcd_92010001" });
+  });
+});

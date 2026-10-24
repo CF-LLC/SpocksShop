@@ -79,6 +79,9 @@ export const sellers = pgTable(
   transfersActive: boolean("transfers_active").notNull().default(false),
   requirementsDue: integer("requirements_due").notNull().default(0),
   connectSyncedAt: timestamp("connect_synced_at", { withTimezone: true }),
+  // Seller terms (/sell/terms) accepted at signup.
+  termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
+  termsVersion: text("terms_version"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
   },
