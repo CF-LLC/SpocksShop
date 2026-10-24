@@ -8,7 +8,7 @@ payout sweeper never starts. Shop-owned items behave exactly as before (no fee, 
 1. Buyer pays the **platform** through the normal Checkout Session (Stripe Tax as today). Seller orders add
    `payment_intent_data.transfer_group = order_<orderId>`.
 2. `checkout.session.completed` → order paid → a `seller_payouts` row is recorded **held**:
-   gross = seller item subtotal, fee = `SELLER_FEE_BPS` (5%), amount = gross − fee. Shipping and tax stay with the platform.
+   gross = seller item subtotal, fee = max(`SELLER_FEE_BPS` (5%, rounded half up), `SELLER_FEE_MIN_CENTS` ($1)) per order, capped at gross so the payout is never negative; amount = gross − fee. Examples: $0.50 → fee $0.50, payout $0; $10 → $1 (min); $20 → $1; $100 → $5. Partial refunds still come off the seller amount first. Shipping and tax stay with the platform.
 3. Delivery: Shippo `track_updated` webhook (re-verified with `GET /tracks`), the sweeper polling tracking, or the
    admin "Mark delivered" button. Starts `release_after = delivered + SELLER_PAYOUT_HOLD_DAYS`.
 4. Sweeper (every `SELLER_PAYOUT_SWEEP_MINUTES`): re-reads the charge; disputed → `disputed` (no transfer);

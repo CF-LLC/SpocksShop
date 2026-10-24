@@ -2,14 +2,18 @@
 
 export type ConnectStatus = "not_started" | "pending" | "restricted" | "active" | "rejected";
 
-/** Fee in cents, rounded half up. The seller gets gross - fee via a Transfer. */
-export function platformFee(grossCents: number, feeBps: number) {
-  if (!(grossCents > 0) || !(feeBps > 0)) return 0;
-  return Math.min(grossCents, Math.round((grossCents * feeBps) / 10_000));
+/**
+ * Per-order fee in cents: max(bps fee rounded half up, minCents), capped at the seller item subtotal
+ * so the seller payout is never negative. The seller gets gross - fee via a Transfer.
+ */
+export function platformFee(grossCents: number, feeBps: number, minCents = 0) {
+  if (!(grossCents > 0)) return 0;
+  const pct = feeBps > 0 ? Math.round((grossCents * feeBps) / 10_000) : 0;
+  return Math.min(grossCents, Math.max(pct, Math.max(0, minCents)));
 }
 
-export function payoutSplit(grossCents: number, feeBps: number) {
-  const feeCents = platformFee(grossCents, feeBps);
+export function payoutSplit(grossCents: number, feeBps: number, minCents = 0) {
+  const feeCents = platformFee(grossCents, feeBps, minCents);
   return { grossCents, feeCents, amountCents: grossCents - feeCents };
 }
 

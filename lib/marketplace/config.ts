@@ -13,6 +13,8 @@ export function marketplaceSettings(env: Env = process.env) {
     enabled: communitySellersEnabled(env),
     /** Platform fee in basis points on the seller's item subtotal. 500 = 5%. Shop-owned items never pay it. */
     feeBps: int(env.SELLER_FEE_BPS, 500, 0, 5000),
+    /** Minimum platform fee per seller order in cents (default $1). Never exceeds the seller item subtotal. */
+    feeMinCents: int(env.SELLER_FEE_MIN_CENTS, 100, 0, 100_000),
     /** Days after delivery before the payout auto-releases (buyer issue window). */
     holdDaysAfterDelivery: int(env.SELLER_PAYOUT_HOLD_DAYS, 3, 0, 60),
     /** Shipped but still not delivered after this many days -> flagged for admin review (never auto-paid). */
