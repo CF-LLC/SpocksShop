@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { SpaceHero } from "@/components/space-hero";
+import { SellCta } from "@/components/sell-cta";
+import { communitySellersEnabled } from "@/lib/features";
 import { AffiliateCard } from "@/components/shop/affiliate-card";
 import { ProductCard } from "@/components/shop/product-card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -69,6 +71,8 @@ export default async function HomePage() {
           <EmptyState title="Picks are on the way" body="We're choosing what to recommend." actions={[{ href: "/shop", label: "Browse the shop" }]} />
         )}
       </section>
+
+      {communitySellersEnabled() ? <SellCta /> : null}
     </div>
   );
 }

@@ -263,3 +263,12 @@ a { color: inherit; }
 .blog-prose a { color: var(--sky); text-decoration: underline; text-underline-offset: 3px; }
 .blog-prose blockquote { border-left: 3px solid var(--line-strong); padding-left: 1rem; font-style: italic; }
 .blog-prose strong { color: var(--text); }
+
+/* Home "Sell on SpockShop" CTA */
+.sell-orbit { animation: sell-spin 60s linear infinite; }
+@keyframes sell-spin { to { transform: rotate(360deg); } }
+.sell-benefit { animation: hero-rise .9s cubic-bezier(.2,.7,.2,1) both; transition: transform .2s, border-color .2s; }
+.sell-benefit:hover { transform: translateY(-2px); border-color: rgba(196,154,85,.45); }
+.sell-cta-btn { box-shadow: 0 0 0 0 rgba(196,154,85,.5); animation: sell-glow 2.8s ease-in-out infinite; }
+@keyframes sell-glow { 50% { box-shadow: 0 0 22px 2px rgba(196,154,85,.35); } }
+@media (prefers-reduced-motion: reduce) { .sell-orbit, .sell-benefit, .sell-cta-btn { animation: none; } }
