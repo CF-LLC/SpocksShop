@@ -2,23 +2,25 @@ import Link from "next/link";
 import { SpaceHero } from "@/components/space-hero";
 import { SellCta } from "@/components/sell-cta";
 import { communitySellersEnabled } from "@/lib/features";
-import { AffiliateCard } from "@/components/shop/affiliate-card";
+import { DailyPickSection } from "@/components/shop/daily-pick";
+import { canPreviewTomorrow, getDailyPickView } from "@/lib/shop/daily-pick";
 import { ProductCard } from "@/components/shop/product-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/lcars";
 import { getClosetProducts } from "@/lib/catalog";
-import { AMAZON_ASSOCIATES_DISCLOSURE, SHOP_SECTIONS } from "@/lib/shop/sections";
-import { activeAffiliateItems, approvedCommunityListings } from "@/lib/shop/queries";
+import { SHOP_SECTIONS } from "@/lib/shop/sections";
+import { approvedCommunityListings } from "@/lib/shop/queries";
 import { plural } from "@/lib/utils";
 
 export default async function HomePage() {
-  const [closet, picks, community] = await Promise.all([getClosetProducts(), activeAffiliateItems(), approvedCommunityListings()]);
+  const [closet, community, preview] = await Promise.all([getClosetProducts(), approvedCommunityListings(), canPreviewTomorrow()]);
+  const daily = await getDailyPickView({ includeTomorrow: preview, historyDays: 0 });
   // Seller-listed items (if any are approved) are part of Closet Picks.
   const closetCount = closet.length + community.length;
 
   const sections = [
     { href: "/shop?tab=closet", title: SHOP_SECTIONS.closet.title, blurb: SHOP_SECTIONS.closet.blurb, count: closetCount, unit: "item", accent: "var(--gold)" },
-    { href: "/shop?tab=amazon", title: SHOP_SECTIONS.affiliate.title, blurb: SHOP_SECTIONS.affiliate.blurb, count: picks.length, unit: "pick", accent: "var(--lilac)" },
+    { href: "/shop?tab=amazon", title: "Amazon Pick of the Day", blurb: "One hand-picked Amazon find, fresh every day.", count: daily.today ? 1 : 0, unit: "pick", accent: "var(--lilac)" },
   ];
 
   return (
@@ -59,18 +61,7 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section aria-labelledby="picks-title">
-        <SectionHeader id="picks-title" eyebrow="Amazon Picks" title="Recommended on Amazon" action={picks.length ? <Link href="/shop?tab=amazon" className="btn btn-outline">All {picks.length} picks</Link> : null}>
-          <span className="text-sm">{AMAZON_ASSOCIATES_DISCLOSURE}</span>
-        </SectionHeader>
-        {picks.length ? (
-          <ul className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
-            {picks.slice(0, 8).map((item) => <li key={item.id}><AffiliateCard item={item} /></li>)}
-          </ul>
-        ) : (
-          <EmptyState title="Picks are on the way" body="We're choosing what to recommend." actions={[{ href: "/shop", label: "Browse the shop" }]} />
-        )}
-      </section>
+      <DailyPickSection view={daily} compact headingId="picks-title" />
 
       {communitySellersEnabled() ? <SellCta /> : null}
     </div>

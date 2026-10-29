@@ -18,7 +18,7 @@ describe("Amazon Associates compliance", () => {
     }
   });
   it("shows the exact disclosure in the footer and Amazon Picks section, without price caveats", () => {
-    for (const f of ["components/site-footer.tsx", "app/shop/page.tsx", "app/guides/[slug]/page.tsx"]) expect(src(f)).toContain("AMAZON_ASSOCIATES_DISCLOSURE");
+    for (const f of ["components/site-footer.tsx", "app/shop/page.tsx", "components/shop/daily-pick.tsx", "app/guides/[slug]/page.tsx"]) expect(src(f)).toContain("AMAZON_ASSOCIATES_DISCLOSURE");
     expect(src("components/site-footer.tsx")).not.toMatch(/prices are approximate/i);
     expect(src("app/shop/page.tsx")).not.toMatch(/Prices are approximate/i);
     expect(AMAZON_ASSOCIATES_DISCLOSURE).toBe("As an Amazon Associate I earn from qualifying purchases.");

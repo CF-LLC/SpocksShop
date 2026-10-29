@@ -330,6 +330,8 @@ export const affiliateItems = pgTable(
     blurb: text("blurb"),
     /** Shop filter chip slug, e.g. "spock" | "necessities". Nullable: uncategorised picks show under "All". */
     category: text("category"),
+    /** Short "why it's today's pick" line (curator-written). Nullable: a line is generated from title/category. */
+    why: text("why"),
     active: boolean("active").notNull().default(true),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: createdAt(),
@@ -498,4 +500,13 @@ export const sellerPayouts = pgTable("seller_payouts", {
   lastError: text("last_error"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
+});
+
+/** One Amazon pick per America/Chicago calendar day. Fixed once chosen (primary key on the date). */
+export const dailyAmazonPicks = pgTable("daily_amazon_picks", {
+  pickDate: date("pick_date", { mode: "string" }).primaryKey(),
+  affiliateItemId: uuid("affiliate_item_id").references(() => affiliateItems.id, { onDelete: "set null" }),
+  cycle: integer("cycle").notNull().default(1),
+  why: text("why"),
+  createdAt: createdAt(),
 });

@@ -9,7 +9,7 @@ describe("two shop sections", () => {
   it("has exactly Amazon Picks and Closet Picks", () => {
     expect(Object.values(SHOP_SECTIONS).map((s) => s.title)).toEqual(["Amazon Picks", "Closet Picks"]);
     expect(SHOP_TABS.filter((t) => t.key !== "all").map((t) => [t.label, t.href])).toEqual([
-      ["Amazon Picks", "/shop?tab=amazon"],
+      ["Amazon Pick of the Day", "/shop?tab=amazon"],
       ["Closet Picks", "/shop?tab=closet"],
     ]);
   });
