@@ -7,7 +7,7 @@ export const PRIMARY_NAV = [
 
 export const SHOP_TABS = [
   { key: "all", label: "Everything", href: "/shop" },
-  { key: "amazon", label: "Amazon Picks", href: "/shop?tab=amazon" },
+  { key: "amazon", label: "Amazon Pick of the Day", href: "/shop?tab=amazon" },
   { key: "closet", label: "Closet Picks", href: "/shop?tab=closet" },
 ] as const;
 export type ShopTab = (typeof SHOP_TABS)[number]["key"];
