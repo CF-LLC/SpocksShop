@@ -5,6 +5,7 @@ import { getSellerSession } from "@/lib/auth/seller-session";
 import { notFoundResponse, redirectTo, sellersDisabled } from "@/lib/sell/http";
 import { MarketplaceError, onboardingLink } from "@/lib/marketplace/service";
 import { marketOrigin } from "@/lib/marketplace/http";
+import { describeConnectError } from "@/lib/marketplace/connect-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +20,13 @@ async function handle(request: Request) {
     const url = await onboardingLink({ db, stripe: getStripe() }, session.sellerId, origin);
     return NextResponse.redirect(url, 303);
   } catch (e) {
-    console.error("connect onboarding failed", { seller: session.sellerId, error: e instanceof Error ? e.message : String(e) });
-    return redirectTo(request, "/sell/dashboard", e instanceof MarketplaceError ? e.message : "Couldn't start payout setup. Please try again.");
+    if (e instanceof MarketplaceError) {
+      console.error("connect onboarding failed", { seller: session.sellerId, kind: "marketplace", message: e.message });
+      return redirectTo(request, "/sell/dashboard", e.message);
+    }
+    const info = describeConnectError(e);
+    console.error("connect onboarding failed", { seller: session.sellerId, kind: info.kind, ...info.log });
+    return redirectTo(request, "/sell/dashboard", info.userMessage);
   }
 }
 
