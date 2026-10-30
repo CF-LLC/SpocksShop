@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { adminUnitAmounts, buildSessionParams, handleDropEvent, STRIPE_MIN_CHARGE_CENTS, type DropDeps } from "../lib/drop/core";
+import { buildSessionParams, handleDropEvent, type DropDeps } from "../lib/drop/core";
+import { adminCostPrice, PRINTFUL_COSTS } from "../lib/drop/admin-cost";
 
 const session = vi.hoisted(() => ({ value: null as null | { userId: string; email: string; role: "admin" | "staff" } }));
 vi.mock("@/lib/auth/session", () => ({ getSession: async () => session.value }));
@@ -9,7 +10,7 @@ vi.mock("@/lib/stripe", () => ({
   stripeSettings: () => ({ mode: "test" }),
 }));
 
-const env = { PRINTFUL_VARIANTS: JSON.stringify({ "tee:M": 4017, "hoodie:L": 5596 }) };
+const env = { PRINTFUL_VARIANTS: JSON.stringify(Object.fromEntries(Object.entries(PRINTFUL_COSTS).map(([k, c]) => [k, c.variant]))) };
 type P = { line_items: { quantity: number; price_data: { unit_amount: number } }[]; shipping_options: { shipping_rate_data: { fixed_amount: { amount: number } } }[]; metadata: Record<string, string> };
 const total = (p: P) => p.line_items.reduce((n, l) => n + l.quantity * l.price_data.unit_amount, 0) + p.shipping_options[0].shipping_rate_data.fixed_amount.amount;
 
@@ -27,33 +28,53 @@ beforeEach(() => {
 });
 
 describe("admin test price", () => {
-  it("unit amounts always total >= the Stripe minimum", () => {
-    for (const qtys of [[1], [2], [3], [1, 1, 1], [5, 5], [3, 4, 5], [7]]) {
-      const lines = qtys.map((q) => ({ slug: "nice-pickle", garment: "tee" as const, size: "M", qty: q }));
-      const u = adminUnitAmounts(lines);
-      expect(u.every((x) => Number.isInteger(x) && x >= 1)).toBe(true);
-      expect(u.reduce((n, x, i) => n + x * lines[i].qty, 0)).toBeGreaterThanOrEqual(STRIPE_MIN_CHARGE_CENTS);
+  it("cost price: net after Stripe fees (at max AR tax) covers Printful cost; tee M = $19.60, hoodie M = $35.85", () => {
+    const net = (P: number, r: number) => P - 0.029 * P * (1 + r) - 30 - 0.005 * P;
+    for (const k of Object.keys(PRINTFUL_COSTS)) {
+      const [garment, size] = k.split(":") as ["tee" | "hoodie", string];
+      for (const qty of [1, 3]) {
+        const p = adminCostPrice([{ slug: "nice-pickle", garment, size, qty }], env)!;
+        expect(p.preTax).toBeGreaterThanOrEqual(50);
+        expect(net(p.preTax, 0.115)).toBeGreaterThanOrEqual(p.cost);
+        expect(net(p.preTax, 0)).toBeLessThan(p.cost + 0.04 * p.preTax); // no real margin
+      }
     }
-    expect(adminUnitAmounts([{ slug: "x", garment: "tee", size: "M", qty: 1 }])).toEqual([50]);
+    expect(adminCostPrice([{ slug: "x", garment: "tee", size: "M", qty: 1 }], env)).toMatchObject({ preTax: 1960, shipping: 535, cost: 1856 });
+    expect(adminCostPrice([{ slug: "x", garment: "hoodie", size: "M", qty: 1 }], env)).toMatchObject({ preTax: 3585, shipping: 919, cost: 3421 });
+    expect(adminCostPrice([{ slug: "x", garment: "hoodie", size: "2XL", qty: 1 }], env)!.preTax).toBe(3809);
   });
-  it("buildSessionParams: admin = $0.50 + $0 shipping, tagged; normal unchanged", () => {
+  it("unknown cost or mismatched variant -> public price, not $0.50", () => {
+    const lines = [{ slug: "adulting-1-star", garment: "tee" as const, size: "M", qty: 1 }];
+    const bad = { PRINTFUL_VARIANTS: JSON.stringify({ "tee:M": 9999 }) };
+    expect(adminCostPrice(lines, bad)).toBeNull();
+    const p = buildSessionParams(lines, "https://x", bad, { adminTest: true }) as unknown as P;
+    expect(total(p)).toBe(2800 + 499);
+    expect(p.metadata.admin_test).toBeUndefined();
+  });
+  it("buildSessionParams: admin = cost price, tagged; normal unchanged", () => {
     const lines = [{ slug: "adulting-1-star", garment: "tee" as const, size: "M", qty: 1 }];
     const a = buildSessionParams(lines, "https://x", env, { adminTest: true }) as unknown as P;
-    expect(total(a)).toBe(50);
+    expect(total(a)).toBe(1960);
+    expect(a.shipping_options[0].shipping_rate_data.fixed_amount.amount).toBe(535);
     expect(a.metadata).toMatchObject({ kind: "daily_drop", admin_test: "true" });
     const n = buildSessionParams(lines, "https://x", env) as unknown as P;
     expect(total(n)).toBe(2800 + 499);
     expect(n.metadata.admin_test).toBeUndefined();
+    const h = buildSessionParams([{ slug: "nice-pickle", garment: "hoodie", size: "M", qty: 1 }], "https://x", env) as unknown as P;
+    expect(total(h)).toBe(4800 + 799);
   });
-  it("verified admin session gets the min price", async () => {
+  it("verified admin session gets the cost price (tee and hoodie)", async () => {
     session.value = { userId: "u1", email: "a@b.c", role: "admin" };
     const { res, params } = await checkout();
     expect(res.status).toBe(200);
-    expect(total(params)).toBe(50);
+    expect(total(params)).toBe(1960);
+    const hd = await checkout({}, [{ slug: "nice-pickle", garment: "hoodie", size: "M", qty: 1 }]);
+    expect(total(hd.params)).toBe(3585);
+    expect(JSON.stringify(hd.body)).not.toMatch(/cost|admin/i);
     expect(params.metadata.admin_test).toBe("true");
     const mixed = await checkout({}, [{ slug: "nice-pickle", garment: "hoodie", size: "L", qty: 1 }, { slug: "adulting-1-star", garment: "tee", size: "M", qty: 2 }]);
-    expect(total(mixed.params)).toBeGreaterThanOrEqual(50);
-    expect(mixed.params.shipping_options[0].shipping_rate_data.fixed_amount.amount).toBe(0);
+    expect(total(mixed.params)).toBe(adminCostPrice([{ slug: "nice-pickle", garment: "hoodie", size: "L", qty: 1 }, { slug: "adulting-1-star", garment: "tee", size: "M", qty: 2 }], env)!.preTax);
+    expect(mixed.params.shipping_options[0].shipping_rate_data.fixed_amount.amount).toBe(919 + 2 * 535);
   });
   it("anonymous, staff and spoofed requests get normal prices and no hint of admin pricing", async () => {
     for (const [s, h] of [[null, {}], [null, { "x-admin": "1", cookie: "spock_admin=forged.token.value", "x-admin-test": "true" }], [{ userId: "s", email: "s@x", role: "staff" as const }, {}]] as const) {
@@ -62,7 +83,7 @@ describe("admin test price", () => {
       expect(res.status).toBe(200);
       expect(total(params)).toBe(2800 + 499);
       expect(params.metadata.admin_test).toBeUndefined();
-      expect(JSON.stringify(body)).not.toMatch(/admin|0\.50/i);
+      expect(JSON.stringify(body)).not.toMatch(/admin|cost/i);
     }
   });
   it("webhook stores admin_test and still creates a real-variant Printful draft", async () => {
