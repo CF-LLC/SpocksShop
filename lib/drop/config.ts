@@ -21,16 +21,16 @@ export const GARMENT_LABEL: Record<Garment, string> = { tee: "Unisex tee", hoodi
 
 export type Design = { slug: string; file: string; title: string; blurb: string; garments: Garment[] };
 export const DESIGNS: Design[] = [
-  { slug: "side-quest", file: "dd01-side-quest", title: "Side Quest In Progress", blurb: "Pixel astronaut, treasure planet, zero main-quest progress.", garments: ["tee", "hoodie"] },
-  { slug: "overthinker", file: "dd02-overthinker", title: "Professional Overthinker", blurb: "A hard-hat brain on permanent overtime.", garments: ["tee", "hoodie"] },
-  { slug: "leaving-early", file: "dd03-leaving-early", title: "My Love Language Is Leaving Early", blurb: "Groovy heart, sprinting for the exit.", garments: ["tee", "hoodie"] },
-  { slug: "iced-coffee-spite", file: "dd04-iced-coffee-spite", title: "Running On Iced Coffee & Spite", blurb: "One rocket-powered, very determined cup.", garments: ["tee", "hoodie"] },
-  { slug: "meeting-nap", file: "dd05-meeting-nap", title: "This Meeting Could've Been A Nap", blurb: "A cat with better calendar priorities.", garments: ["tee", "hoodie"] },
-  { slug: "snack-support", file: "dd06-snack-support", title: "Emotionally Supported By Snacks", blurb: "The snack squad group hug.", garments: ["tee", "hoodie"] },
-  { slug: "buffering", file: "dd07-buffering", title: "Do Not Disturb: Currently Buffering", blurb: "Synthwave robot, stuck at 42%.", garments: ["tee", "hoodie"] },
-  { slug: "explaining", file: "dd08-explaining", title: "I'm Not Arguing, I'm Explaining Why I'm Right", blurb: "An owl professor with receipts.", garments: ["tee", "hoodie"] },
-  { slug: "raccoon-energy", file: "dd09-raccoon-energy", title: "Certified Raccoon Energy", blurb: "Trash-can royalty with pizza.", garments: ["tee", "hoodie"] },
-  { slug: "cozy-mode", file: "dd10-cozy-mode", title: "Cozy Mode Activated", blurb: "8-bit cocoa, blanket, battery at 100%.", garments: ["tee", "hoodie"] },
+  { slug: "socks-ufo", file: "v2-01-socks-ufo", title: "So That's Where The Socks Go", blurb: "A tiny alien, a tractor beam, and every sock you ever lost.", garments: ["tee", "hoodie"] },
+  { slug: "cant-clap", file: "v2-02-cant-clap", title: "Can't Clap, Still Proud Of You", blurb: "Tiny arms, enormous support.", garments: ["tee", "hoodie"] },
+  { slug: "only-gravity", file: "v2-03-only-gravity", title: "No Regrets, Only Gravity", blurb: "Eye contact. Paw on mug. You know how this ends.", garments: ["tee", "hoodie"] },
+  { slug: "washed-on-cold", file: "v2-04-washed-on-cold", title: "Should've Washed On Cold", blurb: "One hot cycle later, this ghost has knees.", garments: ["tee", "hoodie"] },
+  { slug: "personal-best", file: "v2-05-personal-best", title: "Personal Best: Got Out Of Bed", blurb: "A sloth breaks the finish tape one step from the pillow.", garments: ["tee", "hoodie"] },
+  { slug: "act-natural", file: "v2-06-act-natural", title: "Act Natural", blurb: "A pigeon in a trench coat. Definitely not hiding a bagel.", garments: ["tee", "hoodie"] },
+  { slug: "pit-day", file: "v2-07-pit-day", title: "Never Skip Pit Day", blurb: "A swole avocado lifts its own pit.", garments: ["tee", "hoodie"] },
+  { slug: "slightly-burnt", file: "v2-08-slightly-burnt", title: "Slightly Burnt, Fully Relaxed", blurb: "Toaster hot tub, sunglasses tan line, zero worries.", garments: ["tee", "hoodie"] },
+  { slug: "smoke-alarm", file: "v2-09-smoke-alarm", title: "I Cook, The Smoke Alarm Cheers", blurb: "A proud potato chef and a very charred dinner.", garments: ["tee", "hoodie"] },
+  { slug: "free-hugs", file: "v2-10-free-hugs", title: "Free Hugs (Terms Apply)", blurb: "The cactus is thrilled. The balloon is not.", garments: ["tee", "hoodie"] },
 ];
 export const designBySlug = (slug: string) => DESIGNS.find((d) => d.slug === slug) ?? null;
 
