@@ -1,3 +1,4 @@
+import { adminCostPrice } from "./admin-cost";
 import type Stripe from "stripe";
 import { DESIGNS, GARMENT_LABEL, PRICES_CENTS, SHIPPING_CENTS, SIZES, designBySlug, printfulVariant, type Garment } from "./config";
 
@@ -19,27 +20,14 @@ export function parseCart(input: unknown): CartLine[] | null {
 }
 
 /** Checkout Session params: inline price_data (no Stripe Products/Prices created), Stripe Tax automatic_tax, US shipping. */
-/** Stripe's minimum USD charge. Verified-admin test sessions are priced to exactly this (before tax), with free shipping. */
-export const STRIPE_MIN_CHARGE_CENTS = 50;
-
-/** Per-unit admin test prices: whole cents, sum over all units == STRIPE_MIN_CHARGE_CENTS (or more, if >50 units). */
-export function adminUnitAmounts(lines: CartLine[]): number[] {
-  const units = lines.reduce((n, l) => n + l.qty, 0);
-  const base = Math.max(1, Math.floor(STRIPE_MIN_CHARGE_CENTS / units));
-  let extra = Math.max(0, STRIPE_MIN_CHARGE_CENTS - base * units);
-  // Give leftover cents to the first line, spread per unit (round up so the total never drops below the minimum).
-  return lines.map((l, i) => {
-    if (i !== 0 || extra === 0) return base;
-    const bump = Math.ceil(extra / l.qty); extra = 0; return base + bump;
-  });
-}
-
 export function buildSessionParams(lines: CartLine[], origin: string, env: Env = process.env, opts: { adminTest?: boolean } = {}): Stripe.Checkout.SessionCreateParams {
-  const adminTest = opts.adminTest === true;
-  const hasHoodie = lines.some((l) => l.garment === "hoodie");
-  const ship = adminTest ? 0 : hasHoodie ? SHIPPING_CENTS.hoodie : SHIPPING_CENTS.tee;
-  const adminUnits = adminTest ? adminUnitAmounts(lines) : null;
   for (const l of lines) if (!printfulVariant(l.garment, l.size, env)) throw new Error(`unmapped variant ${l.garment}:${l.size}`);
+  // Verified admin: cost-only price. Unknown cost -> normal public price (never a silent $0.50).
+  const admin = opts.adminTest === true ? adminCostPrice(lines, env) : null;
+  const adminTest = admin !== null;
+  const hasHoodie = lines.some((l) => l.garment === "hoodie");
+  const ship = admin ? admin.shipping : hasHoodie ? SHIPPING_CENTS.hoodie : SHIPPING_CENTS.tee;
+  const adminUnits = admin ? admin.unitAmounts : null;
   return {
     mode: "payment",
     line_items: lines.map((l, i) => {

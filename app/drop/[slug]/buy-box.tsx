@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { GARMENT_LABEL, PRICES_CENTS, SHIPPING_CENTS, SIZES, type Garment } from "@/lib/drop/config";
 
-export function BuyBox({ slug, garments, adminTest = false }: { slug: string; garments: Garment[]; adminTest?: boolean }) {
+export function BuyBox({ slug, garments, adminPrices }: { slug: string; garments: Garment[]; adminPrices?: Record<string, number> }) {
   const [garment, setGarment] = useState<Garment>(garments[0]);
   const [size, setSize] = useState("M");
   const [busy, setBusy] = useState(false);
@@ -27,7 +27,9 @@ export function BuyBox({ slug, garments, adminTest = false }: { slug: string; ga
         {SIZES[garment].map((s) => <button key={s} type="button" className="dd-opt" aria-pressed={s === size} onClick={() => setSize(s)}>{s}</button>)}
       </div>
       <button className="dd-btn" onClick={buy} disabled={busy}>{busy ? "Opening secure checkout…" : `Buy · $${PRICES_CENTS[garment] / 100}`}</button>
-      {adminTest && <p className="dd-note" data-admin-test>Admin test price: $0.50, free shipping (tax may apply). Only you see this.</p>}
+      {adminPrices && (adminPrices[`${garment}:${size}`] !== undefined
+        ? <p className="dd-note" data-admin-test>Admin cost price: ${(adminPrices[`${garment}:${size}`] / 100).toFixed(2)} incl. shipping (tax may apply). Only you see this.</p>
+        : <p className="dd-note" data-admin-test>No cost on file for this size, so you'll pay the public price. Only you see this.</p>)}
       {err && <p className="dd-err" role="alert">{err}</p>}
       <p className="dd-note">+ ${(SHIPPING_CENTS[garment] / 100).toFixed(2)} shipping, sales tax at checkout. Printed to order in about 2–7 business days. <Link href="/drop/policies">Returns</Link></p>
     </div>
