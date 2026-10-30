@@ -4,9 +4,9 @@ import type { DropDeps } from "./core";
 import { createPrintfulOrder } from "./printful";
 
 export const dropDeps: DropDeps = {
-  async claim(sessionId, email, items, amount) {
-    const rows = await db.execute(sql`insert into drop_orders (stripe_session_id, email, items, amount_total)
-      values (${sessionId}, ${email}, ${JSON.stringify(items)}::jsonb, ${amount})
+  async claim(sessionId, email, items, amount, adminTest = false) {
+    const rows = await db.execute(sql`insert into drop_orders (stripe_session_id, email, items, amount_total, admin_test)
+      values (${sessionId}, ${email}, ${JSON.stringify(items)}::jsonb, ${amount}, ${adminTest})
       on conflict (stripe_session_id) do nothing returning id`);
     return (rows as unknown as unknown[]).length > 0;
   },

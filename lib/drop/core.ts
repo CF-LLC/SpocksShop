@@ -19,19 +19,36 @@ export function parseCart(input: unknown): CartLine[] | null {
 }
 
 /** Checkout Session params: inline price_data (no Stripe Products/Prices created), Stripe Tax automatic_tax, US shipping. */
-export function buildSessionParams(lines: CartLine[], origin: string, env: Env = process.env): Stripe.Checkout.SessionCreateParams {
+/** Stripe's minimum USD charge. Verified-admin test sessions are priced to exactly this (before tax), with free shipping. */
+export const STRIPE_MIN_CHARGE_CENTS = 50;
+
+/** Per-unit admin test prices: whole cents, sum over all units == STRIPE_MIN_CHARGE_CENTS (or more, if >50 units). */
+export function adminUnitAmounts(lines: CartLine[]): number[] {
+  const units = lines.reduce((n, l) => n + l.qty, 0);
+  const base = Math.max(1, Math.floor(STRIPE_MIN_CHARGE_CENTS / units));
+  let extra = Math.max(0, STRIPE_MIN_CHARGE_CENTS - base * units);
+  // Give leftover cents to the first line, spread per unit (round up so the total never drops below the minimum).
+  return lines.map((l, i) => {
+    if (i !== 0 || extra === 0) return base;
+    const bump = Math.ceil(extra / l.qty); extra = 0; return base + bump;
+  });
+}
+
+export function buildSessionParams(lines: CartLine[], origin: string, env: Env = process.env, opts: { adminTest?: boolean } = {}): Stripe.Checkout.SessionCreateParams {
+  const adminTest = opts.adminTest === true;
   const hasHoodie = lines.some((l) => l.garment === "hoodie");
-  const ship = hasHoodie ? SHIPPING_CENTS.hoodie : SHIPPING_CENTS.tee;
+  const ship = adminTest ? 0 : hasHoodie ? SHIPPING_CENTS.hoodie : SHIPPING_CENTS.tee;
+  const adminUnits = adminTest ? adminUnitAmounts(lines) : null;
   for (const l of lines) if (!printfulVariant(l.garment, l.size, env)) throw new Error(`unmapped variant ${l.garment}:${l.size}`);
   return {
     mode: "payment",
-    line_items: lines.map((l) => {
+    line_items: lines.map((l, i) => {
       const d = designBySlug(l.slug)!;
       return {
         quantity: l.qty,
         price_data: {
           currency: "usd",
-          unit_amount: PRICES_CENTS[l.garment],
+          unit_amount: adminUnits ? adminUnits[i] : PRICES_CENTS[l.garment],
           tax_behavior: "exclusive",
           product_data: {
             name: `${d.title} — ${GARMENT_LABEL[l.garment]} (${l.size})`,
@@ -54,7 +71,7 @@ export function buildSessionParams(lines: CartLine[], origin: string, env: Env =
         },
       },
     ],
-    metadata: { kind: "daily_drop", cart: JSON.stringify(lines.map((l) => [l.slug, l.garment, l.size, l.qty])) },
+    metadata: { kind: "daily_drop", cart: JSON.stringify(lines.map((l) => [l.slug, l.garment, l.size, l.qty])), ...(adminTest ? { admin_test: "true" } : {}) },
     success_url: `${origin}/drop/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/drop`,
   };
@@ -99,7 +116,7 @@ export function buildPrintfulOrder(session: Stripe.Checkout.Session, lines: Cart
 }
 
 export type DropDeps = {
-  claim(sessionId: string, email: string | null, items: CartLine[], amount: number | null): Promise<boolean>;
+  claim(sessionId: string, email: string | null, items: CartLine[], amount: number | null, adminTest?: boolean): Promise<boolean>;
   setResult(sessionId: string, status: string, printfulOrderId: string | null, error: string | null): Promise<void>;
   createPrintfulOrder(body: unknown, confirm: boolean): Promise<{ id: string }>;
 };
@@ -112,7 +129,7 @@ export async function handleDropEvent(event: Stripe.Event, deps: DropDeps, opts:
   if (session.payment_status !== "paid") return "unpaid";
   const lines = cartFromSession(session);
   if (!lines) return "bad_cart";
-  const fresh = await deps.claim(session.id, session.customer_details?.email ?? null, lines, session.amount_total ?? null);
+  const fresh = await deps.claim(session.id, session.customer_details?.email ?? null, lines, session.amount_total ?? null, session.metadata?.admin_test === "true");
   if (!fresh) return "duplicate";
   try {
     const order = await deps.createPrintfulOrder(buildPrintfulOrder(session, lines, opts.artBase, opts.env), opts.autoConfirm);

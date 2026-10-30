@@ -3,6 +3,16 @@ import { dropEnabled } from "@/lib/drop/config";
 import { buildSessionParams, parseCart } from "@/lib/drop/core";
 import { publicUrl } from "@/lib/public-url";
 import { getStripe } from "@/lib/stripe";
+import { getSession } from "@/lib/auth/session";
+
+/** Only a verified, non-revoked admin session (signed cookie + revocation check). Never a client flag. */
+async function isVerifiedAdmin() {
+  try {
+    return (await getSession())?.role === "admin";
+  } catch {
+    return false;
+  }
+}
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,7 +26,7 @@ export async function POST(request: Request) {
   if (!lines) return NextResponse.json({ error: "That item or size isn't available." }, { status: 400 });
   const origin = publicUrl(request, "/").origin;
   try {
-    const session = await stripe.checkout.sessions.create(buildSessionParams(lines, origin));
+    const session = await stripe.checkout.sessions.create(buildSessionParams(lines, origin, process.env, { adminTest: await isVerifiedAdmin() }));
     return NextResponse.json({ url: session.url });
   } catch (e) {
     console.error("drop checkout failed", { message: String((e as Error)?.message).slice(0, 200) });
