@@ -17,26 +17,26 @@ describe("daily drop flags", () => {
 
 describe("checkout params", () => {
   it("uses inline price_data, automatic tax and fixed shipping", () => {
-    const p = buildSessionParams([{ slug: "socks-ufo", garment: "tee", size: "M", qty: 1 }], "https://spockshop.com", env);
+    const p = buildSessionParams([{ slug: "nice-pickle", garment: "tee", size: "M", qty: 1 }], "https://spockshop.com", env);
     expect(p.automatic_tax).toEqual({ enabled: true });
     expect(p.line_items![0].price_data!.unit_amount).toBe(2800);
     expect(p.line_items![0].price).toBeUndefined();
     expect(p.shipping_options![0].shipping_rate_data!.fixed_amount!.amount).toBe(499);
-    const h = buildSessionParams([{ slug: "free-hugs", garment: "hoodie", size: "L", qty: 1 }], "https://x", env);
+    const h = buildSessionParams([{ slug: "blame-the-tequila", garment: "hoodie", size: "L", qty: 1 }], "https://x", env);
     expect(h.line_items![0].price_data!.unit_amount).toBe(4800);
     expect(h.shipping_options![0].shipping_rate_data!.fixed_amount!.amount).toBe(799);
   });
   it("refuses unmapped variants and bad carts", () => {
-    expect(() => buildSessionParams([{ slug: "socks-ufo", garment: "tee", size: "S", qty: 1 }], "https://x", env)).toThrow();
+    expect(() => buildSessionParams([{ slug: "nice-pickle", garment: "tee", size: "S", qty: 1 }], "https://x", env)).toThrow();
     expect(parseCart([{ slug: "nope", garment: "tee", size: "M" }])).toBeNull();
-    expect(parseCart([{ slug: "socks-ufo", garment: "tee", size: "M", qty: 99 }])).toBeNull();
+    expect(parseCart([{ slug: "nice-pickle", garment: "tee", size: "M", qty: 99 }])).toBeNull();
   });
 });
 
 function evt(overrides: Record<string, unknown> = {}) {
   return { type: "checkout.session.completed", data: { object: {
     id: "cs_test_123", payment_status: "paid", amount_total: 3500,
-    metadata: { kind: "daily_drop", cart: JSON.stringify([["socks-ufo", "tee", "M", 1]]) },
+    metadata: { kind: "daily_drop", cart: JSON.stringify([["nice-pickle", "tee", "M", 1]]) },
     customer_details: { email: "a@b.c", name: "A B", address: { line1: "1 St", city: "X", state: "AR", country: "US", postal_code: "72000" } },
     ...overrides } } } as never;
 }
@@ -53,7 +53,7 @@ describe("webhook -> printful draft", () => {
     expect(create.mock.calls[0][1]).toBe(false);
     const body = (create.mock.calls[0] as unknown as [{ items: { variant_id: number; files: { url: string }[] }[] }])[0];
     expect(body.items[0].variant_id).toBe(4012);
-    expect(body.items[0].files[0].url).toBe("https://spockshop.com/drop/art/v2-01-socks-ufo.png");
+    expect(body.items[0].files[0].url).toBe("https://spockshop.com/drop/art/v4-05-nice-pickle.png");
   });
   it("ignores non-drop and unpaid sessions", async () => {
     const deps: DropDeps = { claim: vi.fn(), setResult: vi.fn(), createPrintfulOrder: vi.fn() } as never;

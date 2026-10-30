@@ -9,7 +9,7 @@ const stripe = new Stripe("sk_test_dummy");
 
 function session(overrides: Record<string, unknown> = {}) {
   return { id: "cs_live_1", object: "checkout.session", payment_status: "paid", amount_total: 3299,
-    metadata: { kind: "daily_drop", cart: JSON.stringify([["socks-ufo", "tee", "M", 1]]) },
+    metadata: { kind: "daily_drop", cart: JSON.stringify([["nice-pickle", "tee", "M", 1]]) },
     customer_details: { email: "a@b.c", name: "A B", address: { line1: "1 St", city: "X", state: "AR", country: "US", postal_code: "72000" } },
     ...overrides };
 }
