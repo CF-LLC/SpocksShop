@@ -43,3 +43,6 @@ next-env.d.ts
 
 # copied from node_modules by scripts/copy-ort.mjs
 /public/vendor/
+
+# Daily Drop print files (4500x5400, ~13MB each) are hosted outside git; see DROP_ART_BASE_URL
+drop-art/print/
