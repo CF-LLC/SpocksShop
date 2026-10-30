@@ -10,7 +10,9 @@ export const runtime = "nodejs";
 
 /** Separate Stripe endpoint for the Daily Drop (own signing secret DROP_STRIPE_WEBHOOK_SECRET). */
 export async function POST(request: Request) {
-  if (!dropEnabled()) return NextResponse.json({ error: "Not found." }, { status: 404 });
+  // Stripe sends every account-wide checkout.session.completed here. While the drop is off,
+  // acknowledge with 200 (no DB, Printful or Stripe calls) so Stripe doesn't retry or disable us.
+  if (!dropEnabled()) return NextResponse.json({ ignored: true });
   const stripe = getStripe();
   const secret = process.env.DROP_STRIPE_WEBHOOK_SECRET?.trim();
   if (!stripe || !secret) return NextResponse.json({ error: "Webhook not configured." }, { status: 503 });
