@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { designBySlug } from "@/lib/drop/config";
+import { designBySlug, isHeld } from "@/lib/drop/config";
 import { getSession } from "@/lib/auth/session";
 import { adminCostPrice } from "@/lib/drop/admin-cost";
 import { SIZES } from "@/lib/drop/config";
@@ -15,6 +15,8 @@ export default async function DropProduct({ params }: { params: Promise<{ slug: 
   const d = designBySlug(slug);
   if (!d) notFound();
   const isAdmin = (await getSession().catch(() => null))?.role === "admin";
+  const held = isHeld(d.slug);
+  if (held && !isAdmin) notFound();
   // Admin-only: per garment:size cost price (pre-tax cents). Never computed or sent for anyone else.
   let adminPrices: Record<string, number> | undefined;
   if (isAdmin) {
@@ -33,7 +35,7 @@ export default async function DropProduct({ params }: { params: Promise<{ slug: 
           <div className="dd-kicker">The Daily Drop</div>
           <h1 style={{ fontSize: "clamp(1.6rem,4.5vw,2.4rem)" }}>{d.title}</h1>
           <p className="dd-sub">{d.blurb}</p>
-          <BuyBox slug={d.slug} garments={d.garments} adminPrices={adminPrices} />
+          {held ? <p className="dd-panel" data-held>HELD: not public and not purchasable yet (admin preview only).</p> : <BuyBox slug={d.slug} garments={d.garments} adminPrices={adminPrices} />}
         </div>
       </div>
     </>
