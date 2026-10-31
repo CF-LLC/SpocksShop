@@ -458,14 +458,14 @@ export const productImports = pgTable(
   {
     id: id(),
     productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
-    source: text("source", { enum: ["depop"] }).notNull(),
+    source: text("source", { enum: ["depop", "vinted"] }).notNull(),
     sourceUrl: text("source_url").notNull(),
     // Depop photo URLs used last time (null for imports before 0014); lets a re-import tell if photos changed.
     photoUrls: jsonb("photo_urls").$type<string[] | null>(),
     syncedAt: timestamp("synced_at", { withTimezone: true }),
     importedAt: timestamp("imported_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [check("product_imports_source_valid", sql`${t.source} in ('depop')`)],
+  (t) => [check("product_imports_source_valid", sql`${t.source} in ('depop', 'vinted')`)],
 );
 
 /** First-party, cookieless event counts. Stores no IPs, user ids or other personal data. */

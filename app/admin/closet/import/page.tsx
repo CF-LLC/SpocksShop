@@ -30,6 +30,7 @@ export default async function DepopImportPage({ searchParams }: { searchParams: 
         Nothing goes live until you review and publish it. The Depop link is kept internally for duplicate checks and is never shown to shoppers.
       </p>
       <AdminNotice ok={sp.ok} error={sp.error} />
+      <p className="text-sm"><Link href="/admin/closet/import/vinted" className="font-semibold text-blue-700 underline">Import from Vinted instead →</Link></p>
 
       <section aria-labelledby="bulk-title" className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4" data-testid="depop-bulk">
         <h2 id="bulk-title" className="text-lg font-semibold">Bulk import your whole Depop shop</h2>

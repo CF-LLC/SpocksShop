@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, type SQL } from "drizzle-orm";
+import { publicConditionNotes } from "@/lib/importer/public-text";
 import { db } from "@/lib/db";
 import { categories, inventory, photos, products, sellers } from "@/lib/db/schema";
 import { communitySellersEnabled } from "@/lib/features";
@@ -36,7 +37,7 @@ export function toProduct(row: Row, uploaded: (typeof photos.$inferSelect)[]): P
     categoryName: row.categoryName,
     brand: p.brand ?? "",
     condition: p.condition,
-    conditionNotes: p.conditionNotes ?? "",
+    conditionNotes: publicConditionNotes(p.conditionNotes),
     priceCents: p.priceCents,
     originalPriceCents: p.originalPriceCents,
     available: Math.max(0, onHand - reserved),

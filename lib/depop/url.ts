@@ -30,10 +30,10 @@ export function normalizeDepopUrl(input: string): LinkCheck {
 export type ParsedLinks = { lines: { input: string; check: LinkCheck }[]; tooMany: boolean };
 
 /** Split the textarea into links (newlines, spaces or commas) and validate each. */
-export function parseLinkList(text: string, max: number = MAX_LINKS_PER_SUBMIT): ParsedLinks {
+export function parseLinkList(text: string, max: number = MAX_LINKS_PER_SUBMIT, normalize: (input: string) => LinkCheck = normalizeDepopUrl): ParsedLinks {
   const inputs = text.split(/[\s,]+/).map((l) => l.trim()).filter(Boolean);
   return {
-    lines: inputs.slice(0, max).map((input) => ({ input, check: normalizeDepopUrl(input) })),
+    lines: inputs.slice(0, max).map((input) => ({ input, check: normalize(input) })),
     tooMany: inputs.length > max,
   };
 }

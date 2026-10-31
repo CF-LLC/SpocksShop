@@ -154,7 +154,7 @@ describe("shoppers never see Depop links", () => {
   it("no public page or component references the import table or depop.com", async () => {
     const { execSync } = await import("child_process");
     const out = execSync("grep -rlE 'productImports|depop\\.com' app components lib --include=*.ts --include=*.tsx || true", { cwd: join(__dirname, "..") }).toString().trim().split("\n").filter(Boolean);
-    const allowed = (f: string) => f.startsWith("app/admin/") || f.startsWith("app/api/admin/") || f.startsWith("lib/depop/") || f === "lib/db/schema.ts";
+    const allowed = (f: string) => f.startsWith("app/admin/") || f.startsWith("app/api/admin/") || f.startsWith("lib/depop/") || f.startsWith("lib/importer/") || f.startsWith("lib/vinted/") || f === "lib/db/schema.ts";
     expect(out.filter((f) => !allowed(f))).toEqual([]);
   });
 });
