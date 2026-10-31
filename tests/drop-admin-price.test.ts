@@ -68,12 +68,12 @@ describe("admin test price", () => {
     const { res, params } = await checkout();
     expect(res.status).toBe(200);
     expect(total(params)).toBe(1960);
-    const hd = await checkout({}, [{ slug: "nice-pickle", garment: "hoodie", size: "M", qty: 1 }]);
+    const hd = await checkout({}, [{ slug: "meeting-email", garment: "hoodie", size: "M", qty: 1 }]);
     expect(total(hd.params)).toBe(3585);
     expect(JSON.stringify(hd.body)).not.toMatch(/cost|admin/i);
     expect(params.metadata.admin_test).toBe("true");
-    const mixed = await checkout({}, [{ slug: "nice-pickle", garment: "hoodie", size: "L", qty: 1 }, { slug: "adulting-1-star", garment: "tee", size: "M", qty: 2 }]);
-    expect(total(mixed.params)).toBe(adminCostPrice([{ slug: "nice-pickle", garment: "hoodie", size: "L", qty: 1 }, { slug: "adulting-1-star", garment: "tee", size: "M", qty: 2 }], env)!.preTax);
+    const mixed = await checkout({}, [{ slug: "meeting-email", garment: "hoodie", size: "L", qty: 1 }, { slug: "adulting-1-star", garment: "tee", size: "M", qty: 2 }]);
+    expect(total(mixed.params)).toBe(adminCostPrice([{ slug: "meeting-email", garment: "hoodie", size: "L", qty: 1 }, { slug: "adulting-1-star", garment: "tee", size: "M", qty: 2 }], env)!.preTax);
     expect(mixed.params.shipping_options[0].shipping_rate_data.fixed_amount.amount).toBe(919 + 2 * 535);
   });
   it("anonymous, staff and spoofed requests get normal prices and no hint of admin pricing", async () => {

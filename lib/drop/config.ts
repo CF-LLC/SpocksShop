@@ -32,6 +32,19 @@ export const DESIGNS: Design[] = [
   { slug: "love-my-rooster", file: "v4-09-love-my-rooster", title: "I Love My Cock (He's A Rooster, Pervert)", blurb: "A leather-jacket rooster, swooning hens, one judgmental cat.", garments: ["tee", "hoodie"] },
   { slug: "day-drinking", file: "v4-10-day-drinking", title: "Day Drinking Is Just Hydrating With Ambition", blurb: "The sun on a flamingo float, three umbrellas deep, 10 AM.", garments: ["tee", "hoodie"] },
 ];
+/**
+ * Held designs: kept (art, print files, rows) but not public or purchasable until Printful accepts a draft.
+ * DROP_HELD_SLUGS overrides the default: a comma list of slugs, or "none" to un-hold everything.
+ */
+export const DEFAULT_HELD_SLUGS = ["nice-melons", "nice-pickle", "love-my-rooster"];
+export function heldSlugs(env: Env = process.env): Set<string> {
+  const raw = env.DROP_HELD_SLUGS;
+  if (raw === undefined || raw.trim() === "") return new Set(DEFAULT_HELD_SLUGS);
+  if (raw.trim().toLowerCase() === "none") return new Set();
+  return new Set(raw.split(",").map((x) => x.trim()).filter(Boolean));
+}
+export const isHeld = (slug: string, env: Env = process.env) => heldSlugs(env).has(slug);
+export const publicDesigns = (env: Env = process.env) => DESIGNS.filter((d) => !isHeld(d.slug, env));
 export const designBySlug = (slug: string) => DESIGNS.find((d) => d.slug === slug) ?? null;
 
 /**
