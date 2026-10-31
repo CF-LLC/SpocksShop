@@ -40,25 +40,25 @@ type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === "object" && v !== null && !Array.isArray(v);
 const str = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v.trim() : typeof v === "number" ? String(v) : null);
 
-function decodeEntities(s: string): string {
+export function decodeEntities(s: string): string {
   return s
     .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
     .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
     .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&");
 }
 
-function scripts(html: string, test: RegExp): string[] {
+export function scripts(html: string, test: RegExp): string[] {
   const out: string[] = [];
   const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
   for (let m; (m = re.exec(html)); ) if (test.test(m[1])) out.push(m[2]);
   return out;
 }
 
-function tryJson(s: string): unknown {
+export function tryJson(s: string): unknown {
   try { return JSON.parse(s.trim()); } catch { return null; }
 }
 
-function meta(html: string, key: string): string | null {
+export function meta(html: string, key: string): string | null {
   const re = /<meta\b[^>]*>/gi;
   for (let m; (m = re.exec(html)); ) {
     const tag = m[0];
