@@ -29,7 +29,7 @@ export function DailyPickSection({ view, compact = false, headingId = "daily-pic
           <p className="t-eyebrow mb-1">Amazon Pick of the Day</p>
           <h2 id={headingId} className="t-h2">{today ? `Today's pick · ${fmtDate(today.date, { month: "short", day: "numeric" })}` : "Today's pick"}</h2>
         </div>
-        {compact && today ? <Link href="/shop?tab=amazon" className="btn btn-outline">Past picks</Link> : null}
+        {compact && today ? <Link href="/picks" className="btn btn-outline">Past picks</Link> : null}
       </div>
 
       {today ? (
