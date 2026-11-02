@@ -18,6 +18,7 @@ export default async function DropHome() {
       <div className="dd-kicker">The Daily Drop</div>
       <h1>Shirts from another galaxy.</h1>
       <p className="dd-sub">{live} original illustrated designs, printed to order on tees ({usd(PRICES_CENTS.tee)}), hoodies ({usd(PRICES_CENTS.hoodie)}), mugs (from {usd(PRICES_CENTS.mug)}), stickers (from {usd(PRICES_CENTS.sticker)}) and dad hats ({usd(PRICES_CENTS.hat)}).</p>
+      <p className="dd-panel" data-deals-banner><strong>Deals:</strong> Tee + Hoodie bundle $72 (save $4) · 2 tees for $52 (save $4). Applied automatically at checkout.</p>
       {shown.length === 0 ? (
         <div className="dd-panel">Nothing in orbit right now. Check back soon.</div>
       ) : (
