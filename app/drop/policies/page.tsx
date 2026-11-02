@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Daily Drop Shipping, Returns & Terms", description: "Shipping rates, print times, returns and terms for Daily Drop tees, hoodies, mugs, stickers and hats from Spock's Resale Shop.", alternates: { canonical: "https://spockshop.com/drop/policies" } };
 import Link from "next/link";
 
 const S = "support@spockshop.com";

@@ -1,4 +1,5 @@
 "use client";
+import { sizedImg } from "@/lib/drop/mockups";
 import { useState } from "react";
 import type { Garment } from "@/lib/drop/config";
 import type { GalleryImage } from "@/lib/drop/mockups";
@@ -15,12 +16,12 @@ export function ProductView({ slug, title, garments, images, adminPrices, childr
   return (
     <div className="dd-prod">
       <div>
-        <div className="dd-card"><div className={`dd-shirt${main.mockup ? " dd-mock" : ""}`}><img src={main.src} alt={`${title}: ${main.label}`} data-main-image={main.key} /></div></div>
+        <div className="dd-card"><div className={`dd-shirt${main.mockup ? " dd-mock" : ""}`}><img {...sizedImg(main.src, "(max-width: 800px) 92vw, 560px")} width={800} height={800} fetchPriority="high" alt={`${title}: ${main.label}`} data-main-image={main.key} /></div></div>
         <div className="dd-thumbs" role="group" aria-label="Photos">
           {images.map((i) => (
             <button key={i.key} type="button" className="dd-thumb" aria-pressed={i.key === main.key} aria-label={i.label} title={i.label} data-thumb={i.key}
               onClick={() => { setPick(i.key); if (i.garment) { setGarment(i.garment); setPick(null); } }}>
-              <img src={i.src} alt="" loading="lazy" />
+              <img src={sizedImg(i.src).src} alt="" loading="lazy" decoding="async" />
               {i.swatch ? <span className="dd-swatch" style={{ background: i.swatch }} aria-hidden /> : null}
             </button>
           ))}

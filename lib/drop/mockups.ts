@@ -37,3 +37,14 @@ export function gallery(d: Design): GalleryImage[] {
 }
 /** Every mockup file name the art route may serve (it still applies the held check). */
 export const MOCKUP_NAMES = new Set(DESIGNS.flatMap((d) => MOCKUP_TYPES.map((g) => `${d.file}-${g}.jpg`)));
+
+/** Pre-generated resized WebP variants (scripts/drop-sized.py -> drop-art/sized/<base>-<w>.webp). Originals are kept. */
+export const SIZED_WIDTHS = [480, 800] as const;
+export const SIZED_NAMES = new Set(DESIGNS.flatMap((d) => [d.file, ...MOCKUP_TYPES.map((g) => `${d.file}-${g}`)]).flatMap((b) => SIZED_WIDTHS.map((w) => `${b}-${w}.webp`)));
+/** <img> props for an art/mockup URL: small WebP src + srcset, sized for the slot. Non-matching URLs pass through. */
+export function sizedImg(url: string, sizes = "(max-width: 600px) 50vw, 260px"): { src: string; srcSet?: string; sizes?: string } {
+  const m = /^\/drop\/art\/(.+)\.(jpg|webp)$/.exec(url);
+  if (!m) return { src: url };
+  const base = m[1];
+  return { src: `/drop/art/${base}-480.webp`, srcSet: SIZED_WIDTHS.map((w) => `/drop/art/${base}-${w}.webp ${w}w`).join(", "), sizes };
+}

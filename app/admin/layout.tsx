@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { getSession } from "@/lib/auth/session";
 
 // Admin pages query the database at request time; never prerender at build.
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 const links = [
   ["/admin", "Dashboard"],
