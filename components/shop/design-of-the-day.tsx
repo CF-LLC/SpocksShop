@@ -9,7 +9,7 @@ export function DesignOfTheDay({ design }: { design: Design }) {
   return (
     <section aria-labelledby="dotd-title" data-testid="design-of-the-day">
       <SectionHeader id="dotd-title" eyebrow="Merch · The Daily Drop" title="Design of the day" action={<Link href="/drop" className="btn btn-outline">Shop all merch</Link>}>
-        Original illustrated tees and hoodies, printed to order.
+        Original illustrated tees, hoodies, mugs, stickers and hats, printed to order.
       </SectionHeader>
       <Link href={`/drop/${design.slug}`} className="panel group grid items-center gap-6 p-6 hover:border-[var(--line-strong)] md:grid-cols-[minmax(0,280px)_1fr]">
         <span className="block overflow-hidden rounded-2xl bg-[var(--space-1,#0a1022)]">
@@ -20,7 +20,7 @@ export function DesignOfTheDay({ design }: { design: Design }) {
           <span aria-hidden className="h-1.5 w-12 rounded-full" style={{ background: "var(--gold)" }} />
           <span className="t-h3 mt-2">{design.title}</span>
           <span className="muted text-sm">{design.blurb}</span>
-          <span className="dim mt-3 text-sm font-semibold">Tees from {usd(PRICES_CENTS.tee)}, hoodies {usd(PRICES_CENTS.hoodie)} →</span>
+          <span className="dim mt-3 text-sm font-semibold">Tees {usd(PRICES_CENTS.tee)}, mugs from {usd(PRICES_CENTS.mug)}, stickers from {usd(PRICES_CENTS.sticker)}, hats {usd(PRICES_CENTS.hat)} →</span>
         </span>
       </Link>
     </section>

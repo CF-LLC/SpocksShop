@@ -30,7 +30,7 @@ export default async function DropProduct({ params }: { params: Promise<{ slug: 
     <>
       <Link href="/drop" className="dd-note">← All designs</Link>
       <div className="dd-prod">
-        <div className="dd-card"><div className="dd-shirt"><img src={`/drop/art/${d.file}.webp`} alt={d.title} /></div></div>
+        <div><div className="dd-card"><div className="dd-shirt"><img src={`/drop/art/${d.file}.webp`} alt={d.title} /></div></div><p className="dd-note" style={{ marginTop: ".6rem" }}>Available on tees, hoodies, 11oz/15oz mugs, kiss-cut stickers and dad hats. Art shown is the print; each item is printed to order.</p></div>
         <div>
           <div className="dd-kicker">The Daily Drop</div>
           <h1 style={{ fontSize: "clamp(1.6rem,4.5vw,2.4rem)" }}>{d.title}</h1>

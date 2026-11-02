@@ -1,6 +1,6 @@
 import { adminCostPrice } from "./admin-cost";
 import type Stripe from "stripe";
-import { DESIGNS, GARMENT_LABEL, PRICES_CENTS, SHIPPING_CENTS, SIZES, designBySlug, printfulVariant, type Garment } from "./config";
+import { DESIGNS, GARMENT_LABEL, PRINT_PLACEMENT, SHIPPING_CENTS, TAX_CODE, unitPrice, SIZES, designBySlug, printfulVariant, type Garment } from "./config";
 
 type Env = Record<string, string | undefined>;
 export type CartLine = { slug: string; garment: Garment; size: string; qty: number };
@@ -25,8 +25,8 @@ export function buildSessionParams(lines: CartLine[], origin: string, env: Env =
   // Verified admin: cost-only price. Unknown cost -> normal public price (never a silent $0.50).
   const admin = opts.adminTest === true ? adminCostPrice(lines, env) : null;
   const adminTest = admin !== null;
-  const hasHoodie = lines.some((l) => l.garment === "hoodie");
-  const ship = admin ? admin.shipping : hasHoodie ? SHIPPING_CENTS.hoodie : SHIPPING_CENTS.tee;
+  // One flat rate per order: the highest rate among the product types in the cart.
+  const ship = admin ? admin.shipping : Math.max(...lines.map((l) => SHIPPING_CENTS[l.garment]));
   const adminUnits = admin ? admin.unitAmounts : null;
   return {
     mode: "payment",
@@ -36,11 +36,11 @@ export function buildSessionParams(lines: CartLine[], origin: string, env: Env =
         quantity: l.qty,
         price_data: {
           currency: "usd",
-          unit_amount: adminUnits ? adminUnits[i] : PRICES_CENTS[l.garment],
+          unit_amount: adminUnits ? adminUnits[i] : unitPrice(l.garment, l.size),
           tax_behavior: "exclusive",
           product_data: {
             name: `${d.title} — ${GARMENT_LABEL[l.garment]} (${l.size})`,
-            tax_code: "txcd_30011000", // clothing
+            tax_code: TAX_CODE[l.garment],
             images: [`${origin}/drop/art/${d.file}.webp`],
             metadata: { drop_slug: l.slug, garment: l.garment, size: l.size },
           },
@@ -97,7 +97,7 @@ export function buildPrintfulOrder(session: Stripe.Checkout.Session, lines: Cart
         variant_id: printfulVariant(l.garment, l.size, env),
         quantity: l.qty,
         name: `${d.title} ${l.garment} ${l.size}`,
-        files: [{ type: "front", url: `${artBase}/drop/art/${d.file}.png` }],
+        files: [{ type: PRINT_PLACEMENT[l.garment], url: `${artBase}/drop/art/${d.file}.png` }],
       };
     }),
   };
