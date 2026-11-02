@@ -4,7 +4,8 @@ import { designBySlug, isHeld } from "@/lib/drop/config";
 import { getSession } from "@/lib/auth/session";
 import { adminCostPrice } from "@/lib/drop/admin-cost";
 import { SIZES } from "@/lib/drop/config";
-import { BuyBox } from "./buy-box";
+import { ProductView } from "./product-view";
+import { gallery } from "@/lib/drop/mockups";
 
 // Per-request render (reads the admin cookie); never cached across users.
 export const dynamic = "force-dynamic";
@@ -29,15 +30,22 @@ export default async function DropProduct({ params }: { params: Promise<{ slug: 
   return (
     <>
       <Link href="/drop" className="dd-note">← All designs</Link>
-      <div className="dd-prod">
-        <div><div className="dd-card"><div className="dd-shirt"><img src={`/drop/art/${d.file}.webp`} alt={d.title} /></div></div><p className="dd-note" style={{ marginTop: ".6rem" }}>Available on tees, hoodies, 11oz/15oz mugs, kiss-cut stickers and dad hats. Art shown is the print; each item is printed to order.</p></div>
-        <div>
+      {held ? (
+        <div className="dd-prod">
+          <div className="dd-card"><div className="dd-shirt"><img src={`/drop/art/${d.file}.webp`} alt={d.title} /></div></div>
+          <div>
+            <h1 style={{ fontSize: "clamp(1.6rem,4.5vw,2.4rem)" }}>{d.title}</h1>
+            <p className="dd-panel" data-held>HELD: not public and not purchasable yet (admin preview only).</p>
+          </div>
+        </div>
+      ) : (
+        <ProductView slug={d.slug} title={d.title} garments={d.garments} images={gallery(d)} adminPrices={adminPrices}>
           <div className="dd-kicker">The Daily Drop</div>
           <h1 style={{ fontSize: "clamp(1.6rem,4.5vw,2.4rem)" }}>{d.title}</h1>
           <p className="dd-sub">{d.blurb}</p>
-          {held ? <p className="dd-panel" data-held>HELD: not public and not purchasable yet (admin preview only).</p> : <BuyBox slug={d.slug} garments={d.garments} adminPrices={adminPrices} />}
-        </div>
-      </div>
+          <p className="dd-note">Available on tees, hoodies, 11oz/15oz mugs, kiss-cut stickers and dad hats.</p>
+        </ProductView>
+      )}
     </>
   );
 }

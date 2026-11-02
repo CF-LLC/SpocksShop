@@ -1,4 +1,5 @@
 import { adminCostPrice } from "./admin-cost";
+import { mockupUrl } from "./mockups";
 import type Stripe from "stripe";
 import { DESIGNS, GARMENT_LABEL, PRINT_PLACEMENT, SHIPPING_CENTS, TAX_CODE, unitPrice, SIZES, designBySlug, printfulVariant, type Garment } from "./config";
 
@@ -41,7 +42,7 @@ export function buildSessionParams(lines: CartLine[], origin: string, env: Env =
           product_data: {
             name: `${d.title} — ${GARMENT_LABEL[l.garment]} (${l.size})`,
             tax_code: TAX_CODE[l.garment],
-            images: [`${origin}/drop/art/${d.file}.webp`],
+            images: [`${origin}${mockupUrl(d, l.garment) ?? `/drop/art/${d.file}.webp`}`],
             metadata: { drop_slug: l.slug, garment: l.garment, size: l.size },
           },
         },
@@ -97,11 +98,14 @@ export function buildPrintfulOrder(session: Stripe.Checkout.Session, lines: Cart
         variant_id: printfulVariant(l.garment, l.size, env),
         quantity: l.qty,
         name: `${d.title} ${l.garment} ${l.size}`,
-        files: [{ type: PRINT_PLACEMENT[l.garment], url: `${artBase}/drop/art/${d.file}.png` }],
+        files: [{ type: PRINT_PLACEMENT[l.garment], url: `${artBase}/drop/art/${d.file}.png`, ...(l.garment === "mug" ? { position: MUG_POSITION } : {}) }],
       };
     }),
   };
 }
+
+/** Mug wrap (2700x1050 print area): art on the side that faces out for a right-handed drinker, same as the mockup photos. */
+export const MUG_POSITION = { area_width: 2700, area_height: 1050, width: 875, height: 1050, top: 0, left: 1705 };
 
 export type DropDeps = {
   claim(sessionId: string, email: string | null, items: CartLine[], amount: number | null, adminTest?: boolean): Promise<boolean>;

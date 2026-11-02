@@ -23,3 +23,12 @@
 .dd-note{color:var(--muted);font-size:.9rem}
 .dd a{color:#b9c4ff}
 .dd-panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1.25rem 1.5rem;margin-top:1.5rem}
+.dd-shirt{position:relative}
+.dd-mock{background:#fff}.dd-mock>img:first-child{width:100%}
+.dd-mini{position:absolute;right:.5rem;bottom:.5rem;width:22%!important;border-radius:10px;background:#1b1f3f;border:1px solid var(--line);padding:3px}
+.dd-thumbs{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0}
+.dd-thumb{position:relative;width:72px;height:72px;border:2px solid var(--line);border-radius:12px;background:#fff;padding:0;overflow:hidden;cursor:pointer}
+.dd-thumb[aria-pressed=true]{border-color:var(--glow)}
+.dd-thumb img{width:100%;height:100%;object-fit:cover}
+.dd-thumb:last-child{background:#1b1f3f}
+.dd-swatch{position:absolute;left:4px;bottom:4px;width:14px;height:14px;border-radius:50%;border:1px solid #fff9;box-shadow:0 0 0 1px #0006}
