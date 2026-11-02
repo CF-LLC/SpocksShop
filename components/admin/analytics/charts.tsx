@@ -54,7 +54,7 @@ export function Stat({ label, value, sub }: { label: string; value: number | str
   );
 }
 
-export function AnalyticsTabs({ active }: { active: "overview" | "blog" }) {
+export function AnalyticsTabs({ active }: { active: "overview" | "blog" | "sales" | "ops" | "signups" }) {
   const tab = (href: string, label: string, on: boolean) => <Link href={href} className={`inline-flex min-h-[44px] items-center rounded-full px-4 text-sm font-semibold ${on ? "bg-slate-900 text-white" : "border border-slate-300 bg-white"}`} aria-current={on ? "page" : undefined}>{label}</Link>;
-  return <nav className="flex flex-wrap gap-2" aria-label="Analytics sections">{tab("/admin/analytics", "Overview", active === "overview")}{tab("/admin/analytics/blog", "Blog", active === "blog")}</nav>;
+  return <nav className="flex flex-wrap gap-2" aria-label="Analytics sections">{tab("/admin/analytics", "Overview", active === "overview")}{tab("/admin/analytics/blog", "Blog", active === "blog")}{tab("/admin/analytics/sales", "Sales", active === "sales")}</nav>;
 }
