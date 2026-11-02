@@ -2,6 +2,9 @@ import type { LinkCheck } from "@/lib/depop/url";
 
 /** Cooper's own Vinted member name. Sync and imports are for his listings only. */
 export const OWN_MEMBER = "mrspock13";
+/** mrspock13's numeric member id (from Vinted's public member search). */
+export const OWN_MEMBER_ID = "3206261213";
+export const OWN_MEMBER_URL = `https://www.vinted.com/member/${OWN_MEMBER_ID}-${OWN_MEMBER}`;
 
 /**
  * Accept only https Vinted item pages (vinted.com/items/<id>[-slug]) and return a normalized form

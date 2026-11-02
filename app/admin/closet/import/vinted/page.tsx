@@ -2,10 +2,10 @@ import Link from "next/link";
 import { AdminNotice } from "@/components/admin/notice";
 import { decodeResults } from "@/lib/depop/results";
 import { MAX_LINKS_PER_SUBMIT } from "@/lib/depop/url";
-import { OWN_MEMBER } from "@/lib/vinted/url";
+import { OWN_MEMBER, OWN_MEMBER_URL } from "@/lib/vinted/url";
 import { VintedSync } from "./vinted-sync";
 
-const LABEL = { imported: "Imported as draft", duplicate: "Skipped: duplicate", updated: "Updated", sold: "Skipped: sold", error: "Not imported" } as const;
+const LABEL = { imported: "Imported as draft", duplicate: "Skipped: duplicate", updated: "Updated", flagged: "Kept your edit", sold: "Skipped: sold", error: "Not imported" } as const;
 
 export default async function VintedImportPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string; r?: string }> }) {
   const sp = await searchParams;
@@ -28,7 +28,7 @@ export default async function VintedImportPage({ searchParams }: { searchParams:
             {results.map((r, i) => (
               <li key={i} className="rounded-xl border border-slate-200 p-3 text-sm">
                 <span className="font-semibold">{LABEL[r.status]}</span> <span className="break-all text-slate-500">{r.input}</span>
-                {"id" in r && r.id ? <p className="mt-1"><Link href={`/admin/closet/${r.id}`} className="text-blue-700 underline">{"title" in r ? r.title : "Open item"}</Link>{r.status === "updated" ? ` · ${r.changes.join("; ")}` : ""}</p> : null}
+                {"id" in r && r.id ? <p className="mt-1"><Link href={`/admin/closet/${r.id}`} className="text-blue-700 underline">{"title" in r ? r.title : "Open item"}</Link>{r.status === "updated" ? ` · ${r.changes.join("; ")}` : r.status === "flagged" ? ` · ${r.flagged.join("; ")}` : ""}</p> : null}
                 {r.status === "sold" ? <p className="mt-1 text-slate-700">Already sold on Vinted, no draft made ({r.title})</p> : null}
                 {r.status === "duplicate" && !r.id ? <p className="mt-1 text-slate-700">{r.title}</p> : null}
                 {r.status === "error" ? <p className="mt-1 text-red-800">{r.error}</p> : null}
@@ -63,8 +63,8 @@ export default async function VintedImportPage({ searchParams }: { searchParams:
 
       <section className="surface-panel space-y-2 rounded-2xl p-4">
         <h2 className="text-lg font-semibold">Sync my Vinted shop</h2>
-        <p className="text-sm text-slate-600">Reads only your public member page, once, then each item slowly. New items become drafts, sold ones get marked Sold, nothing is deleted. Runs only when you press the button.</p>
-        <VintedSync />
+        <p className="text-sm text-slate-600">Reads only your public member page, once, with no login (every item&apos;s title, price, brand, size, condition and photos are on it). New items become drafts, items closed as sold get marked Sold, items gone from your page are unpublished (archived), nothing is deleted. If Vinted changed something you edited here, your edit is kept and the change is listed. Runs only when you press the button.</p>
+        <VintedSync defaultUrl={OWN_MEMBER_URL} />
       </section>
     </section>
   );
