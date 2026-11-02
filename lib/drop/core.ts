@@ -1,6 +1,7 @@
 import { adminCostPrice } from "./admin-cost";
 import { mockupUrl } from "./mockups";
 import { DEALS, dealCounts, priceUnits } from "./deals";
+import { PROMO_LABEL, promoAmount, promoEligible } from "./signup";
 import type Stripe from "stripe";
 import { DESIGNS, GARMENT_LABEL, PRINT_PLACEMENT, SHIPPING_CENTS, TAX_CODE, unitPrice, SIZES, designBySlug, printfulVariant, type Garment } from "./config";
 
@@ -22,7 +23,7 @@ export function parseCart(input: unknown): CartLine[] | null {
 }
 
 /** Checkout Session params: inline price_data (no Stripe Products/Prices created), Stripe Tax automatic_tax, US shipping. */
-export function buildSessionParams(lines: CartLine[], origin: string, env: Env = process.env, opts: { adminTest?: boolean } = {}): Stripe.Checkout.SessionCreateParams {
+export function buildSessionParams(lines: CartLine[], origin: string, env: Env = process.env, opts: { adminTest?: boolean; promoCode?: string | null } = {}): Stripe.Checkout.SessionCreateParams {
   for (const l of lines) if (!printfulVariant(l.garment, l.size, env)) throw new Error(`unmapped variant ${l.garment}:${l.size}`);
   // Verified admin: cost-only price. Unknown cost -> normal public price (never a silent $0.50).
   const admin = opts.adminTest === true ? adminCostPrice(lines, env) : null;
@@ -30,12 +31,14 @@ export function buildSessionParams(lines: CartLine[], origin: string, env: Env =
   // One flat rate per order: the highest rate among the product types in the cart.
   const ship = admin ? admin.shipping : Math.max(...lines.map((l) => SHIPPING_CENTS[l.garment]));
   const adminUnits = admin ? admin.unitAmounts : null;
+  // First-order code: public carts only, never on deal-priced units (see lib/drop/signup.ts promoEligible).
+  const promo = !admin && opts.promoCode ? opts.promoCode : null;
   return {
     mode: "payment",
     line_items: (adminUnits
-      ? lines.map((l, i) => ({ l, qty: l.qty, amount: adminUnits[i], deal: null as keyof typeof DEALS | null }))
-      : groupUnits(lines)
-    ).map(({ l, qty, amount, deal }) => {
+      ? lines.map((l, i) => ({ l, qty: l.qty, amount: adminUnits[i], deal: null as keyof typeof DEALS | null, promo: false }))
+      : groupUnits(lines, !!promo)
+    ).map(({ l, qty, amount, deal, promo: pr }) => {
       const d = designBySlug(l.slug)!;
       return {
         quantity: qty,
@@ -44,10 +47,10 @@ export function buildSessionParams(lines: CartLine[], origin: string, env: Env =
           unit_amount: amount,
           tax_behavior: "exclusive" as const,
           product_data: {
-            name: `${d.title} — ${GARMENT_LABEL[l.garment]} (${l.size})${deal ? ` · ${DEALS[deal].label}` : ""}`,
+            name: `${d.title} — ${GARMENT_LABEL[l.garment]} (${l.size})${deal ? ` · ${DEALS[deal].label}` : ""}${pr ? ` · ${PROMO_LABEL}` : ""}`,
             tax_code: TAX_CODE[l.garment],
             images: [`${origin}${mockupUrl(d, l.garment) ?? `/drop/art/${d.file}.webp`}`],
-            metadata: { drop_slug: l.slug, garment: l.garment, size: l.size, ...(deal ? { deal } : {}) },
+            metadata: { drop_slug: l.slug, garment: l.garment, size: l.size, ...(deal ? { deal } : {}), ...(pr ? { promo: "first10" } : {}) },
           },
         },
       };
@@ -64,18 +67,21 @@ export function buildSessionParams(lines: CartLine[], origin: string, env: Env =
         },
       },
     ],
-    metadata: { kind: "daily_drop", cart: JSON.stringify(lines.map((l) => [l.slug, l.garment, l.size, l.qty])), ...(adminTest ? { admin_test: "true" } : dealMeta(lines)) },
+    metadata: { kind: "daily_drop", cart: JSON.stringify(lines.map((l) => [l.slug, l.garment, l.size, l.qty])), ...(adminTest ? { admin_test: "true" } : { ...dealMeta(lines), ...(promo ? { promo_code: promo } : {}) }) },
     success_url: `${origin}/drop/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/drop`,
   };
 }
 
 /** Public carts: units grouped back into Stripe lines by (cart line, price, deal). */
-function groupUnits(lines: CartLine[]) {
-  const out: { l: CartLine; qty: number; amount: number; deal: keyof typeof DEALS | null }[] = [];
+function groupUnits(lines: CartLine[], promo = false) {
+  const out: { l: CartLine; qty: number; amount: number; deal: keyof typeof DEALS | null; promo: boolean }[] = [];
   for (const u of priceUnits(lines)) {
-    const g = out.find((o) => o.l === lines[u.line] && o.amount === u.amount && o.deal === u.deal);
-    if (g) g.qty++; else out.push({ l: lines[u.line], qty: 1, amount: u.amount, deal: u.deal });
+    const l = lines[u.line];
+    const pr = promo && !u.deal && promoEligible(l.garment, l.size);
+    const amount = pr ? promoAmount(u.amount) : u.amount;
+    const g = out.find((o) => o.l === l && o.amount === amount && o.deal === u.deal && o.promo === pr);
+    if (g) g.qty++; else out.push({ l, qty: 1, amount, deal: u.deal, promo: pr });
   }
   return out;
 }
@@ -122,11 +128,17 @@ export function buildPrintfulOrder(session: Stripe.Checkout.Session, lines: Cart
   };
 }
 
+/** Does the 10% code change anything in this cart? (false -> route tells the shopper why.) */
+export function promoApplies(lines: CartLine[]): boolean {
+  return priceUnits(lines).some((u) => !u.deal && promoEligible(lines[u.line].garment, lines[u.line].size));
+}
+
 /** Mug wrap (2700x1050 print area): art on the side that faces out for a right-handed drinker, same as the mockup photos. */
 export const MUG_POSITION = { area_width: 2700, area_height: 1050, width: 875, height: 1050, top: 0, left: 1705 };
 
 export type DropDeps = {
   claim(sessionId: string, email: string | null, items: CartLine[], amount: number | null, adminTest?: boolean): Promise<boolean>;
+  redeemPromo?(code: string, sessionId: string): Promise<void>;
   setResult(sessionId: string, status: string, printfulOrderId: string | null, error: string | null): Promise<void>;
   createPrintfulOrder(body: unknown, confirm: boolean): Promise<{ id: string }>;
 };
@@ -141,6 +153,8 @@ export async function handleDropEvent(event: Stripe.Event, deps: DropDeps, opts:
   if (!lines) return "bad_cart";
   const fresh = await deps.claim(session.id, session.customer_details?.email ?? null, lines, session.amount_total ?? null, session.metadata?.admin_test === "true");
   if (!fresh) return "duplicate";
+  const promo = session.metadata?.promo_code;
+  if (promo && deps.redeemPromo) await deps.redeemPromo(promo, session.id).catch(() => undefined);
   try {
     const order = await deps.createPrintfulOrder(buildPrintfulOrder(session, lines, opts.artBase, opts.env), opts.autoConfirm);
     await deps.setResult(session.id, opts.autoConfirm ? "printful_confirmed" : "printful_draft", order.id, null);
