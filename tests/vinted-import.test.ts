@@ -132,7 +132,7 @@ describe("shared importer with the Vinted adapter", () => {
     const other: Fetcher = async () => ({ bytes: new TextEncoder().encode('<a href="/items/5-x">x</a> someone'), contentType: "text/html" });
     expect(await readOwnMember("https://www.vinted.com/member/1-mrspock13", other)).toMatchObject({ ok: false, blocked: false });
     const own: Fetcher = async () => ({ bytes: new TextEncoder().encode('mrspock13 <a href="/items/5-x">x</a>'), contentType: "text/html" });
-    expect(await readOwnMember("https://www.vinted.com/member/1-mrspock13", own)).toEqual({ ok: true, links: ["https://www.vinted.com/items/5"] });
+    expect(await readOwnMember("https://www.vinted.com/member/1-mrspock13", own)).toMatchObject({ ok: true, links: ["https://www.vinted.com/items/5"] });
   });
   it("manual fallback validates link, title and price", () => {
     expect(manualListing({ url: ITEM, title: "Jacket", price: "13.50" })).toMatchObject({ ok: true, url: "https://www.vinted.com/items/10163929715", listing: { priceCents: 1350, title: "Jacket" } });

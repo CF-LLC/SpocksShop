@@ -6,7 +6,7 @@ import { dbStore } from "@/lib/importer/import";
 import { JobBusyError, startImportJob } from "@/lib/importer/jobs";
 import { VINTED } from "@/lib/importer/source";
 import { vintedFetch } from "@/lib/vinted/fetch";
-import { readOwnMember } from "@/lib/vinted/shop-sync";
+import { readOwnMember, unpublishMissing } from "@/lib/vinted/shop-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +20,11 @@ export async function POST(request: Request) {
   const read = await readOwnMember(memberUrl, vintedFetch);
   if (!read.ok) return NextResponse.json({ error: read.message, blocked: read.blocked }, { status: read.blocked ? 502 : 400 });
   try {
-    const { job } = startImportJob(read.links.join("\n"), { store: dbStore(db, "vinted"), fetcher: vintedFetch, source: VINTED, refreshExisting: true, delayMs: 5000 });
-    return NextResponse.json({ id: job.id, total: job.total }, { status: 202 });
+    // Listings come from the one member-page read; only photos are fetched (slowly) per new/changed item.
+    const listings = new Map(read.wardrobe.items.map((i) => [i.url, i.listing]));
+    const { job } = startImportJob(read.links.join("\n"), { store: dbStore(db, "vinted"), fetcher: vintedFetch, source: VINTED, refreshExisting: true, delayMs: 3000, listings });
+    const missing = read.wardrobe.complete ? await unpublishMissing(db, read.links) : [];
+    return NextResponse.json({ id: job.id, total: job.total, complete: read.wardrobe.complete, missing }, { status: 202 });
   } catch (e) {
     if (e instanceof JobBusyError) return NextResponse.json({ error: e.message, id: e.jobId }, { status: 409 });
     throw e;

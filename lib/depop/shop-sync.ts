@@ -1,8 +1,9 @@
-import { FetchError, MAX_PAGE_BYTES, isBlocked, type Fetcher } from "./fetch";
+import { FetchError, MAX_PAGE_BYTES, USER_AGENT, isBlocked, type Fetcher } from "./fetch";
 
 /** Cooper's own shop only (he gave permission for depop.com/spock13; no other shops). */
 export const OWN_SHOP_URL = "https://www.depop.com/spock13/";
-export const BROWSER_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
+/** Honest, identifiable user agent (no browser impersonation). */
+export const BROWSER_UA = USER_AGENT;
 
 /** Product links on the shop page HTML, normalized and deduped. */
 export function shopLinks(html: string): string[] {
@@ -26,9 +27,9 @@ export async function readOwnShop(fetcher: Fetcher): Promise<ShopRead> {
   }
 }
 
-/** Server fetcher with a normal browser user agent, used only for Cooper's own shop and its listings. */
+/** Server fetcher with the importer's honest user agent, used only for Cooper's own shop and its listings. */
 export const browserFetch: Fetcher = async (url, { maxBytes, accept }) => {
-  const res = await fetch(url, { headers: { "user-agent": BROWSER_UA, accept }, redirect: "follow", signal: AbortSignal.timeout(15_000) });
+  const res = await fetch(url, { headers: { "user-agent": BROWSER_UA, accept }, redirect: "manual", signal: AbortSignal.timeout(15_000) });
   if (!res.ok) throw new FetchError(`Depop returned HTTP ${res.status}.`, res.status);
   const buf = new Uint8Array(await res.arrayBuffer());
   if (buf.byteLength > maxBytes) throw new FetchError("Page too large.");

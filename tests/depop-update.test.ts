@@ -12,7 +12,7 @@ const html = (price: string, availability = "https://schema.org/InStock", name =
 
 function setup(page: string, cur: Partial<CurrentItem> = {}) {
   const base = parseDepopListing(html("20.00"));
-  const current: CurrentItem = { title: base.title, priceCents: 2000, description: draftDescription(base), size: null, status: "listed", photoUrls: [PHOTO], photoCount: 1, ...cur };
+  const current: CurrentItem = { title: base.title, priceCents: 2000, description: draftDescription(base), size: null, status: "listed", photoUrls: [PHOTO], photoCount: 1, snapshot: { title: base.title, priceCents: 2000, description: draftDescription(base), size: null }, ...cur };
   const updates: ItemUpdate[] = [];
   const created: string[] = [];
   const store: ImportStore = {
@@ -46,6 +46,23 @@ describe("re-pasting an already imported Depop link", () => {
     const { results } = await run();
     expect(updates[0].set.status).toBeUndefined();
     expect(results[0].status === "updated" && results[0].changes[0]).toMatch(/left as pending_approval/);
+  });
+  it("keeps Cooper's admin edit and flags the source change instead of overwriting", async () => {
+    const { run, updates } = setup(html("15.00"), { priceCents: 2500 });
+    const { results } = await run();
+    expect(results[0]).toMatchObject({ status: "flagged", flagged: [expect.stringMatching(/Depop changed price \$25 to \$15; your edit was kept/)] });
+    expect(updates[0].set).toEqual({});
+    expect(updates[0].snapshot?.priceCents).toBe(1500);
+  });
+  it("doesn't re-flag an edit when the source hasn't changed since the last sync", async () => {
+    const { run } = setup(html("20.00"), { priceCents: 2500 });
+    expect((await run()).results[0].status).toBe("duplicate");
+  });
+  it("older imports without a snapshot: listed items are flagged, untouched drafts updated", async () => {
+    const a = setup(html("15.00"), { snapshot: null });
+    expect((await a.run()).results[0].status).toBe("flagged");
+    const b = setup(html("15.00"), { snapshot: null, status: "draft" });
+    expect((await b.run()).results[0]).toMatchObject({ status: "updated", changes: ["price $20 to $15"] });
   });
   it("reports 'duplicate' when nothing changed", async () => {
     const { run, updates } = setup(html("20.00"));

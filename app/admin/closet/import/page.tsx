@@ -11,9 +11,10 @@ const BADGE: Record<LinkResult["status"], string> = {
   duplicate: "bg-amber-100 text-amber-900",
   sold: "bg-sky-100 text-sky-900",
   updated: "bg-violet-100 text-violet-900",
+  flagged: "bg-orange-100 text-orange-900",
   error: "bg-red-100 text-red-900",
 };
-const LABEL: Record<LinkResult["status"], string> = { imported: "Imported as draft", duplicate: "Skipped: duplicate", updated: "Updated", sold: "Skipped: sold", error: "Not imported" };
+const LABEL: Record<LinkResult["status"], string> = { imported: "Imported as draft", duplicate: "Skipped: duplicate", updated: "Updated", flagged: "Kept your edit", sold: "Skipped: sold", error: "Not imported" };
 
 export default async function DepopImportPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string; r?: string }> }) {
   const sp = await searchParams;
@@ -59,6 +60,8 @@ export default async function DepopImportPage({ searchParams }: { searchParams: 
                   </p>
                 ) : r.status === "updated" ? (
                   <p className="mt-1"><Link href={`/admin/closet/${r.id}`} className="font-semibold text-blue-700 underline">{r.title}</Link> <span className="text-slate-700">· Updated: {r.changes.join("; ")}</span></p>
+                ) : r.status === "flagged" ? (
+                  <p className="mt-1"><Link href={`/admin/closet/${r.id}`} className="font-semibold text-blue-700 underline">{r.title}</Link> <span className="text-orange-900">· {r.flagged.join("; ")}</span></p>
                 ) : r.status === "sold" ? (
                   <p className="mt-1 text-slate-700">Skipped: sold on Depop, no draft made ({r.title})</p>
                 ) : r.status === "duplicate" ? (

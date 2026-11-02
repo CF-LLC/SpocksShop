@@ -14,16 +14,21 @@ export type LinkResult =
   | { input: string; status: "imported"; id: string; title: string; photos: number; note?: string }
   | { input: string; status: "duplicate"; id: string | null; title: string | null }
   | { input: string; status: "sold"; title: string }
-  | { input: string; status: "updated"; id: string; title: string; changes: string[] }
+  | { input: string; status: "updated"; id: string; title: string; changes: string[]; flagged?: string[] }
+  /** The source changed a field Cooper edited in admin: his edit was kept, the difference is reported. */
+  | { input: string; status: "flagged"; id: string; title: string; flagged: string[] }
   | { input: string; status: "error"; error: string };
 
 /** What SpockShop has now for an imported link (lets a re-paste update it). */
-export type CurrentItem = { title: string; priceCents: number; description: string; size: string | null; status: string; photoUrls: string[] | null; photoCount: number };
+/** Source values at the last sync; a SpockShop value that differs from it was edited by Cooper. */
+export type SourceSnapshot = { title?: string; priceCents?: number | null; description?: string; size?: string | null };
+export type CurrentItem = { title: string; priceCents: number; description: string; size: string | null; status: string; photoUrls: string[] | null; photoCount: number; snapshot?: SourceSnapshot | null };
 export type ItemUpdate = {
   set: Partial<{ title: string; priceCents: number; description: string; tags: string[]; status: string }>;
   /** Replace the item's photos with these (already saved) files. */
   photoPaths?: string[];
   photoUrls: string[];
+  snapshot?: SourceSnapshot;
 };
 export type ImportStore = {
   existing(urls: string[]): Promise<Map<string, { id: string; title: string; current?: CurrentItem }>>;
@@ -48,6 +53,8 @@ export type ImportDeps = {
   maxLinks?: number;
   /** Which marketplace the links are from (default Depop). */
   source?: SourceAdapter;
+  /** Listings already read (e.g. from one member-page read): used instead of opening each listing page. */
+  listings?: Map<string, DepopListing>;
 };
 
 export const blockedSkip = (label: string) => `Not tried: ${label} asked us to slow down, so the import stopped. Paste this link again later or add it by hand.`;
@@ -87,9 +94,12 @@ export async function importLinks(text: string, deps: ImportDeps): Promise<{ res
     requested = true;
     const saved: string[] = [];
     try {
-      const page = await fetcher(check.url, { maxBytes: MAX_PAGE_BYTES, accept: "text/html" });
-      if (!/html/i.test(page.contentType)) throw new FetchError(`${src.label} didn't return a web page.`);
-      const listing = src.parse(new TextDecoder().decode(page.bytes));
+      let listing = deps.listings?.get(check.url);
+      if (!listing) {
+        const page = await fetcher(check.url, { maxBytes: MAX_PAGE_BYTES, accept: "text/html" });
+        if (!/html/i.test(page.contentType)) throw new FetchError(`${src.label} didn't return a web page.`);
+        listing = src.parse(new TextDecoder().decode(page.bytes));
+      }
       if (dup?.current) {
         push(await refreshExisting(input, dup.id, dup.current, listing, { fetcher, wait, delay, save, remove, store: deps.store, saved, src }));
         continue;
@@ -143,11 +153,26 @@ async function refreshExisting(input: string, id: string, cur: CurrentItem, l: D
     if (SOLD_FROM.has(cur.status)) { set.status = "sold"; changes.push(cur.status === "listed" ? `sold on ${ctx.src.label}: marked Sold and taken off the shop` : `sold on ${ctx.src.label}: marked Sold`); }
     else if (cur.status !== "sold") changes.push(`sold on ${ctx.src.label}, but left as ${cur.status} (check it)`);
   }
-  if (l.title && l.title !== cur.title) { set.title = l.title; changes.push(`title "${cur.title}" to "${l.title}"`); }
-  if (l.priceCents != null && l.priceCents !== cur.priceCents) { set.priceCents = l.priceCents; changes.push(`price ${money(cur.priceCents)} to ${money(l.priceCents)}`); }
+  const flagged: string[] = [];
+  const snap = cur.snapshot ?? null;
+  // Cooper edited a field when SpockShop's value differs from what the source said last time.
+  // Without a snapshot (older imports) only untouched drafts are overwritten; anything else is flagged.
+  const edited = <K extends keyof SourceSnapshot>(k: K, now: unknown) => (snap && k in snap ? snap[k] !== now : cur.status !== "draft");
   const desc = draftDescription(l);
-  if (desc && desc !== cur.description) { set.description = desc; changes.push("description"); }
-  if (l.size && l.size !== cur.size) { set.tags = [`size:${l.size}`]; changes.push(`size ${cur.size ?? "none"} to ${l.size}`); }
+  const fields: { key: keyof SourceSnapshot; from: unknown; to: unknown; apply: () => void; say: string }[] = [
+    { key: "title", from: cur.title, to: l.title || null, apply: () => { set.title = l.title; }, say: `title "${cur.title}" to "${l.title}"` },
+    { key: "priceCents", from: cur.priceCents, to: l.priceCents, apply: () => { set.priceCents = l.priceCents!; }, say: `price ${money(cur.priceCents)} to ${l.priceCents != null ? money(l.priceCents) : ""}` },
+    { key: "description", from: cur.description, to: desc || null, apply: () => { set.description = desc; }, say: "description" },
+    { key: "size", from: cur.size, to: l.size, apply: () => { set.tags = [`size:${l.size}`]; }, say: `size ${cur.size ?? "none"} to ${l.size}` },
+  ];
+  for (const f of fields) {
+    if (f.to == null || f.to === f.from) continue;
+    if (snap && f.key in snap && snap[f.key] === f.to) continue; // source unchanged since last sync: Cooper's value stands
+    if (edited(f.key, f.from)) flagged.push(`${ctx.src.label} changed ${f.say}; your edit was kept`);
+    else { f.apply(); changes.push(f.say); }
+  }
+  // New snapshot = what the source says now, so each source change is flagged once, not on every sync.
+  const snapshot: SourceSnapshot = { title: l.title, priceCents: l.priceCents, description: desc, size: l.size };
   const urls = l.photos.filter(ctx.src.isAllowedPhotoUrl).slice(0, MAX_PHOTOS);
   // Legacy imports (no recorded URLs) only get photos if they have none, so hand edits/cutouts aren't replaced blindly.
   const photosChanged = urls.length > 0 && !l.sold && (cur.photoUrls ? cur.photoUrls.join("\n") !== urls.join("\n") : cur.photoCount === 0);
@@ -164,12 +189,12 @@ async function refreshExisting(input: string, id: string, cur: CurrentItem, l: D
     if (ctx.saved.length) { photoPaths = [...ctx.saved]; changes.push(`photos (${ctx.saved.length})`); }
   }
   if (!changes.length) {
-    if (!cur.photoUrls) await ctx.store.update!(id, { set: {}, photoUrls: urls });
-    return { input, status: "duplicate", id, title: cur.title };
+    if (!cur.photoUrls || JSON.stringify(snap) !== JSON.stringify(snapshot)) await ctx.store.update!(id, { set: {}, photoUrls: cur.photoUrls ?? urls, snapshot });
+    return flagged.length ? { input, status: "flagged", id, title: cur.title, flagged } : { input, status: "duplicate", id, title: cur.title };
   }
-  const { removedPaths } = await ctx.store.update!(id, { set, photoPaths, photoUrls: urls });
+  const { removedPaths } = await ctx.store.update!(id, { set, photoPaths, photoUrls: urls, snapshot });
   await Promise.all(removedPaths.map((p) => ctx.remove(p)));
-  return { input, status: "updated", id, title: set.title ?? cur.title, changes };
+  return { input, status: "updated", id, title: set.title ?? cur.title, changes, ...(flagged.length ? { flagged } : {}) };
 }
 
 /** Draft description: Depop text plus size, so nothing is lost; Cooper edits it in the item editor. */
@@ -184,7 +209,7 @@ export function dbStore(db: typeof Db, source: SourceId = "depop"): ImportStore 
       const rows = await db
         .select({
           url: productImports.sourceUrl, id: products.id, title: products.title, priceCents: products.priceCents, description: products.description,
-          tags: products.tags, status: products.status, photoUrls: productImports.photoUrls,
+          tags: products.tags, status: products.status, photoUrls: productImports.photoUrls, snapshot: productImports.sourceSnapshot,
           photoCount: sql<number>`(select count(*)::int from ${photos} where ${photos.productId} = ${products.id})`,
         })
         .from(productImports)
@@ -192,7 +217,7 @@ export function dbStore(db: typeof Db, source: SourceId = "depop"): ImportStore 
         .where(and(eq(productImports.source, source), inArray(productImports.sourceUrl, urls)));
       return new Map(rows.map((r) => [r.url, {
         id: r.id, title: r.title,
-        current: { title: r.title, priceCents: r.priceCents, description: r.description, size: sizeOf(r.tags), status: r.status, photoUrls: r.photoUrls ?? null, photoCount: r.photoCount },
+        current: { title: r.title, priceCents: r.priceCents, description: r.description, size: sizeOf(r.tags), status: r.status, photoUrls: r.photoUrls ?? null, photoCount: r.photoCount, snapshot: r.snapshot ?? null },
       }]));
     },
     async update(id, u) {
@@ -211,7 +236,7 @@ export function dbStore(db: typeof Db, source: SourceId = "depop"): ImportStore 
           await tx.insert(photos).values(u.photoPaths.map((storagePath, i) => ({ productId: id, storagePath, alt: p?.title ?? "", sortOrder: i })));
           removedPaths = old.map((o) => o.path);
         }
-        await tx.update(productImports).set({ photoUrls: u.photoUrls, syncedAt: new Date() }).where(and(eq(productImports.productId, id), eq(productImports.source, source)));
+        await tx.update(productImports).set({ photoUrls: u.photoUrls, syncedAt: new Date(), ...(u.snapshot ? { sourceSnapshot: u.snapshot } : {}) }).where(and(eq(productImports.productId, id), eq(productImports.source, source)));
         return { removedPaths };
       });
     },
@@ -245,7 +270,7 @@ export function dbStore(db: typeof Db, source: SourceId = "depop"): ImportStore 
         });
         await tx.insert(inventory).values({ productId: id, quantityOnHand: 1 });
         if (photoPaths.length) await tx.insert(photos).values(photoPaths.map((storagePath, i) => ({ productId: id, storagePath, alt: listing.title, sortOrder: i })));
-        await tx.insert(productImports).values({ productId: id, source, sourceUrl: url, photoUrls: listing.photos.filter(source === "vinted" ? VINTED.isAllowedPhotoUrl : DEPOP.isAllowedPhotoUrl).slice(0, MAX_PHOTOS), syncedAt: new Date() });
+        await tx.insert(productImports).values({ productId: id, source, sourceUrl: url, photoUrls: listing.photos.filter(source === "vinted" ? VINTED.isAllowedPhotoUrl : DEPOP.isAllowedPhotoUrl).slice(0, MAX_PHOTOS), syncedAt: new Date(), sourceSnapshot: { title: listing.title, priceCents: listing.priceCents, description: draftDescription(listing), size: listing.size } });
       });
     },
   };

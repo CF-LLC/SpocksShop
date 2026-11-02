@@ -463,6 +463,8 @@ export const productImports = pgTable(
     // Depop photo URLs used last time (null for imports before 0014); lets a re-import tell if photos changed.
     photoUrls: jsonb("photo_urls").$type<string[] | null>(),
     syncedAt: timestamp("synced_at", { withTimezone: true }),
+    // Source values at the last sync (title/price/description/size): tells Cooper's admin edits apart from source changes.
+    sourceSnapshot: jsonb("source_snapshot").$type<{ title?: string; priceCents?: number | null; description?: string; size?: string | null } | null>(),
     importedAt: timestamp("imported_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [check("product_imports_source_valid", sql`${t.source} in ('depop', 'vinted')`)],
