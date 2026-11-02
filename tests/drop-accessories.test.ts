@@ -53,3 +53,21 @@ describe("mugs, stickers, hats", () => {
     for (const g of NEW) for (const s of SIZES[g]) expect(adminCostPrice([{ slug: "day-drinking", garment: g, size: s, qty: 1 }], env)).not.toBeNull();
   });
 });
+
+describe("mockups", () => {
+  it("gallery: tee/hoodie/mug mockups first, flat art last; never for held designs", async () => {
+    const { gallery, heroImage, MOCKUP_FILES } = await import("../lib/drop/mockups");
+    const d = DESIGNS.find((x) => x.slug === "blame-the-tequila")!;
+    expect(gallery(d).map((i) => i.key)).toEqual(["tee", "hoodie", "mug", "art"]);
+    expect(heroImage(d)).toBe("/drop/art/v4-07-blame-the-tequila-tee.jpg");
+    for (const h of DESIGNS.filter((x) => isHeld(x.slug, {}))) {
+      expect(MOCKUP_FILES.has(h.file)).toBe(false);
+      expect(gallery(h).map((i) => i.key)).toEqual(["art"]);
+    }
+    for (const p of publicDesigns({})) expect(MOCKUP_FILES.has(p.file)).toBe(true);
+  });
+  it("mug order uses the same wrap position as the mockup", () => {
+    const o = buildPrintfulOrder({ id: "cs_test_1", customer_details: { address: { country: "US" } } } as unknown as Stripe.Checkout.Session, parseCart([{ slug: "day-drinking", garment: "mug", size: "11oz", qty: 1 }])!, "https://x", env);
+    expect(o.items[0].files[0]).toMatchObject({ type: "default", position: { left: 1705, width: 875 } });
+  });
+});

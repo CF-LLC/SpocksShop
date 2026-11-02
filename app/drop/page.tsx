@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DESIGNS, PRICES_CENTS, isHeld } from "@/lib/drop/config";
 import { getSession } from "@/lib/auth/session";
+import { artUrl, heroImage, mockupUrl } from "@/lib/drop/mockups";
 
 // Per-request: held designs are shown (marked HELD) only to a signed-in admin.
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export default async function DropHome() {
         <div className="dd-grid">
           {shown.map((d) => (
             <Link key={d.slug} href={`/drop/${d.slug}`} className="dd-card">
-              <div className="dd-shirt"><img src={`/drop/art/${d.file}.webp`} alt={d.title} loading="lazy" /></div>
+              <div className={`dd-shirt${mockupUrl(d, "tee") ? " dd-mock" : ""}`}><img src={heroImage(d)} alt={`${d.title} on a tee`} loading="lazy" />{mockupUrl(d, "tee") ? <img className="dd-mini" src={artUrl(d)} alt="" loading="lazy" /> : null}</div>
               <div className="dd-card-b"><h3>{isHeld(d.slug) ? <span data-held>HELD · </span> : null}{d.title}</h3><div className="dd-price">from {usd(PRICES_CENTS.sticker)} · tees, mugs, hats &amp; more</div></div>
             </Link>
           ))}
