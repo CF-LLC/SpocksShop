@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { track } from "@/components/analytics";
 import type { CartLine, CartProduct } from "@/lib/types";
 import { CART_STORAGE_KEY, readFromStorage, writeToStorage } from "@/lib/storage";
 
@@ -88,6 +89,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return { lines, snapshots: { ...cur.snapshots, [product.id]: product } };
     });
     setOpen(true);
+    track("add_to_cart", undefined);
   }, []);
 
   const setQuantity = useCallback((productId: string, quantity: number) => {

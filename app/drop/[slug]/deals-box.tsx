@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { track } from "@/components/analytics";
 import { PRICES_CENTS, SHIPPING_CENTS, SIZES } from "@/lib/drop/config";
 import { BUNDLE_PRICE, DEALS, TWO_TEE_PRICE } from "@/lib/drop/deals";
 
@@ -25,7 +26,8 @@ export function DealsBox({ slug }: { slug: string }) {
   async function go(key: string, items: { garment: string; size: string }[]) {
     setBusy(key); setErr(null);
     try {
-      const r = await fetch("/api/drop/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: items.map((i) => ({ slug, ...i, qty: 1 })) }) });
+      track("checkout_start");
+      const r = (await fetch("/api/drop/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: items.map((i) => ({ slug, ...i, qty: 1 })) }) }));
       const j = (await r.json().catch(() => ({}))) as { url?: string; error?: string };
       if (r.ok && j.url) { window.location.href = j.url; return; }
       setErr(j.error ?? "Something went wrong. Please try again.");

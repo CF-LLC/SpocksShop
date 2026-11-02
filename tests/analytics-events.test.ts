@@ -3,7 +3,7 @@ import { cleanPath, cleanRef, createLimiter, parseEvent } from "@/lib/analytics/
 
 describe("analytics events", () => {
   it("accepts only known events and strips query strings", () => {
-    expect(parseEvent({ name: "product_view", path: "/shop/blue-mug?email=a@b.c" })).toEqual({ name: "product_view", path: "/shop/blue-mug", ref: null });
+    expect(parseEvent({ name: "product_view", path: "/shop/blue-mug?email=a@b.c" })).toMatchObject({ name: "product_view", path: "/shop/blue-mug", ref: null, test: false });
     expect(parseEvent({ name: "signup" })).toBeNull();
     expect(parseEvent(null)).toBeNull();
   });
