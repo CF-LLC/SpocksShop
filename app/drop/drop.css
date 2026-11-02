@@ -36,3 +36,5 @@
 .dd-save{color:#9df5c4;font-size:.85rem;font-weight:700;margin-left:.3rem}
 .dd-select{background:#0f1230;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:.45rem .6rem;min-height:40px}
 .dd-deal .dd-btn{margin-top:.4rem}
+.dd-codeline label{display:inline-flex;gap:.4rem;align-items:center}
+.dd-input-sm{width:9.5rem;border-radius:8px;border:1px solid rgba(185,166,255,.4);background:rgba(255,255,255,.06);color:inherit;padding:.25rem .5rem;font-family:ui-monospace,monospace}

@@ -12,6 +12,7 @@ import { SHOP_SECTIONS } from "@/lib/shop/sections";
 import { approvedCommunityListings } from "@/lib/shop/queries";
 import { plural } from "@/lib/utils";
 import { DesignOfTheDay } from "@/components/shop/design-of-the-day";
+import { DropSignup } from "@/components/drop/signup-form";
 import { designOfTheDay, dropEnabled } from "@/lib/drop/config";
 
 export default async function HomePage() {
@@ -66,6 +67,7 @@ export default async function HomePage() {
       </section>
 
       {dotd ? <DesignOfTheDay design={dotd} /> : null}
+      {dotd ? <DropSignup source="home" /> : null}
 
       <DailyPickSection view={daily} compact headingId="picks-title" />
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DropSignup } from "@/components/drop/signup-form";
 import { DESIGNS, PRICES_CENTS, isHeld } from "@/lib/drop/config";
 import { getSession } from "@/lib/auth/session";
 import { artUrl, heroImage, mockupUrl } from "@/lib/drop/mockups";
@@ -31,6 +32,7 @@ export default async function DropHome() {
           ))}
         </div>
       )}
+      <DropSignup source="drop" />
       <p className="dd-note" style={{ marginTop: "2rem" }}><Link href="/drop/policies">Shipping, returns &amp; terms</Link> · Questions: <a href="mailto:support@spockshop.com">support@spockshop.com</a></p>
     </>
   );

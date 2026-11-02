@@ -297,3 +297,18 @@ a { color: inherit; }
 @keyframes dp-pulse { 50% { opacity: .55; transform: scale(1.08); } }
 @keyframes dp-float { 50% { transform: translateY(-6px) rotate(-6deg); } }
 @media (prefers-reduced-motion: reduce) { .dp-card, .dp-glow, .dp-orbit { animation: none; } .dp-card:hover .dp-media img { transform: none; } }
+
+/* Daily Drop email signup (homepage, /drop, footer). Self-contained: used outside the /drop layout too. */
+.dd-signup{position:relative;margin:2rem 0;padding:1.25rem 1.25rem 1rem;border-radius:18px;border:1px solid rgba(185,166,255,.35);background:linear-gradient(135deg,rgba(20,24,60,.92),rgba(14,16,40,.92));color:#e9ecff}
+.dd-signup-compact{margin:0;padding:1rem}
+.dd-signup-title{font-size:1.15rem;font-weight:700;margin:0 0 .25rem}
+.dd-signup-note{font-size:.85rem;opacity:.8;margin:.25rem 0}
+.dd-signup-note a{text-decoration:underline}
+.dd-signup-row{display:flex;gap:.5rem;flex-wrap:wrap;margin:.6rem 0}
+.dd-signup-input{flex:1 1 220px;min-height:46px;border-radius:12px;border:1px solid rgba(185,166,255,.4);background:rgba(255,255,255,.06);color:inherit;padding:.6rem .8rem;font-size:1rem}
+.dd-signup-btn{min-height:46px;border:0;border-radius:12px;padding:.6rem 1.1rem;font-weight:700;color:#0a0b1f;background:linear-gradient(90deg,#9df,#b9a6ff);cursor:pointer}
+.dd-signup-btn[disabled]{opacity:.6;cursor:wait}
+.dd-consent{display:flex;gap:.5rem;align-items:flex-start;font-size:.8rem;opacity:.85}
+.dd-consent input{margin-top:.2rem}
+.dd-signup-err{color:#ffb4b4;font-size:.9rem;margin:.4rem 0 0}
+.dd-signup-code{font-family:ui-monospace,monospace;font-size:1.5rem;font-weight:800;letter-spacing:.08em;margin:.4rem 0;color:#9df;user-select:all}
