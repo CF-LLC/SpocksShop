@@ -1,5 +1,6 @@
 import { adminCostPrice } from "./admin-cost";
 import { mockupUrl } from "./mockups";
+import { DEALS, dealCounts, priceUnits } from "./deals";
 import type Stripe from "stripe";
 import { DESIGNS, GARMENT_LABEL, PRINT_PLACEMENT, SHIPPING_CENTS, TAX_CODE, unitPrice, SIZES, designBySlug, printfulVariant, type Garment } from "./config";
 
@@ -31,19 +32,22 @@ export function buildSessionParams(lines: CartLine[], origin: string, env: Env =
   const adminUnits = admin ? admin.unitAmounts : null;
   return {
     mode: "payment",
-    line_items: lines.map((l, i) => {
+    line_items: (adminUnits
+      ? lines.map((l, i) => ({ l, qty: l.qty, amount: adminUnits[i], deal: null as keyof typeof DEALS | null }))
+      : groupUnits(lines)
+    ).map(({ l, qty, amount, deal }) => {
       const d = designBySlug(l.slug)!;
       return {
-        quantity: l.qty,
+        quantity: qty,
         price_data: {
           currency: "usd",
-          unit_amount: adminUnits ? adminUnits[i] : unitPrice(l.garment, l.size),
-          tax_behavior: "exclusive",
+          unit_amount: amount,
+          tax_behavior: "exclusive" as const,
           product_data: {
-            name: `${d.title} — ${GARMENT_LABEL[l.garment]} (${l.size})`,
+            name: `${d.title} — ${GARMENT_LABEL[l.garment]} (${l.size})${deal ? ` · ${DEALS[deal].label}` : ""}`,
             tax_code: TAX_CODE[l.garment],
             images: [`${origin}${mockupUrl(d, l.garment) ?? `/drop/art/${d.file}.webp`}`],
-            metadata: { drop_slug: l.slug, garment: l.garment, size: l.size },
+            metadata: { drop_slug: l.slug, garment: l.garment, size: l.size, ...(deal ? { deal } : {}) },
           },
         },
       };
@@ -60,10 +64,24 @@ export function buildSessionParams(lines: CartLine[], origin: string, env: Env =
         },
       },
     ],
-    metadata: { kind: "daily_drop", cart: JSON.stringify(lines.map((l) => [l.slug, l.garment, l.size, l.qty])), ...(adminTest ? { admin_test: "true" } : {}) },
+    metadata: { kind: "daily_drop", cart: JSON.stringify(lines.map((l) => [l.slug, l.garment, l.size, l.qty])), ...(adminTest ? { admin_test: "true" } : dealMeta(lines)) },
     success_url: `${origin}/drop/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/drop`,
   };
+}
+
+/** Public carts: units grouped back into Stripe lines by (cart line, price, deal). */
+function groupUnits(lines: CartLine[]) {
+  const out: { l: CartLine; qty: number; amount: number; deal: keyof typeof DEALS | null }[] = [];
+  for (const u of priceUnits(lines)) {
+    const g = out.find((o) => o.l === lines[u.line] && o.amount === u.amount && o.deal === u.deal);
+    if (g) g.qty++; else out.push({ l: lines[u.line], qty: 1, amount: u.amount, deal: u.deal });
+  }
+  return out;
+}
+function dealMeta(lines: CartLine[]): Record<string, string> {
+  const c = dealCounts(priceUnits(lines));
+  return c.bundle || c.twoTees ? { deals: `bundle:${c.bundle},two_tees:${c.twoTees}` } : {};
 }
 
 export function cartFromSession(session: Pick<Stripe.Checkout.Session, "metadata">): CartLine[] | null {

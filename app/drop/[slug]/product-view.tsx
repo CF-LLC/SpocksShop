@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { Garment } from "@/lib/drop/config";
 import type { GalleryImage } from "@/lib/drop/mockups";
 import { BuyBox } from "./buy-box";
+import { DealsBox } from "./deals-box";
 
 /** Mockup gallery + buy box share the selected product type: picking Hoodie shows the hoodie photo and vice versa. */
 export function ProductView({ slug, title, garments, images, adminPrices, children }: { slug: string; title: string; garments: Garment[]; images: GalleryImage[]; adminPrices?: Record<string, number>; children: React.ReactNode }) {
@@ -28,6 +29,7 @@ export function ProductView({ slug, title, garments, images, adminPrices, childr
       <div>
         {children}
         <BuyBox slug={slug} garments={garments} adminPrices={adminPrices} garment={garment} onGarment={(g) => { setGarment(g); setPick(null); }} />
+        {garments.includes("tee") && garments.includes("hoodie") && !adminPrices ? <DealsBox slug={slug} /> : null}
       </div>
     </div>
   );

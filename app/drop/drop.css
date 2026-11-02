@@ -32,3 +32,7 @@
 .dd-thumb img{width:100%;height:100%;object-fit:cover}
 .dd-thumb:last-child{background:#1b1f3f}
 .dd-swatch{position:absolute;left:4px;bottom:4px;width:14px;height:14px;border-radius:50%;border:1px solid #fff9;box-shadow:0 0 0 1px #0006}
+.dd-deal{border-top:1px solid var(--line);padding:.9rem 0}.dd-deal:first-of-type{border-top:0}.dd-deal h3{margin:.2rem 0 .6rem;font-size:1.05rem}
+.dd-save{color:#9df5c4;font-size:.85rem;font-weight:700;margin-left:.3rem}
+.dd-select{background:#0f1230;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:.45rem .6rem;min-height:40px}
+.dd-deal .dd-btn{margin-top:.4rem}
