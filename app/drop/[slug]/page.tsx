@@ -8,6 +8,8 @@ import { getSession } from "@/lib/auth/session";
 import { adminCostPrice } from "@/lib/drop/admin-cost";
 import { SIZES } from "@/lib/drop/config";
 import { ProductView } from "./product-view";
+import { PairsWell } from "@/components/shop/pairs-well";
+import { DROP_PAIRINGS } from "@/lib/shop/pairings";
 import { gallery } from "@/lib/drop/mockups";
 
 // Per-request render (reads the admin cookie); never cached across users.
@@ -60,6 +62,7 @@ export default async function DropProduct({ params }: { params: Promise<{ slug: 
           <p className="dd-sub">{d.blurb}</p>
           <p className="dd-note">Available on tees, hoodies, 11oz/15oz mugs, kiss-cut stickers and dad hats.</p>
         </ProductView>
+        {!isAdmin ? <PairsWell pairing={DROP_PAIRINGS[d.slug] ?? null} /> : null}
         </>
       )}
     </>

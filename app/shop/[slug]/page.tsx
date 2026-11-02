@@ -12,6 +12,8 @@ import { db } from "@/lib/db";
 import { shippingRates } from "@/lib/db/schema";
 import { SHOP_SECTIONS } from "@/lib/shop/sections";
 import { stripeSettings } from "@/lib/stripe";
+import { PairsWell } from "@/components/shop/pairs-well";
+import { closetPairing } from "@/lib/shop/pairings";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -134,6 +136,8 @@ export default async function ProductPage({ params }: Params) {
           <Link href="/shop?tab=amazon" className="btn btn-ghost">See Amazon Picks</Link>
         </div>
       )}
+
+      {product.source === "closet" ? <PairsWell pairing={closetPairing(product.title)} /> : null}
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
     </article>
