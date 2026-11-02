@@ -4,7 +4,9 @@ import { dropEnabled } from "@/lib/drop/config";
 import "./drop.css";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "The Daily Drop — tees & hoodies", robots: { index: false } };
+// Indexable since launch (the noindex was a pre-launch placeholder while the drop was flag-gated off).
+// Held designs 404 for the public; /drop/success sets its own noindex.
+export const metadata: Metadata = { title: "The Daily Drop: Funny Illustrated Tees, Hoodies & Mugs" };
 
 export default function DropLayout({ children }: { children: React.ReactNode }) {
   if (!dropEnabled()) notFound();

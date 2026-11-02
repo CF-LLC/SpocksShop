@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SectionHeader } from "@/components/ui/lcars";
 import { PRICES_CENTS, type Design } from "@/lib/drop/config";
-import { artUrl, heroImage, mockupUrl } from "@/lib/drop/mockups";
+import { artUrl, heroImage, mockupUrl, sizedImg } from "@/lib/drop/mockups";
 
 const usd = (c: number) => `$${(c / 100).toFixed(0)}`;
 
@@ -15,13 +15,13 @@ export function DesignOfTheDay({ design }: { design: Design }) {
       <Link href={`/drop/${design.slug}`} className="panel group grid items-center gap-6 p-6 hover:border-[var(--line-strong)] md:grid-cols-[minmax(0,280px)_1fr]">
         <span className={`relative block overflow-hidden rounded-2xl ${mockupUrl(design, "tee") ? "bg-white" : "bg-[var(--space-1,#0a1022)]"}`}>
           {/* eslint-disable-next-line @next/next/no-img-element -- static mockup/art served by /drop/art */}
-          <img src={heroImage(design)} alt={`${design.title} on a tee`} loading="lazy" className="aspect-square w-full object-contain" />
+          <img {...sizedImg(heroImage(design), "(max-width: 768px) 92vw, 420px")} width={480} height={480} alt={`${design.title} on a tee`} loading="lazy" className="aspect-square w-full object-contain" />
           {mockupUrl(design, "hoodie") ? (
             <span className="absolute bottom-2 right-2 flex gap-1.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={mockupUrl(design, "hoodie")!} alt={`${design.title} on a hoodie`} loading="lazy" className="h-16 w-16 rounded-lg border border-[var(--line)] bg-white object-cover" />
+              <img src={sizedImg(mockupUrl(design, "hoodie")!).src} alt={`${design.title} on a hoodie`} loading="lazy" className="h-16 w-16 rounded-lg border border-[var(--line)] bg-white object-cover" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={artUrl(design)} alt="" loading="lazy" className="h-16 w-16 rounded-lg border border-[var(--line)] bg-[var(--space-1,#0a1022)] object-contain p-1" />
+              <img src={sizedImg(artUrl(design)).src} alt="" loading="lazy" className="h-16 w-16 rounded-lg border border-[var(--line)] bg-[var(--space-1,#0a1022)] object-contain p-1" />
             </span>
           ) : null}
         </span>

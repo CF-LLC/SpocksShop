@@ -2,10 +2,10 @@ import { readFile } from "fs/promises";
 import path from "path";
 import { dropEnabled, DESIGNS, isHeld } from "@/lib/drop/config";
 import { getSession } from "@/lib/auth/session";
-import { MOCKUP_NAMES } from "@/lib/drop/mockups";
+import { MOCKUP_NAMES, SIZED_NAMES } from "@/lib/drop/mockups";
 
 export const runtime = "nodejs";
-const ALLOWED = new Set([...DESIGNS.flatMap((d) => [`${d.file}.png`, `${d.file}.webp`]), ...MOCKUP_NAMES]);
+const ALLOWED = new Set([...DESIGNS.flatMap((d) => [`${d.file}.png`, `${d.file}.webp`]), ...MOCKUP_NAMES, ...SIZED_NAMES]);
 
 /** Art is only reachable while the drop is on (print .png for Printful, .webp previews). */
 export async function GET(_req: Request, ctx: { params: Promise<{ file: string }> }) {
@@ -14,11 +14,11 @@ export async function GET(_req: Request, ctx: { params: Promise<{ file: string }
   const d = DESIGNS.find((x) => file.startsWith(`${x.file}.`) || file.startsWith(`${x.file}-`));
   const held = !!d && isHeld(d.slug);
   if (held && (await getSession().catch(() => null))?.role !== "admin") return new Response("Not found", { status: 404 });
-  const dir = file.endsWith(".jpg") ? "mockups" : file.endsWith(".png") ? "print" : "preview";
+  const dir = SIZED_NAMES.has(file) ? "sized" : file.endsWith(".jpg") ? "mockups" : file.endsWith(".png") ? "print" : "preview";
   try {
     const buf = await readFile(path.join(process.cwd(), "drop-art", dir, file));
     return new Response(new Uint8Array(buf), {
-      headers: { "Content-Type": file.endsWith(".jpg") ? "image/jpeg" : file.endsWith(".png") ? "image/png" : "image/webp", "Cache-Control": held ? "private, no-store" : "public, max-age=86400" },
+      headers: { "Content-Type": file.endsWith(".jpg") ? "image/jpeg" : file.endsWith(".png") ? "image/png" : "image/webp", "Cache-Control": held ? "private, no-store" : (SIZED_NAMES.has(file) ? "public, max-age=604800" : "public, max-age=86400") },
     });
   } catch {
     return new Response("Not found", { status: 404 });
