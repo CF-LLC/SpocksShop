@@ -2,7 +2,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto max-w-xl py-10">
+    <div className="mx-auto max-w-xl py-10" data-not-found>
       <h1 className="t-h1 mb-6 text-center">Page not found</h1>
       <EmptyState
         icon="🔭"

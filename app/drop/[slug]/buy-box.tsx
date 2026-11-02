@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { track } from "@/components/analytics";
 import { useEffect, useState } from "react";
 import { PROMO_STORAGE_KEY } from "@/components/drop/signup-form";
 import { promoAmount, promoEligible } from "@/lib/drop/signup";
@@ -22,7 +23,8 @@ export function BuyBox({ slug, garments, adminPrices, garment: ctrl, onGarment }
   async function buy() {
     setBusy(true); setErr(null);
     try {
-      const r = await fetch("/api/drop/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: [{ slug, garment, size, qty: 1 }], ...(codeOn ? { code: code.trim() } : {}) }) });
+      track("checkout_start");
+      const r = (await fetch("/api/drop/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: [{ slug, garment, size, qty: 1 }], ...(codeOn ? { code: code.trim() } : {}) }) }));
       const j = (await r.json().catch(() => ({}))) as { url?: string; error?: string };
       if (r.ok && j.url) { window.location.href = j.url; return; }
       setErr(j.error ?? "Something went wrong. Please try again.");

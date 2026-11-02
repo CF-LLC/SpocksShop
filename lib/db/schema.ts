@@ -8,6 +8,7 @@ import {
   jsonb,
   numeric,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uuid,
@@ -476,8 +477,25 @@ export const analyticsEvents = pgTable("analytics_events", {
   name: text("name").notNull(),
   path: text("path"),
   ref: text("ref"),
+  /** Daily-rotating salted hash for unique-visitor counts (never an IP). */
+  visitor: text("visitor"),
+  /** Referrer host (external only). */
+  source: text("source"),
+  /** Search term, only when the referrer URL carried one. */
+  term: text("term"),
+  test: boolean("test").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Rollups of raw analytics rows older than 90 days (raw rows are then pruned). */
+export const analyticsDaily = pgTable("analytics_daily", {
+  day: date("day").notNull(),
+  name: text("name").notNull(),
+  path: text("path").notNull().default(""),
+  source: text("source").notNull().default(""),
+  n: integer("n").notNull().default(0),
+  visitors: integer("visitors").notNull().default(0),
+}, (t) => [primaryKey({ columns: [t.day, t.name, t.path, t.source] })]);
 
 /** One held payout per seller order. Paid by a Transfer (separate charges and transfers) after delivery. */
 export const sellerPayouts = pgTable("seller_payouts", {
