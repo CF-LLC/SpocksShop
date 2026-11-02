@@ -32,6 +32,7 @@ export default async function DropHome() {
           ))}
         </div>
       )}
+      <p className="dd-note" data-gift-links style={{ marginTop: "1.5rem" }}>Gift ideas: <Link href="/gifts">all gift guides</Link> · <Link href="/gifts/funny-gifts-for-him">for him</Link> · <Link href="/gifts/funny-gifts-for-her">for her</Link> · <Link href="/gifts/funny-coworker-gifts">for coworkers</Link> · <Link href="/gifts/funny-white-elephant-gifts">white elephant</Link> · <Link href="/gifts/funny-drinking-gifts">drinking</Link></p>
       <DropSignup source="drop" />
       <p className="dd-note" style={{ marginTop: "2rem" }}><Link href="/drop/policies">Shipping, returns &amp; terms</Link> · Questions: <a href="mailto:support@spockshop.com">support@spockshop.com</a></p>
     </>
