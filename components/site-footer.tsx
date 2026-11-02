@@ -15,7 +15,7 @@ export function SiteFooter() {
           <nav aria-label="Footer">
             <p className="t-eyebrow mb-2">Explore</p>
             <ul className="grid gap-1 text-sm">
-              {[["/shop?tab=amazon", "Amazon Picks"], ["/shop?tab=closet", "Closet Picks"], ["/guides", "Guides"], ["https://blog.spockshop.com", "Blog"], ["/about", "About"], ["/contact", "Contact"]].map(([href, label]) => (
+              {[["/drop", "Merch"], ["/shop?tab=amazon", "Amazon Picks"], ["/shop?tab=closet", "Closet Picks"], ["/guides", "Guides"], ["https://blog.spockshop.com", "Blog"], ["/about", "About"], ["/contact", "Contact"]].map(([href, label]) => (
                 <li key={href}><Link href={href} className="muted inline-flex min-h-[36px] items-center hover:text-[var(--text)]">{label}</Link></li>
               ))}
             </ul>

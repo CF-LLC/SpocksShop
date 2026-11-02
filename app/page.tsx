@@ -11,15 +11,19 @@ import { getClosetProducts } from "@/lib/catalog";
 import { SHOP_SECTIONS } from "@/lib/shop/sections";
 import { approvedCommunityListings } from "@/lib/shop/queries";
 import { plural } from "@/lib/utils";
+import { DesignOfTheDay } from "@/components/shop/design-of-the-day";
+import { designOfTheDay, dropEnabled } from "@/lib/drop/config";
 
 export default async function HomePage() {
   const [closet, community, preview] = await Promise.all([getClosetProducts(), approvedCommunityListings(), canPreviewTomorrow()]);
   const daily = await getDailyPickView({ includeTomorrow: preview, historyDays: 0 });
   // Seller-listed items (if any are approved) are part of Closet Picks.
+  const dotd = dropEnabled() ? designOfTheDay() : null;
   const closetCount = closet.length + community.length;
 
   const sections = [
     { href: "/shop?tab=closet", title: SHOP_SECTIONS.closet.title, blurb: SHOP_SECTIONS.closet.blurb, count: closetCount, unit: "item", accent: "var(--gold)" },
+    ...(dotd ? [{ href: "/drop", title: "Merch", blurb: "Original illustrated tees and hoodies from The Daily Drop.", count: dotd ? 1 : 0, unit: "new design today", accent: "var(--cyan, #7fd8ff)" }] : []),
     { href: "/shop?tab=amazon", title: "Amazon Pick of the Day", blurb: "One hand-picked Amazon find, fresh every day.", count: daily.today ? 1 : 0, unit: "pick", accent: "var(--lilac)" },
   ];
 
@@ -28,8 +32,8 @@ export default async function HomePage() {
       <SpaceHero />
 
       <section aria-labelledby="sections-title">
-        <SectionHeader id="sections-title" eyebrow="Two ways to shop" title="Pick a section" />
-        <ul className="grid gap-4 md:grid-cols-2">
+        <SectionHeader id="sections-title" eyebrow="Ways to shop" title="Pick a section" />
+        <ul className={`grid gap-4 ${sections.length > 2 ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
           {sections.map((s) => (
             <li key={s.href}>
               <Link href={s.href} className="panel group flex h-full min-h-[44px] flex-col gap-2 p-6 hover:border-[var(--line-strong)]">
@@ -60,6 +64,8 @@ export default async function HomePage() {
           />
         )}
       </section>
+
+      {dotd ? <DesignOfTheDay design={dotd} /> : null}
 
       <DailyPickSection view={daily} compact headingId="picks-title" />
 

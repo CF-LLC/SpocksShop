@@ -60,3 +60,14 @@ export function printfulVariant(garment: Garment, size: string, env: Env = proce
     return null;
   }
 }
+
+/**
+ * Design of the day for the homepage: rotates by UTC calendar day among PUBLIC designs only,
+ * so a held design can never be picked. Returns null when nothing is public.
+ */
+export function designOfTheDay(date: Date = new Date(), env: Env = process.env): Design | null {
+  const list = publicDesigns(env);
+  if (list.length === 0) return null;
+  const day = Math.floor(date.getTime() / 86_400_000);
+  return list[((day % list.length) + list.length) % list.length];
+}
