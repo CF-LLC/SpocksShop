@@ -23,7 +23,7 @@ export default async function HomePage() {
 
   const sections = [
     { href: "/shop?tab=closet", title: SHOP_SECTIONS.closet.title, blurb: SHOP_SECTIONS.closet.blurb, count: closetCount, unit: "item", accent: "var(--gold)" },
-    ...(dotd ? [{ href: "/drop", title: "Merch", blurb: "Original illustrated tees and hoodies from The Daily Drop.", count: dotd ? 1 : 0, unit: "new design today", accent: "var(--cyan, #7fd8ff)" }] : []),
+    ...(dotd ? [{ href: "/drop", title: "Merch", blurb: "Original illustrated tees, hoodies, mugs, stickers and hats from The Daily Drop.", count: dotd ? 1 : 0, unit: "new design today", accent: "var(--cyan, #7fd8ff)" }] : []),
     { href: "/shop?tab=amazon", title: "Amazon Pick of the Day", blurb: "One hand-picked Amazon find, fresh every day.", count: daily.today ? 1 : 0, unit: "pick", accent: "var(--lilac)" },
   ];
 

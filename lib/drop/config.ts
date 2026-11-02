@@ -10,27 +10,51 @@ export function printfulAutoConfirm(env: Env = process.env): boolean {
   return on(env.PRINTFUL_AUTO_CONFIRM);
 }
 
-export type Garment = "tee" | "hoodie";
-export const PRICES_CENTS: Record<Garment, number> = { tee: 2800, hoodie: 4800 };
-export const SHIPPING_CENTS: Record<Garment, number> = { tee: 499, hoodie: 799 };
+export type Garment = "tee" | "hoodie" | "mug" | "sticker" | "hat";
+export const GARMENTS: Garment[] = ["tee", "hoodie", "mug", "sticker", "hat"];
+/** "From" price per product type (smallest option). Use unitPrice() for a specific option. */
+export const PRICES_CENTS: Record<Garment, number> = { tee: 2800, hoodie: 4800, mug: 2000, sticker: 700, hat: 2800 };
+/** Options that cost more than the type's base price. */
+export const OPTION_PRICES_CENTS: Partial<Record<string, number>> = { "mug:15oz": 2400, "sticker:4in": 800, "sticker:5.5in": 900 };
+export const unitPrice = (g: Garment, size: string) => OPTION_PRICES_CENTS[`${g}:${size}`] ?? PRICES_CENTS[g];
+export const SHIPPING_CENTS: Record<Garment, number> = { tee: 499, hoodie: 799, mug: 799, sticker: 499, hat: 599 };
+/** Size (or color for hats, capacity for mugs) options per type. */
 export const SIZES: Record<Garment, string[]> = {
   tee: ["S", "M", "L", "XL", "2XL"],
   hoodie: ["S", "M", "L", "XL", "2XL"],
+  mug: ["11oz", "15oz"],
+  sticker: ["3in", "4in", "5.5in"],
+  hat: ["Black", "Navy", "Khaki", "Stone"],
 };
-export const GARMENT_LABEL: Record<Garment, string> = { tee: "Unisex tee", hoodie: "Pullover hoodie" };
+export const OPTION_LABEL: Record<Garment, string> = { tee: "Size", hoodie: "Size", mug: "Size", sticker: "Size", hat: "Color" };
+export const DEFAULT_OPTION: Record<Garment, string> = { tee: "M", hoodie: "M", mug: "11oz", sticker: "4in", hat: "Black" };
+export const GARMENT_LABEL: Record<Garment, string> = { tee: "Unisex tee", hoodie: "Pullover hoodie", mug: "Glossy mug", sticker: "Kiss-cut sticker", hat: "Dad hat" };
+/** Stripe tax code per type: apparel (tee/hoodie/hat) = clothing; mugs/stickers = general tangible goods. */
+export const TAX_CODE: Record<Garment, string> = { tee: "txcd_30011000", hoodie: "txcd_30011000", hat: "txcd_30011000", mug: "txcd_99999999", sticker: "txcd_99999999" };
+/** Printful print-file placement per type (v1 orders API). */
+export const PRINT_PLACEMENT: Record<Garment, string> = { tee: "front", hoodie: "front", mug: "default", sticker: "default", hat: "front_dtf_hat" };
+/**
+ * Built-in Printful catalog variants for the accessory types (catalog products 19 White Glossy Mug, 358 Kiss-Cut Stickers,
+ * 206 Yupoong 6245CM dad hat with DTF front print). PRINTFUL_VARIANTS still overrides any key. Tee/hoodie stay env-only.
+ */
+export const DEFAULT_VARIANTS: Record<string, number> = {
+  "mug:11oz": 1320, "mug:15oz": 4830,
+  "sticker:3in": 10163, "sticker:4in": 10164, "sticker:5.5in": 10165,
+  "hat:Black": 7854, "hat:Navy": 7857, "hat:Khaki": 7855, "hat:Stone": 7859,
+};
 
 export type Design = { slug: string; file: string; title: string; blurb: string; garments: Garment[] };
 export const DESIGNS: Design[] = [
-  { slug: "screwed-at-work", file: "v4-01-screwed-at-work", title: "I Got Screwed At Work Again", blurb: "A sweaty little screw, a smug screwdriver boss, another Tuesday.", garments: ["tee", "hoodie"] },
-  { slug: "nice-melons", file: "v4-02-nice-melons", title: "Nice Melons", blurb: "Two flexing watermelons. Thanks, they grew them themselves.", garments: ["tee", "hoodie"] },
-  { slug: "hungover-send-pizza", file: "v4-03-hungover-send-pizza", title: "Hungover As F*ck, Send Pizza", blurb: "A raccoon, a trash can, last night's party hat. Pizza is medicine.", garments: ["tee", "hoodie"] },
-  { slug: "ghosted-by-a-ghost", file: "v4-04-ghosted-by-a-ghost", title: "Got Ghosted By A Ghost", blurb: "Table for two, candle lit, chair empty. Even the dead won't text back.", garments: ["tee", "hoodie"] },
-  { slug: "nice-pickle", file: "v4-05-nice-pickle", title: "Nice Pickle", blurb: "A ripped, winking pickle. Buy him a drink first.", garments: ["tee", "hoodie"] },
-  { slug: "meeting-email", file: "v4-06-meeting-email", title: "This Meeting Could've Been A F*cking Email", blurb: "The coffee mug is on fire and so is its patience.", garments: ["tee", "hoodie"] },
-  { slug: "blame-the-tequila", file: "v4-07-blame-the-tequila", title: "Blame The Tequila", blurb: "A lime in a cowboy hat rides the bottle. The salt shaker saw everything.", garments: ["tee", "hoodie"] },
-  { slug: "adulting-1-star", file: "v4-08-adulting-1-star", title: "Adulting: 1 Star, Would Not Recommend", blurb: "Bills, laundry, a pan on fire. The possum left a review.", garments: ["tee", "hoodie"] },
-  { slug: "love-my-rooster", file: "v4-09-love-my-rooster", title: "I Love My Cock (He's A Rooster, Pervert)", blurb: "A leather-jacket rooster, swooning hens, one judgmental cat.", garments: ["tee", "hoodie"] },
-  { slug: "day-drinking", file: "v4-10-day-drinking", title: "Day Drinking Is Just Hydrating With Ambition", blurb: "The sun on a flamingo float, three umbrellas deep, 10 AM.", garments: ["tee", "hoodie"] },
+  { slug: "screwed-at-work", file: "v4-01-screwed-at-work", title: "I Got Screwed At Work Again", blurb: "A sweaty little screw, a smug screwdriver boss, another Tuesday.", garments: GARMENTS },
+  { slug: "nice-melons", file: "v4-02-nice-melons", title: "Nice Melons", blurb: "Two flexing watermelons. Thanks, they grew them themselves.", garments: GARMENTS },
+  { slug: "hungover-send-pizza", file: "v4-03-hungover-send-pizza", title: "Hungover As F*ck, Send Pizza", blurb: "A raccoon, a trash can, last night's party hat. Pizza is medicine.", garments: GARMENTS },
+  { slug: "ghosted-by-a-ghost", file: "v4-04-ghosted-by-a-ghost", title: "Got Ghosted By A Ghost", blurb: "Table for two, candle lit, chair empty. Even the dead won't text back.", garments: GARMENTS },
+  { slug: "nice-pickle", file: "v4-05-nice-pickle", title: "Nice Pickle", blurb: "A ripped, winking pickle. Buy him a drink first.", garments: GARMENTS },
+  { slug: "meeting-email", file: "v4-06-meeting-email", title: "This Meeting Could've Been A F*cking Email", blurb: "The coffee mug is on fire and so is its patience.", garments: GARMENTS },
+  { slug: "blame-the-tequila", file: "v4-07-blame-the-tequila", title: "Blame The Tequila", blurb: "A lime in a cowboy hat rides the bottle. The salt shaker saw everything.", garments: GARMENTS },
+  { slug: "adulting-1-star", file: "v4-08-adulting-1-star", title: "Adulting: 1 Star, Would Not Recommend", blurb: "Bills, laundry, a pan on fire. The possum left a review.", garments: GARMENTS },
+  { slug: "love-my-rooster", file: "v4-09-love-my-rooster", title: "I Love My Cock (He's A Rooster, Pervert)", blurb: "A leather-jacket rooster, swooning hens, one judgmental cat.", garments: GARMENTS },
+  { slug: "day-drinking", file: "v4-10-day-drinking", title: "Day Drinking Is Just Hydrating With Ambition", blurb: "The sun on a flamingo float, three umbrellas deep, 10 AM.", garments: GARMENTS },
 ];
 /**
  * Held designs: kept (art, print files, rows) but not public or purchasable until Printful accepts a draft.
@@ -54,10 +78,12 @@ export const designBySlug = (slug: string) => DESIGNS.find((d) => d.slug === slu
 export function printfulVariant(garment: Garment, size: string, env: Env = process.env): number | null {
   try {
     const map = JSON.parse(env.PRINTFUL_VARIANTS ?? "{}") as Record<string, unknown>;
-    const v = Number(map[`${garment}:${size}`]);
+    const key = `${garment}:${size}`;
+    const v = Number(map[key] ?? DEFAULT_VARIANTS[key]);
     return Number.isInteger(v) && v > 0 ? v : null;
   } catch {
-    return null;
+    const v = DEFAULT_VARIANTS[`${garment}:${size}`];
+    return v ?? null;
   }
 }
 

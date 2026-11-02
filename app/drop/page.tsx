@@ -16,7 +16,7 @@ export default async function DropHome() {
     <>
       <div className="dd-kicker">The Daily Drop</div>
       <h1>Shirts from another galaxy.</h1>
-      <p className="dd-sub">{live} original illustrated designs, printed to order. Tees {usd(PRICES_CENTS.tee)}, hoodies {usd(PRICES_CENTS.hoodie)}.</p>
+      <p className="dd-sub">{live} original illustrated designs, printed to order on tees ({usd(PRICES_CENTS.tee)}), hoodies ({usd(PRICES_CENTS.hoodie)}), mugs (from {usd(PRICES_CENTS.mug)}), stickers (from {usd(PRICES_CENTS.sticker)}) and dad hats ({usd(PRICES_CENTS.hat)}).</p>
       {shown.length === 0 ? (
         <div className="dd-panel">Nothing in orbit right now. Check back soon.</div>
       ) : (
@@ -24,7 +24,7 @@ export default async function DropHome() {
           {shown.map((d) => (
             <Link key={d.slug} href={`/drop/${d.slug}`} className="dd-card">
               <div className="dd-shirt"><img src={`/drop/art/${d.file}.webp`} alt={d.title} loading="lazy" /></div>
-              <div className="dd-card-b"><h3>{isHeld(d.slug) ? <span data-held>HELD · </span> : null}{d.title}</h3><div className="dd-price">from {usd(PRICES_CENTS.tee)}</div></div>
+              <div className="dd-card-b"><h3>{isHeld(d.slug) ? <span data-held>HELD · </span> : null}{d.title}</h3><div className="dd-price">from {usd(PRICES_CENTS.sticker)} · tees, mugs, hats &amp; more</div></div>
             </Link>
           ))}
         </div>

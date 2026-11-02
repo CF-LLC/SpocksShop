@@ -11,7 +11,7 @@ export default function DropPolicies() {
       <section className="dd-panel"><h2>Shipping</h2>
         <p>Every item is made to order and ships from the United States through our print partner, Printful. We currently ship to US addresses only.</p>
         <ul><li>Production: about 2–7 business days (estimate).</li><li>Delivery: about 3–8 business days after production (estimate).</li>
-        <li>Shipping: $4.99 for orders with tees only, $7.99 for orders that include a hoodie. Sales tax is calculated at checkout.</li></ul>
+        <li>Shipping is one flat rate per order, set by the item with the highest rate: tees and stickers $4.99, dad hats $5.99, hoodies and mugs $7.99. Sales tax is calculated at checkout.</li></ul>
         <p>These are estimates, not guarantees; busy seasons and carrier delays can add time. You&apos;ll get tracking by email once your order ships.</p></section>
       <section className="dd-panel"><h2>Returns &amp; refunds</h2>
         <p><strong>Damaged, misprinted or defective?</strong> Email <M /> within 30 days of delivery with your order email and a photo. We&apos;ll send a free reprint or a full refund, your choice.</p>

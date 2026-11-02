@@ -24,6 +24,16 @@ export const PRINTFUL_COSTS: Record<string, Cost> = {
   "hoodie:L": { variant: 5596, item: 2263, ship: 919, pfTax: 239 },
   "hoodie:XL": { variant: 5597, item: 2263, ship: 919, pfTax: 239 },
   "hoodie:2XL": { variant: 5598, item: 2463, ship: 919, pfTax: 254 },
+  // Accessories: same estimate-costs method, read 2026-11-01 (front_dtf_hat placement for hats).
+  "mug:11oz": { variant: 1320, item: 607, ship: 709, pfTax: 99 },
+  "mug:15oz": { variant: 4830, item: 811, ship: 769, pfTax: 119 },
+  "sticker:3in": { variant: 10163, item: 234, ship: 489, pfTax: 55 },
+  "sticker:4in": { variant: 10164, item: 254, ship: 489, pfTax: 56 },
+  "sticker:5.5in": { variant: 10165, item: 274, ship: 489, pfTax: 58 },
+  "hat:Black": { variant: 7854, item: 1402, ship: 509, pfTax: 143 },
+  "hat:Navy": { variant: 7857, item: 1402, ship: 509, pfTax: 143 },
+  "hat:Khaki": { variant: 7855, item: 1402, ship: 509, pfTax: 143 },
+  "hat:Stone": { variant: 7859, item: 1402, ship: 509, pfTax: 143 },
 };
 
 /** Stripe card fee 2.9% + 30c on the full charge (incl. tax), plus Stripe Tax 0.5% on the pre-tax amount. */
