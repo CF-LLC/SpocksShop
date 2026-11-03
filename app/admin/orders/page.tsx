@@ -6,6 +6,8 @@ import { orderItems, orders, products } from "@/lib/db/schema";
 import { formatCents } from "@/lib/commerce/money";
 import { OPEN_APPROVAL_STATUSES } from "@/lib/approval/core";
 import { stripeSettings } from "@/lib/stripe";
+import { listDropOrders, parseDropFilter } from "@/lib/admin/drop-orders";
+import { DropOrdersSection } from "@/components/admin/drop-orders";
 
 const when = (d: Date | null) => (d ? new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(d) + " CT" : "—");
 
@@ -22,8 +24,11 @@ const statusLabel: Record<string, string> = {
   declined: "Declined", hold_expired: "Auto-canceled", canceled: "Canceled", pending: "In checkout", processing: "Processing", shipped: "Shipped",
 };
 
-export default async function AdminOrdersPage({ searchParams }: { searchParams: NoticeParams }) {
+export default async function AdminOrdersPage({ searchParams }: { searchParams: Promise<Awaited<NoticeParams> & { drop?: string }> }) {
   const now = new Date();
+  const sp = await searchParams;
+  const dropFilter = parseDropFilter(sp.drop);
+  const dropRows = await listDropOrders(dropFilter);
   const rows = await db.select().from(orders).orderBy(desc(orders.createdAt)).limit(200);
   const ids = rows.map((r) => r.id);
   const items = ids.length
@@ -42,7 +47,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
           {checkoutOn ? "Website checkout is on." : "Website checkout is off (STRIPE_CHECKOUT_ENABLED)."} Items that require approval are held at checkout when the payment method allows it (cards, Apple/Google Pay, Link, Klarna, Affirm, Afterpay, Cash App Pay, Amazon Pay); crypto and bank payments are charged right away. Accept captures the hold (or just confirms a captured payment); Decline releases the hold or refunds in full. Orders auto-cancel after 6 days.
         </p>
       </div>
-      <AdminNotice {...await searchParams} />
+      <AdminNotice {...sp} />
 
       <section aria-labelledby="queue-title" className="space-y-3" data-testid="approval-queue">
         <h2 id="queue-title" className="text-lg font-semibold">Waiting for you <span className="rounded-full bg-amber-100 px-2 py-0.5 text-sm text-amber-900">{queue.length}</span></h2>
@@ -86,8 +91,10 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         )}
       </section>
 
+      <DropOrdersSection rows={dropRows} filter={dropFilter} />
+
       <section aria-labelledby="all-title" className="space-y-3">
-        <h2 id="all-title" className="text-lg font-semibold">All orders</h2>
+        <h2 id="all-title" className="text-lg font-semibold">Shop orders</h2>
         {rest.length === 0 ? <p className="text-sm text-slate-600">No orders yet.</p> : (
           <>
             <ul className="space-y-2 sm:hidden">
