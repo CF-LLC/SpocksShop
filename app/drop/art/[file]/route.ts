@@ -3,17 +3,20 @@ import path from "path";
 import { dropEnabled, DESIGNS, isHeld } from "@/lib/drop/config";
 import { getSession } from "@/lib/auth/session";
 import { MOCKUP_NAMES, SIZED_NAMES } from "@/lib/drop/mockups";
+import { validArtToken } from "@/lib/drop/art-token";
 
 export const runtime = "nodejs";
 const ALLOWED = new Set([...DESIGNS.flatMap((d) => [`${d.file}.png`, `${d.file}.webp`]), ...MOCKUP_NAMES, ...SIZED_NAMES]);
 
 /** Art is only reachable while the drop is on (print .png for Printful, .webp previews). */
-export async function GET(_req: Request, ctx: { params: Promise<{ file: string }> }) {
+export async function GET(req: Request, ctx: { params: Promise<{ file: string }> }) {
   const { file } = await ctx.params;
   if (!dropEnabled() || !ALLOWED.has(file)) return new Response("Not found", { status: 404 });
   const d = DESIGNS.find((x) => file.startsWith(`${x.file}.`) || file.startsWith(`${x.file}-`));
   const held = !!d && isHeld(d.slug);
-  if (held && (await getSession().catch(() => null))?.role !== "admin") return new Response("Not found", { status: 404 });
+  const u = new URL(req.url);
+  const signed = held && validArtToken(file, u.searchParams.get("exp"), u.searchParams.get("sig"));
+  if (held && !signed && (await getSession().catch(() => null))?.role !== "admin") return new Response("Not found", { status: 404 });
   const dir = SIZED_NAMES.has(file) ? "sized" : file.endsWith(".jpg") ? "mockups" : file.endsWith(".png") ? "print" : "preview";
   try {
     const buf = await readFile(path.join(process.cwd(), "drop-art", dir, file));
