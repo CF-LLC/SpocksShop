@@ -28,5 +28,5 @@ export function dropItemsLabel(items: unknown): string {
 }
 
 export const dropStatusLabel: Record<string, string> = {
-  received: "Received", printful_draft: "Printful draft (not confirmed)", printful_confirmed: "Sent to Printful", printful_failed: "Printful failed",
+  received: "Received", printful_draft: "Printful draft (not confirmed)", printful_confirmed: "Sent to Printful", printful_failed: "Printful failed", refunded: "Refunded (Printful order canceled)",
 };

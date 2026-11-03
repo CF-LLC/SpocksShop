@@ -19,6 +19,11 @@ describe("admin Daily Drop orders", () => {
     expect(html.match(/data-testid="test-badge"/g)?.length).toBe(1);
     expect(html.match(/>Daily Drop</g)?.length).toBe(2);
   });
+  it("shows a Refunded badge for refunded drop orders", () => {
+    const html = renderToStaticMarkup(createElement(DropOrdersSection, { rows: [{ ...test, status: "refunded" }, real], filter: "all" }));
+    expect(html.match(/data-testid="refunded-badge"/g)?.length).toBe(1);
+    expect(html).toContain("Refunded (Printful order canceled)");
+  });
   it("orders page reads drop_orders, not just the shop orders table", () => {
     const page = readFileSync("app/admin/orders/page.tsx", "utf8");
     expect(page).toContain("listDropOrders");
