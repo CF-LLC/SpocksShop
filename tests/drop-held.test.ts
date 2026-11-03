@@ -2,10 +2,11 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { DESIGNS, DEFAULT_HELD_SLUGS, heldSlugs, isHeld, publicDesigns } from "../lib/drop/config";
 
 describe("held designs config", () => {
-  it("holds melons, pickle and rooster by default; 7 public", () => {
-    expect([...heldSlugs({})].sort()).toEqual(["love-my-rooster", "nice-melons", "nice-pickle"]);
+  it("melons, pickle and rooster released (2026-11-02): nothing held by default; all 10 public", () => {
+    expect([...heldSlugs({})]).toEqual(DEFAULT_HELD_SLUGS);
+    for (const s of ["nice-melons", "nice-pickle", "love-my-rooster"]) expect(isHeld(s, {})).toBe(false);
     expect(publicDesigns({}).map((d) => d.slug)).toEqual(DESIGNS.filter((d) => !DEFAULT_HELD_SLUGS.includes(d.slug)).map((d) => d.slug));
-    expect(publicDesigns({})).toHaveLength(7);
+    expect(publicDesigns({})).toHaveLength(10);
     expect(DESIGNS).toHaveLength(10); // nothing deleted
   });
   it("DROP_HELD_SLUGS overrides; 'none' un-holds all", () => {
@@ -25,6 +26,8 @@ describe("checkout route refuses held designs", () => {
     return POST(new Request("https://spockshop.com/api/drop/checkout", { method: "POST", body: JSON.stringify({ items: [{ slug, garment: "tee", size: "M", qty: 1 }] }) }));
   };
   for (const s of DEFAULT_HELD_SLUGS) it(`refuses ${s}`, async () => expect((await call(s)).status).toBe(400));
+  it("refuses a design held via env", async () => { process.env.DROP_HELD_SLUGS = "nice-melons"; expect((await call("nice-melons")).status).toBe(400); });
+  for (const s of ["nice-melons", "nice-pickle", "love-my-rooster"]) it(`sells released ${s}`, async () => expect((await call(s)).status).toBe(200));
   it("still sells a public design", async () => expect((await call("adulting-1-star")).status).toBe(200));
   it("un-held via env sells again", async () => { process.env.DROP_HELD_SLUGS = "none"; expect((await call("nice-pickle")).status).toBe(200); });
 });
@@ -34,9 +37,10 @@ describe("design of the day", () => {
     const { designOfTheDay } = await import("../lib/drop/config");
     const seen = new Set<string>();
     for (let i = 0; i < 366; i++) {
-      const d = designOfTheDay(new Date(Date.UTC(2026, 0, 1) + i * 86_400_000), {});
+      const held = { DROP_HELD_SLUGS: "nice-melons,nice-pickle,love-my-rooster" };
+      const d = designOfTheDay(new Date(Date.UTC(2026, 0, 1) + i * 86_400_000), held);
       expect(d).not.toBeNull();
-      expect(DEFAULT_HELD_SLUGS).not.toContain(d!.slug);
+      expect(held.DROP_HELD_SLUGS.split(",")).not.toContain(d!.slug);
       seen.add(d!.slug);
     }
     expect(seen.size).toBe(7);

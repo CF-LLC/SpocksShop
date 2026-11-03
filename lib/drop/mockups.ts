@@ -16,6 +16,7 @@ export const MOCKUP_COLOR: Record<MockupType, { name: string; hex: string }> = {
 export const MOCKUP_FILES = new Set<string>([
   "v4-01-screwed-at-work", "v4-03-hungover-send-pizza", "v4-04-ghosted-by-a-ghost", "v4-06-meeting-email",
   "v4-07-blame-the-tequila", "v4-08-adulting-1-star", "v4-10-day-drinking",
+  "v4-02-nice-melons", "v4-05-nice-pickle", "v4-09-love-my-rooster",
 ]);
 export const isMockupType = (g: string): g is MockupType => (MOCKUP_TYPES as readonly string[]).includes(g);
 export function mockupUrl(d: Pick<Design, "file">, g: Garment): string | null {

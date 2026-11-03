@@ -57,10 +57,11 @@ export const DESIGNS: Design[] = [
   { slug: "day-drinking", file: "v4-10-day-drinking", title: "Day Drinking Is Just Hydrating With Ambition", blurb: "The sun on a flamingo float, three umbrellas deep, 10 AM.", garments: GARMENTS },
 ];
 /**
- * Held designs: kept (art, print files, rows) but not public or purchasable until Printful accepts a draft.
+ * Held designs: kept (art, print files, rows) but not public or purchasable until Cooper approves them.
+ * Nice Melons, Nice Pickle and the rooster were released by Cooper on 2026-11-02.
  * DROP_HELD_SLUGS overrides the default: a comma list of slugs, or "none" to un-hold everything.
  */
-export const DEFAULT_HELD_SLUGS = ["nice-melons", "nice-pickle", "love-my-rooster"];
+export const DEFAULT_HELD_SLUGS: string[] = [];
 export function heldSlugs(env: Env = process.env): Set<string> {
   const raw = env.DROP_HELD_SLUGS;
   if (raw === undefined || raw.trim() === "") return new Set(DEFAULT_HELD_SLUGS);

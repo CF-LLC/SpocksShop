@@ -11,8 +11,9 @@ const NEW: Garment[] = ["mug", "sticker", "hat"];
 describe("mugs, stickers, hats", () => {
   it("every design offers them; held designs stay held", () => {
     for (const d of DESIGNS) for (const g of NEW) expect(d.garments).toContain(g);
-    expect(publicDesigns({}).map((d) => d.slug)).not.toContain("nice-pickle");
-    expect(isHeld("nice-melons", {})).toBe(true);
+    expect(publicDesigns({}).map((d) => d.slug)).toContain("nice-pickle");
+    expect(isHeld("nice-melons", {})).toBe(false);
+    expect(isHeld("nice-melons", { DROP_HELD_SLUGS: "nice-melons" })).toBe(true);
   });
   it("every option maps to a built-in Printful variant matching the cost table", () => {
     for (const g of NEW) for (const s of SIZES[g]) {
