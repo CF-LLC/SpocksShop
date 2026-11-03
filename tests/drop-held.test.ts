@@ -2,12 +2,13 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { DESIGNS, DEFAULT_HELD_SLUGS, heldSlugs, isHeld, publicDesigns } from "../lib/drop/config";
 
 describe("held designs config", () => {
-  it("melons, pickle and rooster released (2026-11-02): nothing held by default; all 10 public", () => {
+  it("melons, pickle and rooster released (2026-11-02); only the 5 new v5 designs held by default; 10 public", () => {
     expect([...heldSlugs({})]).toEqual(DEFAULT_HELD_SLUGS);
     for (const s of ["nice-melons", "nice-pickle", "love-my-rooster"]) expect(isHeld(s, {})).toBe(false);
     expect(publicDesigns({}).map((d) => d.slug)).toEqual(DESIGNS.filter((d) => !DEFAULT_HELD_SLUGS.includes(d.slug)).map((d) => d.slug));
     expect(publicDesigns({})).toHaveLength(10);
-    expect(DESIGNS).toHaveLength(10); // nothing deleted
+    expect(DESIGNS).toHaveLength(15); // nothing deleted
+    for (const d of DESIGNS.filter((x) => x.file.startsWith("v5-"))) expect(isHeld(d.slug, {})).toBe(true);
   });
   it("DROP_HELD_SLUGS overrides; 'none' un-holds all", () => {
     expect(heldSlugs({ DROP_HELD_SLUGS: "none" }).size).toBe(0);
@@ -37,7 +38,7 @@ describe("design of the day", () => {
     const { designOfTheDay } = await import("../lib/drop/config");
     const seen = new Set<string>();
     for (let i = 0; i < 366; i++) {
-      const held = { DROP_HELD_SLUGS: "nice-melons,nice-pickle,love-my-rooster" };
+      const held = { DROP_HELD_SLUGS: "nice-melons,nice-pickle,love-my-rooster,hot-mess-facts,id-hit-that,pour-decisions,classy-as-trash,overshares-after-2-drinks" };
       const d = designOfTheDay(new Date(Date.UTC(2026, 0, 1) + i * 86_400_000), held);
       expect(d).not.toBeNull();
       expect(held.DROP_HELD_SLUGS.split(",")).not.toContain(d!.slug);
