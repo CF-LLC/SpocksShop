@@ -25,6 +25,7 @@ export function DropOrdersSection({ rows, filter }: { rows: DropOrderRow[]; filt
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span className="flex items-center gap-2">
                   <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-xs font-semibold text-indigo-900">Daily Drop</span>
+                  {r.status === "refunded" ? <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-900" data-testid="refunded-badge">Refunded</span> : null}
                   {r.admin_test ? <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-900" data-testid="test-badge">Test</span> : null}
                   <span className="font-mono">DD-{r.id}</span>
                 </span>
