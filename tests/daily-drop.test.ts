@@ -12,7 +12,7 @@ describe("daily drop flags", () => {
     expect(dropEnabled({ DAILY_DROP_ENABLED: "true" })).toBe(true);
     expect(printfulAutoConfirm({})).toBe(false);
   });
-  it("has 10 designs (held ones kept)", () => expect(DESIGNS).toHaveLength(10));
+  it("has 15 designs (held ones kept)", () => expect(DESIGNS).toHaveLength(15));
 });
 
 describe("checkout params", () => {

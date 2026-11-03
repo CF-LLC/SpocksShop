@@ -55,13 +55,19 @@ export const DESIGNS: Design[] = [
   { slug: "adulting-1-star", file: "v4-08-adulting-1-star", title: "Adulting: 1 Star, Would Not Recommend", blurb: "Bills, laundry, a pan on fire. The possum left a review.", garments: GARMENTS },
   { slug: "love-my-rooster", file: "v4-09-love-my-rooster", title: "I Love My Cock (He's A Rooster, Pervert)", blurb: "A leather-jacket rooster, swooning hens, one judgmental cat.", garments: GARMENTS },
   { slug: "day-drinking", file: "v4-10-day-drinking", title: "Day Drinking Is Just Hydrating With Ambition", blurb: "The sun on a flamingo float, three umbrellas deep, 10 AM.", garments: GARMENTS },
+  // v5 (2026-11-02): different styles on purpose (type-only label, line art, 70s badge, woodcut, road sign). HELD until Cooper approves the preview.
+  { slug: "hot-mess-facts", file: "v5-01-hot-mess-facts", title: "Hot Mess Facts", blurb: "A nutrition label for a disaster: 300% iced coffee, 2% sleep.", garments: GARMENTS },
+  { slug: "id-hit-that", file: "v5-02-id-hit-that", title: "I'd Hit That", blurb: "One very cute piñata, drawn in a single line. Confetti pending.", garments: GARMENTS },
+  { slug: "pour-decisions", file: "v5-03-pour-decisions", title: "Pour Decisions", blurb: "A 70s sunset and a tipping wine glass. Est. last night.", garments: GARMENTS },
+  { slug: "classy-as-trash", file: "v5-04-classy-as-trash", title: "Classy As Trash", blurb: "A monocled raccoon takes tea in a garbage can, pinky up.", garments: GARMENTS },
+  { slug: "overshares-after-2-drinks", file: "v5-05-overshares", title: "Caution: Overshares After 2 Drinks", blurb: "An official-looking road sign for that one friend. It's you.", garments: GARMENTS },
 ];
 /**
  * Held designs: kept (art, print files, rows) but not public or purchasable until Cooper approves them.
  * Nice Melons, Nice Pickle and the rooster were released by Cooper on 2026-11-02.
  * DROP_HELD_SLUGS overrides the default: a comma list of slugs, or "none" to un-hold everything.
  */
-export const DEFAULT_HELD_SLUGS: string[] = [];
+export const DEFAULT_HELD_SLUGS: string[] = ["hot-mess-facts", "id-hit-that", "pour-decisions", "classy-as-trash", "overshares-after-2-drinks"];
 export function heldSlugs(env: Env = process.env): Set<string> {
   const raw = env.DROP_HELD_SLUGS;
   if (raw === undefined || raw.trim() === "") return new Set(DEFAULT_HELD_SLUGS);
