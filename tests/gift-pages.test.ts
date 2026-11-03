@@ -37,15 +37,14 @@ describe("gift landing pages", () => {
 });
 
 describe("sized images", () => {
-  it("maps art/mockup URLs to 480/800 webp variants that exist for public designs only", async () => {
+  it("maps art/mockup URLs to 480/800 webp variants that exist for every public design", async () => {
     const { sizedImg, SIZED_NAMES } = await import("../lib/drop/mockups");
     const { existsSync } = await import("fs");
     const r = sizedImg("/drop/art/v4-10-day-drinking-tee.jpg");
     expect(r.src).toBe("/drop/art/v4-10-day-drinking-tee-480.webp");
     expect(r.srcSet).toContain("-800.webp 800w");
     for (const n of SIZED_NAMES) {
-      const held = /^v4-0(2|5|9)-/.test(n);
-      expect(existsSync(`drop-art/sized/${n}`), n).toBe(!held);
+      expect(existsSync(`drop-art/sized/${n}`), n).toBe(true);
     }
   });
 });

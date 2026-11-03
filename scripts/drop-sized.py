@@ -1,6 +1,6 @@
 """Regenerate drop-art/sized/*.webp (480/800 wide) from mockups + previews. Skips held designs. Run: python3 scripts/drop-sized.py"""
 from PIL import Image; import os, glob
-HELD = ["v4-02", "v4-05", "v4-09"]
+HELD: list[str] = []  # file prefixes of held designs (none since 2026-11-02)
 os.makedirs("drop-art/sized", exist_ok=True)
 for src in glob.glob("drop-art/mockups/*.jpg") + glob.glob("drop-art/preview/*.webp"):
     base = os.path.basename(src).rsplit(".", 1)[0]
