@@ -12,6 +12,8 @@ export function VintedSync({ defaultUrl }: { defaultUrl: string }) {
   const [job, setJob] = useState<ImportJob | null>(null);
   const [missing, setMissing] = useState<Missing[] | null>(null);
   const [complete, setComplete] = useState<boolean | null>(null);
+  const [paging, setPaging] = useState<{ pagesFetched: number; expected: number | null; seen: number; reason: string | null } | null>(null);
+  const [held, setHeld] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -32,13 +34,13 @@ export function VintedSync({ defaultUrl }: { defaultUrl: string }) {
   }, [jobId]);
 
   const sync = useCallback(async () => {
-    setError(null); setBusy(true); setJob(null); setMissing(null); setComplete(null);
+    setError(null); setBusy(true); setJob(null); setMissing(null); setComplete(null); setPaging(null); setHeld(null);
     try {
       const r = await fetch("/api/admin/vinted/shop-sync", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ memberUrl }) });
       const d = await r.json();
       if (r.status === 409 && d.id) { setError("Another import is running; showing its progress."); setJobId(d.id); return; }
       if (!r.ok) { setError(d.error ?? `HTTP ${r.status}`); return; }
-      setMissing(d.missing ?? []); setComplete(!!d.complete); setJobId(d.id);
+      setMissing(d.missing ?? []); setComplete(!!d.complete); setPaging(d.paging ?? null); setHeld(d.held ?? null); setJobId(d.id);
     } catch {
       setError("Couldn't start the sync. Try again.");
     } finally { setBusy(false); }
@@ -59,7 +61,9 @@ export function VintedSync({ defaultUrl }: { defaultUrl: string }) {
             {running ? `Syncing… ${job.processed}/${job.total}` : job.state === "stopped" ? "Stopped: Vinted blocked or challenged the server. Nothing was bypassed; try later or add items by hand." : job.state === "done" ? "Sync finished." : "Sync failed (logged)."}
             {" "}<strong>{count("imported")}</strong> new drafts · <strong>{count("updated")}</strong> updated · <strong>{count("flagged")}</strong> kept your edit · <strong>{count("sold")}</strong> sold (no draft) · <strong>{missing?.length ?? 0}</strong> unpublished (gone from Vinted) · {count("duplicate")} unchanged · {count("error")} errors
           </p>
-          {complete === false ? <p className="text-amber-800">Your member page didn&apos;t list every item at once, so nothing was unpublished this time.</p> : null}
+          {paging ? <p className="text-slate-600">Read {paging.seen}{paging.expected !== null ? ` of ${paging.expected}` : ""} items from your member page ({paging.pagesFetched} {paging.pagesFetched === 1 ? "request" : "requests"}).</p> : null}
+          {complete === false ? <p className="text-amber-800">Couldn&apos;t confirm the full list of your Vinted items{paging?.reason ? ` (${paging.reason})` : ""}, so nothing was unpublished this time.</p> : null}
+          {held ? <p className="text-amber-800">{held}</p> : null}
           <ul className="space-y-1">
             {shown.map((r, i) => (
               <li key={i} className="rounded-lg border border-slate-200 p-2">

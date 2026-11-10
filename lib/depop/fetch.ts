@@ -20,8 +20,10 @@ export const isBlocked = (e: unknown): boolean => {
 
 export const isUserFacing = (e: unknown): e is Error => e instanceof Error && (e as { userFacing?: boolean }).userFacing === true;
 
-export type Fetched = { bytes: Uint8Array; contentType: string };
-export type Fetcher = (url: string, opts: { maxBytes: number; accept: string }) => Promise<Fetched>;
+/** setCookie: raw Set-Cookie headers, only filled by fetchers that need them (the Vinted member sync). */
+export type Fetched = { bytes: Uint8Array; contentType: string; setCookie?: string[] };
+/** cookie: only ever the anonymous visitor cookie Vinted itself just issued for this one sync (never a login). */
+export type Fetcher = (url: string, opts: { maxBytes: number; accept: string; cookie?: string }) => Promise<Fetched>;
 
 /**
  * GET exactly one URL: honest user agent, timeout, size cap, and NO redirect following
