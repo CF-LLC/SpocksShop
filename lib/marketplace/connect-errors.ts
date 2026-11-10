@@ -5,7 +5,12 @@ export type ConnectErrorInfo = {
   userMessage: string;
 };
 
-const PLATFORM_NOT_READY = /accounts v2 is not enabled|settings\/connect\/platform-setup|signed up for connect|platform profile|responsibilities for (managing )?losses/i;
+const PLATFORM_NOT_READY = /accounts v2 is not enabled|settings\/connect\/platform-setup|signed up for connect|platform profile|responsibilities (for|of) (managing |collecting )?(losses|requirements)|must be activated in order to create accounts|only stripe connect platforms/i;
+/**
+ * Stripe error codes meaning the SpockShop platform account itself can't create connected accounts yet
+ * (live Connect activation / platform profile / identity "Go live" step incomplete). Sellers can't fix these.
+ */
+const PLATFORM_NOT_READY_CODES = new Set(["account_create_activation_required", "non_connect_platform_accounts_v2_access_blocked"]);
 
 export function describeConnectError(e: unknown): ConnectErrorInfo {
   const err = (e ?? {}) as { type?: unknown; code?: unknown; statusCode?: unknown; requestId?: unknown; message?: unknown; raw?: { message?: unknown } };
@@ -19,7 +24,7 @@ export function describeConnectError(e: unknown): ConnectErrorInfo {
     requestId: typeof err.requestId === "string" ? err.requestId : undefined,
     message,
   };
-  if (PLATFORM_NOT_READY.test(message)) {
+  if ((log.code && PLATFORM_NOT_READY_CODES.has(log.code)) || PLATFORM_NOT_READY.test(message)) {
     return { kind: "platform_not_ready", log, userMessage: "Payouts aren't open yet: we're finishing SpockShop's Stripe setup. Your account and listings are saved, and you'll be able to set up payouts soon. Nothing you need to do right now." };
   }
   const isStripe = typeof log.type === "string" && log.type.startsWith("Stripe");
