@@ -6,13 +6,16 @@ export function isChallengePage(html: string): boolean {
 }
 
 /**
- * One plain GET with the importer's honest user agent: no cookies, no login, redirects not followed.
+ * One plain GET with the importer's honest user agent: no login, redirects not followed. The only cookie
+ * ever sent is the anonymous visitor token Vinted hands every visitor of the member page (member sync paging).
  * 403/429 or a challenge page = blocked: the caller stops and Cooper fills the details in by hand.
  */
-export const vintedFetch: Fetcher = async (url, { maxBytes, accept }) => {
+export const vintedFetch: Fetcher = async (url, { maxBytes, accept, cookie }) => {
   let res: Response;
+  const headers: Record<string, string> = { "user-agent": USER_AGENT, accept, "accept-language": "en-US,en;q=0.8" };
+  if (cookie) headers.cookie = cookie;
   try {
-    res = await fetch(url, { headers: { "user-agent": USER_AGENT, accept, "accept-language": "en-US,en;q=0.8" }, redirect: "manual", signal: AbortSignal.timeout(PAGE_TIMEOUT_MS), cache: "no-store" });
+    res = await fetch(url, { headers, redirect: "manual", signal: AbortSignal.timeout(PAGE_TIMEOUT_MS), cache: "no-store" });
   } catch {
     throw new FetchError("Couldn't reach Vinted (timed out or offline).");
   }
@@ -24,5 +27,5 @@ export const vintedFetch: Fetcher = async (url, { maxBytes, accept }) => {
   if (buf.byteLength > maxBytes) throw new FetchError("Response is too large.");
   const type = res.headers.get("content-type") ?? "";
   if (/html/i.test(type) && isChallengePage(new TextDecoder().decode(buf))) throw new FetchError("Vinted showed a bot check instead of the listing. SpockShop doesn't try to get around it: add this item by hand (title, price, photos).", 403);
-  return { bytes: buf, contentType: type };
+  return { bytes: buf, contentType: type, setCookie: typeof res.headers.getSetCookie === "function" ? res.headers.getSetCookie() : [] };
 };
