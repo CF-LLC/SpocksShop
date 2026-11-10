@@ -1,4 +1,6 @@
 import { activityChecks, appCheck, backupCheck, databaseCheck, recentErrors, tunnelCheck, type Check } from "@/lib/health/checks";
+import { communitySellersEnabled } from "@/lib/features";
+import { connectPlatformHealth } from "@/lib/marketplace/platform-status-store";
 
 const badge: Record<Check["state"], string> = {
   ok: "bg-green-100 text-green-800",
@@ -8,14 +10,15 @@ const badge: Record<Check["state"], string> = {
 const icon: Record<Check["state"], string> = { ok: "✓", warn: "!", fail: "✕" };
 
 export default async function AdminHealthPage() {
-  const [db, backup, tunnel, activity, errors] = await Promise.all([
+  const [db, backup, tunnel, activity, errors, connect] = await Promise.all([
     databaseCheck(),
     backupCheck(),
     tunnelCheck(),
     activityChecks().catch(() => null),
     recentErrors(20),
+    communitySellersEnabled() ? connectPlatformHealth() : Promise.resolve(null),
   ]);
-  const checks: Check[] = [appCheck(), ...db, backup, tunnel, ...(activity?.checks ?? [{ key: "activity", label: "Orders & listings", state: "fail" as const, detail: "Database unavailable" }])];
+  const checks: Check[] = [appCheck(), ...db, backup, tunnel, ...(activity?.checks ?? [{ key: "activity", label: "Orders & listings", state: "fail" as const, detail: "Database unavailable" }]), ...(connect ? [connect] : [])];
   const worst = checks.some((c) => c.state === "fail") ? "fail" : checks.some((c) => c.state === "warn") ? "warn" : "ok";
 
   return (

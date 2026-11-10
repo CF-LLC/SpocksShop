@@ -6,6 +6,9 @@ import { notFoundResponse, redirectTo, sellersDisabled } from "@/lib/sell/http";
 import { MarketplaceError, onboardingLink } from "@/lib/marketplace/service";
 import { marketOrigin } from "@/lib/marketplace/http";
 import { describeConnectError } from "@/lib/marketplace/connect-errors";
+import { recordConnectPlatformStatus } from "@/lib/marketplace/platform-status-store";
+import { blockedStatus } from "@/lib/marketplace/platform-status";
+import { logError } from "@/lib/errors/log";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +21,7 @@ async function handle(request: Request) {
   if (!origin) return redirectTo(request, "/sell/dashboard", "Payout setup isn't available right now.");
   try {
     const url = await onboardingLink({ db, stripe: getStripe() }, session.sellerId, origin);
+    await recordConnectPlatformStatus({ state: "ok", at: new Date().toISOString() });
     return NextResponse.redirect(url, 303);
   } catch (e) {
     if (e instanceof MarketplaceError) {
@@ -26,6 +30,9 @@ async function handle(request: Request) {
     }
     const info = describeConnectError(e);
     console.error("connect onboarding failed", { seller: session.sellerId, kind: info.kind, ...info.log });
+    // Surface on /admin/health: platform-side blocks need Cooper in the Stripe Dashboard, not the seller.
+    await logError("connect-onboarding", new Error(info.log.message), { seller: session.sellerId, kind: info.kind, code: info.log.code, requestId: info.log.requestId, statusCode: info.log.statusCode });
+    if (info.kind === "platform_not_ready") await recordConnectPlatformStatus(blockedStatus(info));
     return redirectTo(request, "/sell/dashboard", info.userMessage);
   }
 }
