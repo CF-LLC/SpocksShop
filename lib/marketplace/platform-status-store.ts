@@ -15,6 +15,17 @@ export async function recordConnectPlatformStatus(value: ConnectPlatformStatus) 
   }
 }
 
+export async function getConnectPlatformStatus(): Promise<ConnectPlatformStatus | null> {
+  try {
+    const [row] = await db.select().from(appStatus).where(eq(appStatus.key, CONNECT_PLATFORM_STATUS_KEY));
+    const v = row?.value as ConnectPlatformStatus | null | undefined;
+    if (v && (v.state === "blocked" || v.state === "ok")) return v;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function connectPlatformHealth(): Promise<HealthCheck> {
   try {
     const [row] = await db.select().from(appStatus).where(eq(appStatus.key, CONNECT_PLATFORM_STATUS_KEY));

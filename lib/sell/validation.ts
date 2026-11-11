@@ -12,4 +12,5 @@ export const listingSchema = z.object({
   description: z.string().trim().max(4000).default(""),
   condition: z.string().trim().max(40).optional(),
   price: z.coerce.number().positive().max(100000),
+  weight: z.coerce.number().gt(0, "Enter the item weight in pounds.").max(70, "Weight must be 70 lb or less."),
 });

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { communityListings, inventory, photos, products, sellers } from "@/lib/db/schema";
 import { AdminInputError } from "@/lib/admin/http";
 import { slugify } from "@/lib/admin/forms";
+import { listingWeightLb } from "@/lib/sell/setup";
 
 /** Approve a pending listing and publish it as a community product (with its photos). */
 export async function approveListing(listingId: string, reviewerId: string, note: string | null) {
@@ -24,6 +25,7 @@ export async function approveListing(listingId: string, reviewerId: string, note
         description: listing.description,
         condition: listing.condition ?? "Good",
         priceCents: listing.priceCents,
+        weightLb: listingWeightLb(listing.weightLb),
         status: "listed",
         source: "community",
         sellerId: seller.id,

@@ -2,10 +2,10 @@ import Link from "next/link";
 import { OrbitalDecoration } from "@/components/visual/orbital-decoration";
 import { Constellation } from "@/components/visual/constellation";
 
-export const SELL_CTA_HREF = "/sell/signup";
+export const SELL_CTA_HREF = "/sell";
 
 export const SELL_BENEFITS = [
-  { icon: "🚀", title: "List in minutes", body: "Create a free seller account, add photos and a price, and launch after a quick review." },
+  { icon: "🚀", title: "List in minutes", body: "Create a free seller account, add photos, a weight and a price, and launch after a quick review." },
   { icon: "🛰️", title: "Simple, fair fees", body: "One simple fee: 5% per order ($1 minimum), charged only when an item sells." },
   { icon: "💫", title: "Paid out by Stripe", body: "Secure Stripe payouts land 3 days after your buyer's package is delivered." },
 ] as const;

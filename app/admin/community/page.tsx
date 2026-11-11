@@ -33,7 +33,7 @@ export default async function AdminCommunityQueuePage({ searchParams }: { search
             <li key={l.id} className="rounded-xl border p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-lg font-semibold">{l.title}</h2>
-                <p className="text-sm">{formatCents(l.priceCents)} · {l.condition ?? "—"} · by {seller} ({sellerStatus})</p>
+                <p className="text-sm">{formatCents(l.priceCents)} · {l.weightLb ? `${l.weightLb} lb` : "no weight"} · {l.condition ?? "—"} · by {seller} ({sellerStatus})</p>
               </div>
               <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{l.description}</p>
               <div className="mt-3 flex flex-wrap gap-2">

@@ -3,7 +3,7 @@ import { SELL_BENEFITS, SELL_CTA_HREF } from "@/components/sell-cta";
 
 describe("home Sell on SpockShop CTA", () => {
   it("links to seller signup with 3 benefits", () => {
-    expect(SELL_CTA_HREF).toBe("/sell/signup");
+    expect(SELL_CTA_HREF).toBe("/sell");
     expect(SELL_BENEFITS).toHaveLength(3);
   });
   it("contains no phone numbers or street addresses", () => {

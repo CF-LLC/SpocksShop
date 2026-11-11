@@ -39,8 +39,8 @@ export function buildAiCheckoutParams(
     customer_email: seller.email,
     client_reference_id: seller.sellerId,
     metadata,
-    success_url: `${origin}/sell?ai=thanks`,
-    cancel_url: `${origin}/sell?ai=cancelled`,
+    success_url: `${origin}/sell/dashboard?ai=thanks`,
+    cancel_url: `${origin}/sell/dashboard?ai=cancelled`,
   };
   return kind === "credits"
     ? { ok: true, params: { ...base, mode: "payment" } }

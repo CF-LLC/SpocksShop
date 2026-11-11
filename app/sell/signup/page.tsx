@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSellerSession } from "@/lib/auth/seller-session";
 import { FormError } from "@/components/shop/form-error";
 import { COMMUNITY_MARKET_NAME } from "@/lib/shop/sections";
 
 export default async function SellerSignupPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
+  if (await getSellerSession()) redirect("/sell/dashboard");
   return (
     <section className="space-y-5">
       <h1 className="text-2xl font-semibold">Sell in {COMMUNITY_MARKET_NAME}</h1>
