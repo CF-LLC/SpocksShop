@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSellerSession } from "@/lib/auth/seller-session";
 import { FormError } from "@/components/shop/form-error";
 
 export default async function SellerLoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
+  if (await getSellerSession()) redirect("/sell/dashboard");
   return (
     <section className="space-y-5">
       <h1 className="text-2xl font-semibold">Seller sign in</h1>

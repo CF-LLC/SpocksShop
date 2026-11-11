@@ -44,3 +44,12 @@ describe("hasAdminSession (server-side cookie check)", () => {
     expect(await hasAdminSession()).toBe(false);
   });
 });
+
+describe("mainNav seller link", () => {
+  it("adds Sell only when community sellers are enabled", () => {
+    expect(mainNav(false).some((l) => l.href === "/sell")).toBe(false);
+    expect(mainNav(false, true).some((l) => l.href === "/sell" && l.label === "Sell")).toBe(true);
+    const admin = mainNav(true, true);
+    expect(admin.findIndex((l) => l.href === "/sell")).toBeLessThan(admin.findIndex((l) => l.href === "/admin"));
+  });
+});

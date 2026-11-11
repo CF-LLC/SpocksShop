@@ -16,8 +16,9 @@ The Amazon Associates disclosure ("As an Amazon Associate I earn from qualifying
 
 When on:
 
-- `/sell/signup` creates a `users` row (role `seller`) and a `sellers` row with status `pending`.
+- `/sell` is the public landing page (redirects signed-in sellers to the dashboard). `/sell/signup` creates a `users` row (role `seller`) and a `sellers` row with status `pending`.
 - `/sell/login`, `/sell/dashboard`. Seller sessions use their own cookie and JWT audience, so they can never open `/admin`.
-- Active sellers submit listings with 1–8 photos (JPEG/PNG/WebP, 5 MB each). Listings are created as `pending` and wait for admin review.
+- A seller can submit listings only when the account is admin-approved, Stripe payouts are ready, and a return address is saved. Listings need a weight (lb) so checkout can quote shipping, plus 1–8 photos (JPEG/PNG/WebP, 5 MB each). Listings are created as `pending` and wait for admin review. Approved listings copy that weight onto the published product.
+- If Stripe Connect platform activation is incomplete, the dashboard explains that payouts aren't open yet and does not send the seller into a failing Stripe onboarding click.
 
 Photos are written to `MEDIA_DIR` (default `/var/spocks/media`, the `spocks_media` volume).

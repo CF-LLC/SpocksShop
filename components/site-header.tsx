@@ -17,7 +17,7 @@ export function Brand() {
   );
 }
 
-export function SiteHeader({ isAdmin = false }: { isAdmin?: boolean }) {
+export function SiteHeader({ isAdmin = false, sellersEnabled = false }: { isAdmin?: boolean; sellersEnabled?: boolean }) {
   const pathname = usePathname();
   const cart = useCart();
   return (
@@ -25,7 +25,7 @@ export function SiteHeader({ isAdmin = false }: { isAdmin?: boolean }) {
       <div className="container-x flex h-16 items-center justify-between gap-4">
         <Brand />
         <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
-          {mainNav(isAdmin).map((l) => (
+          {mainNav(isAdmin, sellersEnabled).map((l) => (
             <Link
               key={l.href}
               href={l.href}

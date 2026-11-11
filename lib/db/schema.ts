@@ -303,6 +303,7 @@ export const communityListings = pgTable(
   description: text("description").notNull().default(""),
   condition: text("condition"),
   priceCents: integer("price_cents").notNull(),
+  weightLb: numeric("weight_lb", { precision: 8, scale: 2 }),
   status: text("status", { enum: ["draft", "pending", "approved", "rejected"] }).notNull().default("draft"),
   moderationNote: text("moderation_note"),
   reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),

@@ -24,6 +24,9 @@ export function isActive(pathname: string, href: string) {
 export const ADMIN_NAV = { href: "/admin", label: "Admin" } as const;
 
 /** Main menu links; "Admin" is appended only when the server verified an admin session. */
-export function mainNav(isAdmin: boolean): readonly { href: string; label: string }[] {
-  return isAdmin ? [...PRIMARY_NAV, ADMIN_NAV] : PRIMARY_NAV;
+export function mainNav(isAdmin: boolean, sellersEnabled = false): readonly { href: string; label: string }[] {
+  const links: { href: string; label: string }[] = [...PRIMARY_NAV];
+  if (sellersEnabled) links.push({ href: "/sell", label: "Sell" });
+  if (isAdmin) links.push(ADMIN_NAV);
+  return links;
 }

@@ -6,7 +6,8 @@ import { dollarsToCents } from "@/lib/commerce/money";
 import { MAX_PHOTOS, MediaError, deleteMedia, photoFiles, savePhoto, validatePhoto } from "@/lib/media";
 import { notFoundResponse, redirectTo, sellersDisabled } from "@/lib/sell/http";
 import { listingSchema } from "@/lib/sell/validation";
-import { sellerCanSell } from "@/lib/marketplace/core";
+import { sellerCanList, listingWeightLb } from "@/lib/sell/setup";
+import { getShipFrom } from "@/lib/shipping/ship-from";
 
 export async function POST(request: Request) {
   if (sellersDisabled()) return notFoundResponse();
@@ -17,7 +18,10 @@ export async function POST(request: Request) {
   if (!seller || seller.status !== "active") {
     return redirectTo(request, "/sell/dashboard", "Your seller account must be approved before you can submit listings.");
   }
-  if (!sellerCanSell(seller)) return redirectTo(request, "/sell/dashboard", "Finish setting up payouts with Stripe before you list.");
+  const shipFrom = await getShipFrom(db, { sellerId: seller.id });
+  if (!sellerCanList(seller, Boolean(shipFrom))) {
+    return redirectTo(request, "/sell/dashboard", seller.transfersActive ? "Save your return address before you list." : "Finish setting up payouts with Stripe before you list.");
+  }
 
   const form = await request.formData();
   const parsed = listingSchema.safeParse({
@@ -25,8 +29,9 @@ export async function POST(request: Request) {
     description: form.get("description") ?? "",
     condition: form.get("condition") || undefined,
     price: form.get("price"),
+    weight: form.get("weight"),
   });
-  if (!parsed.success) return redirectTo(request, "/sell/dashboard", "Add a title (3+ characters) and a price.");
+  if (!parsed.success) return redirectTo(request, "/sell/dashboard", "Add a title (3+ characters), a price, and the item weight in pounds.");
 
   const files = photoFiles(form);
   if (files.length === 0) return redirectTo(request, "/sell/dashboard", "Add at least one photo.");
@@ -49,6 +54,7 @@ export async function POST(request: Request) {
           description: parsed.data.description,
           condition: parsed.data.condition ?? null,
           priceCents: dollarsToCents(parsed.data.price),
+          weightLb: listingWeightLb(parsed.data.weight),
           status: "pending",
         })
         .returning();

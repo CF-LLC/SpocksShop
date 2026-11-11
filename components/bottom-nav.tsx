@@ -40,7 +40,7 @@ export function BottomNav({ sellersEnabled, isAdmin = false }: { sellersEnabled:
               <button type="button" className="icon-btn" onClick={() => setMenu(false)} aria-label="Close menu"><CloseIcon className="h-6 w-6" /></button>
             </div>
             <ul className="grid gap-1" onClick={() => setMenu(false)}>
-              {mainNav(isAdmin).map((l) => (
+              {mainNav(isAdmin, sellersEnabled).map((l) => (
                 <li key={l.href}><Link href={l.href} className="flex min-h-[48px] items-center rounded-xl px-3 text-lg font-semibold hover:bg-[var(--space-3)]">{l.label}</Link></li>
               ))}
             </ul>
@@ -49,7 +49,6 @@ export function BottomNav({ sellersEnabled, isAdmin = false }: { sellersEnabled:
               {SHOP_TABS.filter((t) => t.key !== "all").map((t) => (
                 <li key={t.key}><Link href={t.href} className="muted flex min-h-[48px] items-center rounded-xl px-3 font-semibold hover:bg-[var(--space-3)]">{t.label}</Link></li>
               ))}
-              {sellersEnabled ? <li><Link href="/sell/signup" className="muted flex min-h-[48px] items-center rounded-xl px-3 font-semibold hover:bg-[var(--space-3)]">Sell in Closet Picks</Link></li> : null}
             </ul>
           </div>
         </>
