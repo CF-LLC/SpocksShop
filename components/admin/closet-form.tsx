@@ -1,4 +1,5 @@
 import { productConditions } from "@/lib/types";
+import { DEFAULT_CLOSET_WEIGHT_LB } from "@/lib/commerce/closet-weight";
 
 type Values = {
   title?: string; sku?: string; slug?: string; description?: string; categoryId?: string | null; brand?: string | null;
@@ -62,7 +63,7 @@ export function ClosetForm({ action, values = {}, categories, submitLabel, isNew
           <label className={`${label} sm:col-span-2`}>Condition notes<input name="conditionNotes" defaultValue={values.conditionNotes ?? ""} className={input} /></label>
           <label className={label}>Original price ($)<input name="originalPrice" type="number" inputMode="decimal" step="0.01" min="0" defaultValue={values.originalPrice ?? ""} className={input} /></label>
           <label className={label}>Purchase cost ($, admin only)<input name="purchaseCost" type="number" inputMode="decimal" step="0.01" min="0" defaultValue={values.purchaseCost ?? ""} className={input} /></label>
-          <label className={label}>Weight (lb, for shipping)<input name="weightLb" type="number" inputMode="decimal" step="0.01" min="0" defaultValue={values.weightLb ?? ""} className={input} /></label>
+          <label className={label}>Weight (lb, for shipping)<input name="weightLb" type="number" inputMode="decimal" step="0.01" min="0" defaultValue={values.weightLb ?? String(DEFAULT_CLOSET_WEIGHT_LB)} className={input} /></label>
           <label className={label}>SKU{isNew ? " (blank = auto)" : ""}<input name="sku" required={!isNew} defaultValue={values.sku} className={`${input} font-mono`} /></label>
           <label className={label}>URL slug (optional)<input name="slug" defaultValue={values.slug} placeholder="from title" className={input} /></label>
           <label className="flex min-h-[44px] items-center gap-3 text-sm"><input type="checkbox" name="featured" className="h-5 w-5" defaultChecked={values.featured} /> Featured</label>
