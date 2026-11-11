@@ -13,6 +13,8 @@ import { canPreviewTomorrow, getDailyPickView } from "@/lib/shop/daily-pick";
 import { alternate, applyClosetQuery, closetHref, facets, FEATURE_EVERY, interleave, PAGE_SIZE, parseClosetQuery, SORTS, type ClosetQuery } from "@/lib/shop/closet-filters";
 import { amazonFeatures, dropFeatures, type Feature } from "@/lib/shop/features";
 import type { Product } from "@/lib/types";
+import { ClosetShippingNote } from "@/components/shop/closet-shipping-note";
+import { listActiveShippingRates } from "@/lib/commerce/shipping-rates";
 
 export const metadata: Metadata = {
   title: "Shop Closet Picks",
@@ -42,7 +44,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Params 
   }
 
   const query = parseClosetQuery(params);
-  const [closetAll, community, amazon] = await Promise.all([getClosetProducts(), approvedCommunityListings(), amazonFeatures()]);
+  const [closetAll, community, amazon, rates] = await Promise.all([getClosetProducts(), approvedCommunityListings(), amazonFeatures(), listActiveShippingRates()]);
   const all: Entry[] = [
     ...closetAll.map((p): Entry => ({ type: "product", product: p, key: p.id, title: p.title, description: p.description, brand: p.brand, priceCents: p.priceCents, listedAt: p.listedAt })),
     ...community.map((l): Entry => ({ type: "listing", listing: l, key: `l-${l.id}`, title: l.title, description: l.description, brand: l.sellerName, priceCents: l.priceCents, listedAt: "" })),
@@ -61,6 +63,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Params 
         <p className="t-eyebrow mb-2">Shop</p>
         <h1 className="t-h1">{s.title}</h1>
         <p className="muted mt-2 max-w-2xl">{s.blurb}</p>
+        <ClosetShippingNote rates={rates} />
       </header>
 
       {all.length > 0 ? <Filters query={query} f={f} total={matches.length} filtered={filtered} /> : null}

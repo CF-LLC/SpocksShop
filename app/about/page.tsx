@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LcarsBar } from "@/components/ui/lcars";
 import { AMAZON_ASSOCIATES_DISCLOSURE, SHOP_SECTIONS } from "@/lib/shop/sections";
+import { closetShippingCopy } from "@/lib/commerce/shipping-copy";
+import { listActiveShippingRates } from "@/lib/commerce/shipping-rates";
 
 export const metadata: Metadata = { title: "About", description: "What Spock's Resale Shop is and how buying works." };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const shipping = closetShippingCopy(await listActiveShippingRates());
   return (
     <div className="mx-auto max-w-3xl space-y-10">
       <header>
@@ -30,7 +33,7 @@ export default function AboutPage() {
       <section className="panel p-6">
         <h2 className="t-h2">Buying from Closet Picks</h2>
         <ul className="muted mt-3 grid list-disc gap-2 pl-5">
-          <li>US shipping priced by weight, shipped from Bentonville, AR.</li>
+          <li>{shipping.ratesPhrase ? shipping.text : "US shipping is one weight-based fee per order, shipped from Bentonville, AR. Bundle a few Closet Picks in the same order and you pay that postage once."}</li>
           <li>Payments are processed by Stripe. We never see your card number.</li>
           <li>Items are held for you for 30 minutes while you pay.</li>
           <li>Sales tax isn&apos;t collected online yet.</li>
