@@ -12,11 +12,13 @@ import { SHOP_SECTIONS } from "@/lib/shop/sections";
 import { approvedCommunityListings } from "@/lib/shop/queries";
 import { plural } from "@/lib/utils";
 import { DesignOfTheDay } from "@/components/shop/design-of-the-day";
+import { ClosetShippingNote } from "@/components/shop/closet-shipping-note";
 import { DropSignup } from "@/components/drop/signup-form";
 import { designOfTheDay, dropEnabled } from "@/lib/drop/config";
+import { listActiveShippingRates } from "@/lib/commerce/shipping-rates";
 
 export default async function HomePage() {
-  const [closet, community, preview] = await Promise.all([getClosetProducts(), approvedCommunityListings(), canPreviewTomorrow()]);
+  const [closet, community, preview, rates] = await Promise.all([getClosetProducts(), approvedCommunityListings(), canPreviewTomorrow(), listActiveShippingRates()]);
   const daily = await getDailyPickView({ includeTomorrow: preview, historyDays: 0 });
   // Seller-listed items (if any are approved) are part of Closet Picks.
   const dotd = dropEnabled() ? designOfTheDay() : null;
@@ -50,7 +52,8 @@ export default async function HomePage() {
 
       <section aria-labelledby="closet-title">
         <SectionHeader id="closet-title" eyebrow="Closet Picks" title="Latest finds" action={closet.length ? <Link href="/shop?tab=closet" className="btn btn-outline">View all</Link> : null}>
-          Every item is one of a kind. When it&apos;s gone, it&apos;s gone.
+          <p>Every item is one of a kind. When it&apos;s gone, it&apos;s gone.</p>
+          <ClosetShippingNote rates={rates} />
         </SectionHeader>
         {closet.length ? (
           <ul className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
