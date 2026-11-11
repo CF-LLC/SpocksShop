@@ -9,6 +9,7 @@ import { FetchError, isBlocked, isUserFacing, MAX_PAGE_BYTES, POLITE_DELAY_MS, h
 import { DepopParseError, type DepopListing } from "@/lib/depop/parse";
 import { parseLinkList } from "@/lib/depop/url";
 import { DEPOP, VINTED, type SourceAdapter, type SourceId } from "./source";
+import { closetWeightLb } from "@/lib/commerce/closet-weight";
 
 export type LinkResult =
   | { input: string; status: "imported"; id: string; title: string; photos: number; note?: string }
@@ -266,6 +267,7 @@ export function dbStore(db: typeof Db, source: SourceId = "depop"): ImportStore 
           requiresApproval: true,
           uniqueFind: true,
           source: "closet",
+          weightLb: closetWeightLb(null),
           tags: listing.size ? [`size:${listing.size}`] : [],
         });
         await tx.insert(inventory).values({ productId: id, quantityOnHand: 1 });

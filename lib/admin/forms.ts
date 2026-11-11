@@ -4,6 +4,7 @@ import { AFFILIATE_CATEGORY_SLUGS } from "@/lib/affiliate/categories";
 import { dollarsToCents } from "@/lib/commerce/money";
 import { productConditions } from "@/lib/types";
 import { AdminInputError } from "@/lib/admin/http";
+import { closetWeightLb } from "@/lib/commerce/closet-weight";
 
 export function slugify(value: string): string {
   return value
@@ -67,7 +68,7 @@ export function parseClosetForm(form: FormData) {
       priceCents: dollarsToCents(d.price),
       originalPriceCents: d.originalPrice != null ? dollarsToCents(d.originalPrice) : null,
       purchaseCostCents: d.purchaseCost != null ? dollarsToCents(d.purchaseCost) : null,
-      weightLb: d.weightLb != null ? String(d.weightLb) : null,
+      weightLb: closetWeightLb(d.weightLb),
       status: d.status,
       featured: d.featured,
       // Closet Picks default to needing approval; only a form that shows the checkbox can turn it off.
