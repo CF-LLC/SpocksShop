@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import { z } from "zod";
 import { AFFILIATE_CATEGORY_SLUGS } from "@/lib/affiliate/categories";
+import { withAffiliateTag } from "@/lib/commerce/affiliate";
 import { dollarsToCents } from "@/lib/commerce/money";
 import { productConditions } from "@/lib/types";
 import { AdminInputError } from "@/lib/admin/http";
@@ -83,15 +84,53 @@ export function parseClosetForm(form: FormData) {
 export const affiliateItemSchema = z
   .object({
     title: z.string().trim().min(2).max(200),
-    imageUrl: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().max(2000).optional()),
-    amazonUrl: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().max(2000).optional()),
+    imageUrl: z.preprocess((v) => (typeof v === "string" ? v.trim() || undefined : v), z.string().url().max(2000).optional()),
+    amazonUrl: z.preprocess((v) => (typeof v === "string" ? v.trim() || undefined : v), z.string().url().max(2000).optional()),
     asin: z.preprocess((v) => (v === "" ? undefined : typeof v === "string" ? v.trim().toUpperCase() : v), z.string().regex(/^[A-Z0-9]{10}$/, "ASIN must be 10 letters/digits").optional()),
     priceNote: optionalText,
+    /** Short curator line shown on the public pick card. */
+    blurb: z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), z.string().trim().max(300).optional()),
+    /** Curator "why it's today's pick" line. Empty clears it; Daily Pick then uses its generated fallback. */
+    why: z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), z.string().trim().max(500).optional()),
+    /** Full Amazon title when `title` is a shortened display title. */
+    fullTitle: z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), z.string().trim().max(500).optional()),
     category: z.preprocess((v) => (v === "" || v == null ? null : v), z.enum(AFFILIATE_CATEGORY_SLUGS).nullable()).default(null),
     active: z.preprocess((v) => v === "on" || v === "true", z.boolean()),
     sortOrder: z.coerce.number().int().min(-10000).max(10000).default(0),
   })
   .refine((d) => d.amazonUrl || d.asin, { message: "Add an Amazon URL or an ASIN", path: ["amazonUrl"] });
+
+export type AffiliateItemInput = z.infer<typeof affiliateItemSchema>;
+
+/** Amazon URLs are stored with tag=mrspock-20. Non-Amazon URLs are left as entered. */
+function storedAmazonUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    return withAffiliateTag(url);
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Columns written on create/update. Empty optional fields become null so a blank
+ * input clears them. Every curator column is present, so a save cannot drop blurb/why/fullTitle.
+ */
+export function affiliateItemWrite(data: AffiliateItemInput) {
+  return {
+    title: data.title,
+    imageUrl: data.imageUrl ?? null,
+    amazonUrl: storedAmazonUrl(data.amazonUrl),
+    asin: data.asin ?? null,
+    priceNote: data.priceNote ?? null,
+    blurb: data.blurb ?? null,
+    why: data.why ?? null,
+    fullTitle: data.fullTitle ?? null,
+    category: data.category,
+    active: data.active,
+    sortOrder: data.sortOrder,
+  };
+}
 
 /** Move item at `index` up or down; returns the new order (array of ids). */
 export function reorder<T>(items: T[], index: number, direction: "up" | "down"): T[] {

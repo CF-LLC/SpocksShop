@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { normalizeAffiliateCategory } from "./categories";
-import { AMAZON_ASSOCIATE_TAG, buildAffiliateUrlFromAsin, isValidAsin, withAffiliateTag } from "../commerce/affiliate";
+import { AMAZON_ASSOCIATE_TAG, asinFromUrl, buildAffiliateUrlFromAsin, isValidAsin, withAffiliateTag } from "../commerce/affiliate";
+
+export { asinFromUrl };
 
 /**
  * Bulk import of Amazon picks into affiliate_items.
@@ -67,13 +69,6 @@ export function formatPrice(price: AffiliatePick["price"]): string | null {
 export function priceNoteFor(price: AffiliatePick["price"]): string {
   const p = formatPrice(price);
   return p ? `About ${p}, price may vary on Amazon` : "Price may vary on Amazon";
-}
-
-const ASIN_IN_URL = /\/(?:dp|gp\/product|gp\/aw\/d)\/([A-Z0-9]{10})(?:[/?]|$)/i;
-
-export function asinFromUrl(url: string): string | null {
-  const m = ASIN_IN_URL.exec(url);
-  return m ? m[1].toUpperCase() : null;
 }
 
 /**

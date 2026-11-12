@@ -61,3 +61,28 @@ export function resolveWhy(...lines: (string | null | undefined)[]): string | nu
   for (const l of lines) if (typeof l === "string" && l.trim()) return l.trim();
   return null;
 }
+
+export type StoredDay = { pickDate: string; itemId: string | null; cycle: number; active: boolean };
+export type RotationChoice = { itemId: string; cycle: number; locked: boolean };
+
+/**
+ * What today and tomorrow would show, without writing. Tomorrow's unlocked
+ * choice includes today's pick, matching ensure-today-then-tomorrow.
+ */
+export function previewRotation(today: string, tomorrow: string, pool: string[], rows: readonly StoredDay[]): { today: RotationChoice | null; tomorrow: RotationChoice | null } {
+  const ordered = [...rows].sort((a, b) => (a.pickDate < b.pickDate ? -1 : a.pickDate > b.pickDate ? 1 : 0));
+  const before = (date: string) => ordered.filter((row) => row.pickDate < date).map((row) => ({ itemId: row.itemId, cycle: row.cycle }));
+  const locked = (date: string): RotationChoice | null => {
+    const row = ordered.find((r) => r.pickDate === date && r.itemId && r.active);
+    return row?.itemId ? { itemId: row.itemId, cycle: row.cycle, locked: true } : null;
+  };
+  const todayLocked = locked(today);
+  const pickedToday = todayLocked ?? chooseNextPick(today, pool, before(today));
+  const todayChoice = pickedToday ? { itemId: pickedToday.itemId, cycle: pickedToday.cycle, locked: Boolean(todayLocked) } : null;
+  const tomorrowLocked = locked(tomorrow);
+  if (tomorrowLocked) return { today: todayChoice, tomorrow: tomorrowLocked };
+  const history = [...before(today)];
+  if (todayChoice) history.push({ itemId: todayChoice.itemId, cycle: todayChoice.cycle });
+  const pickedTomorrow = chooseNextPick(tomorrow, pool, history);
+  return { today: todayChoice, tomorrow: pickedTomorrow ? { ...pickedTomorrow, locked: false } : null };
+}

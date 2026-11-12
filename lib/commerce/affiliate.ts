@@ -15,6 +15,14 @@ export function isValidAsin(asin: string): boolean {
   return ASIN_RE.test(asin.trim().toUpperCase());
 }
 
+const ASIN_IN_URL = /\/(?:dp|gp\/product|gp\/aw\/d)\/([A-Z0-9]{10})(?:[/?]|$)/i;
+
+/** ASIN embedded in an Amazon product URL, if the path has one. */
+export function asinFromUrl(url: string): string | null {
+  const m = ASIN_IN_URL.exec(url);
+  return m ? m[1].toUpperCase() : null;
+}
+
 /** Build a canonical product link for an ASIN, always tagged. */
 export function buildAffiliateUrlFromAsin(asin: string): string {
   const clean = asin.trim().toUpperCase();
