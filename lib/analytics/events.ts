@@ -24,6 +24,24 @@ export function cleanRef(v: unknown): string | null {
   return /^[\w-]+$/.test(r) ? r : null;
 }
 
+const ASIN_IN_AMAZON_PATH = /\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i;
+
+/**
+ * Ref stored for an outbound Amazon click. Prefer the pick's own ASIN (short links
+ * have none in the path); otherwise the ASIN in the URL; otherwise "link".
+ */
+export function amazonClickRef(href: string, hintedAsin?: string | null): string {
+  const hinted = hintedAsin?.trim().toUpperCase();
+  if (hinted && /^[A-Z0-9]{10}$/.test(hinted)) return hinted;
+  try {
+    const asin = new URL(href).pathname.match(ASIN_IN_AMAZON_PATH)?.[1];
+    if (asin) return asin.toUpperCase();
+  } catch {
+    // Not a URL; the beacon still counts it as an unscoped link.
+  }
+  return "link";
+}
+
 const TERM_KEYS = ["q", "query", "p", "text", "wd", "search", "k"];
 
 /**

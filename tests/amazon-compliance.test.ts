@@ -13,7 +13,18 @@ describe("Amazon Associates compliance", () => {
     expect(JSON.stringify(pub)).not.toMatch(/price|rating|12\.24/i);
   });
   it("affiliate card and public pages don't render prices or ratings", () => {
-    for (const f of ["components/shop/affiliate-card.tsx", "app/guides/[slug]/page.tsx", "app/guides/page.tsx"]) {
+    for (const f of [
+      "components/shop/affiliate-card.tsx",
+      "components/shop/daily-pick.tsx",
+      "components/shop/pairs-well.tsx",
+      "components/shop/feature-card.tsx",
+      "components/admin/affiliate-preview.tsx",
+      "components/admin/affiliate-import-preview.tsx",
+      "app/shop/page.tsx",
+      "app/picks/page.tsx",
+      "app/guides/[slug]/page.tsx",
+      "app/guides/page.tsx",
+    ]) {
       expect(src(f)).not.toMatch(/priceNote|price_note|rating|AggregateRating|"Offer"/);
     }
   });

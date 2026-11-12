@@ -1,4 +1,4 @@
-import { affiliateUrlFor } from "@/lib/commerce/affiliate";
+import { affiliateUrlFor, isValidAsin } from "@/lib/commerce/affiliate";
 import { AFFILIATE_LINK_REL, AFFILIATE_LINK_TARGET } from "@/lib/shop/sections";
 
 /** The only way to render an Amazon link: always tagged, sponsored, new tab. */
@@ -17,8 +17,9 @@ export function AffiliateLink({
   } catch {
     return null;
   }
+  const asin = item.asin && isValidAsin(item.asin) ? item.asin.trim().toUpperCase() : undefined;
   return (
-    <a href={href} rel={AFFILIATE_LINK_REL} target={AFFILIATE_LINK_TARGET} className={className}>
+    <a href={href} rel={AFFILIATE_LINK_REL} target={AFFILIATE_LINK_TARGET} className={className} data-asin={asin}>
       {children}
     </a>
   );

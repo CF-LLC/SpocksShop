@@ -1,7 +1,7 @@
-import { and, asc, desc, eq, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, lte, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { affiliateItems, dailyAmazonPicks } from "@/lib/db/schema";
-import { chicagoDate, chooseNextPick, fallbackWhy, resolveWhy } from "@/lib/shop/daily-pick-core";
+import { chicagoDate, chooseNextPick, fallbackWhy, previewRotation, resolveWhy } from "@/lib/shop/daily-pick-core";
 import { toPublicPick, type PublicPick } from "@/lib/shop/public-pick";
 
 export type DailyPick = { date: string; pick: PublicPick; why: string };
@@ -84,6 +84,55 @@ export async function getDailyPickView({ includeTomorrow = false, historyDays = 
   } catch (err) {
     console.error("daily pick failed", err);
     return { today: null, tomorrow: null, history: [], poolSize: 0 };
+  }
+}
+
+export type PeekedPick = DailyPick & { locked: boolean };
+
+/**
+ * Today and tomorrow for the affiliate admin. Reads the cycle only: it does not
+ * insert or replace a day, so opening this page cannot lock the rotation early.
+ */
+export async function peekDailyWindow(now = new Date()): Promise<{ today: PeekedPick | null; tomorrow: PeekedPick | null }> {
+  const empty = { today: null, tomorrow: null };
+  try {
+    const today = chicagoDate(now);
+    const tomorrow = chicagoDate(now, 1);
+    const pool = await poolIds(db);
+    const stored = await db
+      .select({
+        pickDate: dailyAmazonPicks.pickDate,
+        itemId: dailyAmazonPicks.affiliateItemId,
+        cycle: dailyAmazonPicks.cycle,
+        why: dailyAmazonPicks.why,
+        active: affiliateItems.active,
+      })
+      .from(dailyAmazonPicks)
+      .leftJoin(affiliateItems, eq(affiliateItems.id, dailyAmazonPicks.affiliateItemId))
+      .where(lte(dailyAmazonPicks.pickDate, tomorrow));
+    const plan = previewRotation(today, tomorrow, pool, stored.map((row) => ({
+      pickDate: row.pickDate, itemId: row.itemId, cycle: row.cycle, active: Boolean(row.active),
+    })));
+    const ids = [plan.today?.itemId, plan.tomorrow?.itemId].filter((id): id is string => Boolean(id));
+    if (!ids.length) return empty;
+    const items = await db.select().from(affiliateItems).where(inArray(affiliateItems.id, ids));
+    const byId = new Map(items.map((item) => [item.id, item]));
+    const rowWhy = new Map(stored.map((row) => [row.pickDate, row.why]));
+    const build = (choice: { itemId: string; cycle: number; locked: boolean } | null, date: string): PeekedPick | null => {
+      if (!choice) return null;
+      const item = byId.get(choice.itemId);
+      if (!item || !item.active) return null;
+      return {
+        date,
+        pick: toPublicPick(item),
+        why: resolveWhy(choice.locked ? rowWhy.get(date) : null, item.why) ?? fallbackWhy(item.title, item.category),
+        locked: choice.locked,
+      };
+    };
+    return { today: build(plan.today, today), tomorrow: build(plan.tomorrow, tomorrow) };
+  } catch (err) {
+    console.error("daily pick peek failed", err);
+    return empty;
   }
 }
 

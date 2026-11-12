@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { amazonClickRef } from "@/lib/analytics/events";
 
 type Name = "page_view" | "product_view" | "add_to_cart" | "checkout_start" | "amazon_click";
 
@@ -37,8 +38,7 @@ export function EventTracker() {
       let u: URL;
       try { u = new URL(a.href); } catch { return; }
       if (!/(^|\.)amazon\.[a-z.]+$|(^|\.)amzn\.to$/.test(u.hostname)) return;
-      const asin = u.pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i)?.[1];
-      track("amazon_click", asin ?? "link");
+      track("amazon_click", amazonClickRef(a.href, a.dataset.asin));
     };
     document.addEventListener("click", onClick, { capture: true });
     document.addEventListener("auxclick", onClick, { capture: true });
