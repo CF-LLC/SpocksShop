@@ -21,9 +21,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // Held/unknown designs: page 404s for the public; never indexable even for an admin preview.
   if (!d || isHeld(d.slug)) return { title: "Not found", robots: { index: false, follow: false } };
   const url = `https://spockshop.com/drop/${d.slug}`;
-  const description = `${d.title}: ${d.blurb} Original illustrated design on tees ($28), hoodies ($48), mugs, stickers and dad hats. Printed to order.`.slice(0, 200);
+  const mug = d.garments.includes("mug");
+  const description = `${d.title}: ${d.blurb} Original illustrated design on tees ($28), hoodies ($48), ${mug ? "mugs, stickers and dad hats" : "and dad hats"}. Printed to order.`.slice(0, 200);
   const image = `https://spockshop.com${heroImage(d)}`;
-  return { title: `${d.title} Tee, Hoodie & Mug`, description, alternates: { canonical: url }, openGraph: { title: d.title, description, url, images: [image] }, robots: { index: true, follow: true } };
+  return { title: `${d.title} Tee, Hoodie & ${mug ? "Mug" : "Hat"}`, description, alternates: { canonical: url }, openGraph: { title: d.title, description, url, images: [image] }, robots: { index: true, follow: true } };
 }
 
 export default async function DropProduct({ params }: { params: Promise<{ slug: string }> }) {
@@ -60,7 +61,7 @@ export default async function DropProduct({ params }: { params: Promise<{ slug: 
           <div className="dd-kicker">The Daily Drop</div>
           <h1 style={{ fontSize: "clamp(1.6rem,4.5vw,2.4rem)" }}>{d.title}</h1>
           <p className="dd-sub">{d.blurb}</p>
-          <p className="dd-note">Available on tees, hoodies, 11oz/15oz mugs, kiss-cut stickers and dad hats.</p>
+          <p className="dd-note">{d.garments.includes("mug") ? "Available on tees, hoodies, 11oz/15oz mugs, kiss-cut stickers and dad hats." : "Available on tees, hoodies and dad hats (white-ink art, printed on dark garments)."}</p>
         </ProductView>
         {!isAdmin ? <PairsWell pairing={DROP_PAIRINGS[d.slug] ?? null} /> : null}
         </>
