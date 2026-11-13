@@ -95,3 +95,11 @@ describe("v5 designs released (2026-11-12)", () => {
     for (const d of DESIGNS) expect(urls).toContain(`https://spockshop.com/drop/${d.slug}`);
   });
 });
+
+describe("product page copy follows garments", () => {
+  it("white-ink designs don't promise mugs or stickers", async () => {
+    const { readFileSync } = await import("fs");
+    const src = readFileSync("app/drop/[slug]/page.tsx", "utf8");
+    expect(src).toMatch(/d\.garments\.includes\("mug"\) \? "Available on tees, hoodies, 11oz\/15oz mugs/);
+  });
+});
