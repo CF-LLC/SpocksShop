@@ -29,7 +29,7 @@ export function DesignOfTheDay({ design }: { design: Design }) {
           <span aria-hidden className="h-1.5 w-12 rounded-full" style={{ background: "var(--gold)" }} />
           <span className="t-h3 mt-2">{design.title}</span>
           <span className="muted text-sm">{design.blurb}</span>
-          <span className="dim mt-3 text-sm font-semibold">Tees {usd(PRICES_CENTS.tee)}, mugs from {usd(PRICES_CENTS.mug)}, stickers from {usd(PRICES_CENTS.sticker)}, hats {usd(PRICES_CENTS.hat)} →</span>
+          <span className="dim mt-3 text-sm font-semibold">{design.garments.includes("mug") ? <>Tees {usd(PRICES_CENTS.tee)}, mugs from {usd(PRICES_CENTS.mug)}, stickers from {usd(PRICES_CENTS.sticker)}, hats {usd(PRICES_CENTS.hat)}</> : <>Tees {usd(PRICES_CENTS.tee)}, hoodies {usd(PRICES_CENTS.hoodie)}, hats {usd(PRICES_CENTS.hat)}</>} →</span>
         </span>
       </Link>
     </section>

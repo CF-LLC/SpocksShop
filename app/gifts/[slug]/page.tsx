@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function GiftLanding({ params }: { params: Promise<{ slug: string }> }) {
   const p = giftPage((await params).slug);
   if (!p) notFound();
-  const designs = designsFor(p.designs);
+  const designs = designsFor(p.designs, process.env, p.show);
   const others = GIFT_PAGES.filter((o) => o.slug !== p.slug);
   return (
     <>

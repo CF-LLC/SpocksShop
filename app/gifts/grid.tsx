@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PRICES_CENTS, type Design } from "@/lib/drop/config";
+import { PRICES_CENTS, type Design, type Garment } from "@/lib/drop/config";
 import { artUrl, mockupUrl, sizedImg, type MockupType } from "@/lib/drop/mockups";
 
 const usd = (c: number) => `$${(c / 100).toFixed(0)}`;
@@ -16,7 +16,7 @@ export function GiftGrid({ designs, show }: { designs: Design[]; show: MockupTyp
             <div className="dd-card-b">
               <h3>{d.title}</h3>
               <p className="dd-note" style={{ margin: "0 0 .3rem" }}>{d.blurb}</p>
-              <div className="dd-price">Tee {usd(PRICES_CENTS.tee)} · Hoodie {usd(PRICES_CENTS.hoodie)} · Mug from {usd(PRICES_CENTS.mug)} · Sticker from {usd(PRICES_CENTS.sticker)}</div>
+              <div className="dd-price">{[["tee", `Tee ${usd(PRICES_CENTS.tee)}`], ["hoodie", `Hoodie ${usd(PRICES_CENTS.hoodie)}`], ["mug", `Mug from ${usd(PRICES_CENTS.mug)}`], ["sticker", `Sticker from ${usd(PRICES_CENTS.sticker)}`]].filter(([g]) => d.garments.includes(g as Garment)).map(([, t]) => t).join(" · ")}</div>
             </div>
           </Link>
         );

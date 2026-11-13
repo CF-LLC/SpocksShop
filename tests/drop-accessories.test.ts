@@ -9,8 +9,9 @@ const env = { PRINTFUL_VARIANTS: JSON.stringify({ "tee:M": 4017 }) };
 const NEW: Garment[] = ["mug", "sticker", "hat"];
 
 describe("mugs, stickers, hats", () => {
-  it("every design offers them; held designs stay held", () => {
-    for (const d of DESIGNS) for (const g of NEW) expect(d.garments).toContain(g);
+  it("every design offers them (white-ink v5 designs: hats only); held designs stay held", () => {
+    const WHITE_INK = ["hot-mess-facts", "id-hit-that"];
+    for (const d of DESIGNS) for (const g of NEW) if (!WHITE_INK.includes(d.slug) || g === "hat") expect(d.garments).toContain(g);
     expect(publicDesigns({}).map((d) => d.slug)).toContain("nice-pickle");
     expect(isHeld("nice-melons", {})).toBe(false);
     expect(isHeld("nice-melons", { DROP_HELD_SLUGS: "nice-melons" })).toBe(true);

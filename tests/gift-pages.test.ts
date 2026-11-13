@@ -18,7 +18,8 @@ describe("gift landing pages", () => {
   it("references only real designs, never held ones, and always shows something", () => {
     for (const p of GIFT_PAGES) {
       if (p.designs !== "all") for (const s of p.designs) { expect(DESIGNS.some((d) => d.slug === s)).toBe(true); expect([...DEFAULT_HELD_SLUGS]).not.toContain(s); }
-      const ds = designsFor(p.designs, {});
+      const ds = designsFor(p.designs, {}, p.show);
+      for (const d of ds) expect(d.garments).toContain(p.show); // e.g. white-ink v5 designs never on a mug page
       expect(ds.length).toBeGreaterThan(0);
       for (const d of ds) expect([...DEFAULT_HELD_SLUGS]).not.toContain(d.slug);
     }
@@ -43,8 +44,7 @@ describe("sized images", () => {
     const r = sizedImg("/drop/art/v4-10-day-drinking-tee.jpg");
     expect(r.src).toBe("/drop/art/v4-10-day-drinking-tee-480.webp");
     expect(r.srcSet).toContain("-800.webp 800w");
-    for (const n of [...SIZED_NAMES].filter((x) => !x.startsWith("v5-"))) { // v5 held: no sized variants until released
-      expect(existsSync(`drop-art/sized/${n}`), n).toBe(true);
-    }
+    for (const n of SIZED_NAMES) expect(existsSync(`drop-art/sized/${n}`), n).toBe(true); // every design, v5 included
+    expect(sizedImg("/drop/art/v5-01-hot-mess-facts-tee.jpg").src).toBe("/drop/art/v5-01-hot-mess-facts-tee-480.webp");
   });
 });
