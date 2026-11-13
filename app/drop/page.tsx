@@ -31,7 +31,7 @@ export default async function DropHome() {
           {shown.map((d, i) => (
             <Link key={d.slug} href={`/drop/${d.slug}`} className="dd-card">
               <div className={`dd-shirt${mockupUrl(d, "tee") ? " dd-mock" : ""}`}><img {...sizedImg(heroImage(d), "(max-width: 520px) 92vw, (max-width: 1100px) 45vw, 260px")} alt={`${d.title} on a tee`} loading={i < 4 ? "eager" : "lazy"} {...(i === 0 ? { fetchPriority: "high" as const } : {})} decoding="async" width={480} height={480} />{mockupUrl(d, "tee") ? <img className="dd-mini" src={sizedImg(artUrl(d)).src} alt="" loading="lazy" decoding="async" /> : null}</div>
-              <div className="dd-card-b"><h3>{isHeld(d.slug) ? <span data-held>HELD · </span> : null}{d.title}</h3><div className="dd-price">from {usd(PRICES_CENTS.sticker)} · tees, mugs, hats &amp; more</div></div>
+              <div className="dd-card-b"><h3>{isHeld(d.slug) ? <span data-held>HELD · </span> : null}{d.title}</h3><div className="dd-price">from {usd(Math.min(...d.garments.map((g) => PRICES_CENTS[g])))} · {d.garments.includes("mug") ? <>tees, mugs, hats &amp; more</> : <>tees, hoodies &amp; hats</>}</div></div>
             </Link>
           ))}
         </div>

@@ -1,5 +1,5 @@
 import type { MockupType } from "@/lib/drop/mockups";
-import { publicDesigns, type Design } from "@/lib/drop/config";
+import { publicDesigns, type Design, type Garment } from "@/lib/drop/config";
 
 /**
  * SEO gift landing pages (/gifts/<slug>). Copy is hand-written per page; designs are referenced by slug and
@@ -121,8 +121,8 @@ export const GIFT_PAGES: GiftPage[] = [
 
 export const giftPage = (slug: string) => GIFT_PAGES.find((p) => p.slug === slug) ?? null;
 
-/** Public designs only (held ones filtered out at call time), in the page's order. */
-export function designsFor(slugs: string[] | "all", env: Record<string, string | undefined> = process.env): Design[] {
-  const pub = publicDesigns(env);
+/** Public designs only (held ones filtered out at call time), in the page's order; with `garment`, only designs sold on it. */
+export function designsFor(slugs: string[] | "all", env: Record<string, string | undefined> = process.env, garment?: Garment): Design[] {
+  const pub = publicDesigns(env).filter((d) => !garment || d.garments.includes(garment));
   return slugs === "all" ? pub : slugs.map((s) => pub.find((d) => d.slug === s)).filter((d): d is Design => d !== undefined);
 }
