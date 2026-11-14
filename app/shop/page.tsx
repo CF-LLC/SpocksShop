@@ -15,6 +15,8 @@ import { amazonFeatures, dropFeatures, type Feature } from "@/lib/shop/features"
 import type { Product } from "@/lib/types";
 import { ClosetShippingNote } from "@/components/shop/closet-shipping-note";
 import { listActiveShippingRates } from "@/lib/commerce/shipping-rates";
+import { DropSignup } from "@/components/drop/signup-form";
+import { dropEnabled } from "@/lib/drop/config";
 
 export const metadata: Metadata = {
   title: "Shop Closet Picks",
@@ -94,6 +96,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Params 
           ) : null}
         </section>
       )}
+      {dropEnabled() ? <DropSignup source="closet" /> : null}
     </div>
   );
 }

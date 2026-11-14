@@ -50,6 +50,7 @@ export function DropSignup({ source, compact = false }: { source: string; compac
           </div>
           <label className="dd-consent"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} required /> <span>{CONSENT_TEXT}</span></label>
           {err && <p className="dd-signup-err" role="alert">{err}</p>}
+          <p className="dd-signup-note" data-unsub-link>Already signed up and want out? <Link href="/drop/unsubscribe">Unsubscribe</Link>.</p>
         </form>
       )}
     </section>
