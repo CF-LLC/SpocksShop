@@ -14,6 +14,7 @@ describe("closet product SEO", () => {
     expect(s.description).toContain("$12, one of a kind");
     expect(s.description).toContain("Ceramic.");
     expect(s.description.length).toBeLessThanOrEqual(160);
+    expect(productSeo({ ...base, description: "Size: XL / US 16-18" }).description).toContain("Size: XL / US 16-18. Closet Picks")
     expect(productSeo({ ...base, available: 0 } as never).description).toContain("Sold");
   });
 });
