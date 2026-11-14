@@ -23,7 +23,8 @@ export function productSeo(p: Pick<Product, "title" | "description" | "brand" | 
   const brand = p.brand && !name.toLowerCase().includes(p.brand.toLowerCase()) ? p.brand : "";
   const title = `${name}${brand ? ` by ${brand}` : ""}${p.condition ? ` (${p.condition})` : ""}`.slice(0, 70);
   const firstLine = p.description.split(/\n+/).map((s) => s.trim()).find(Boolean) ?? "";
+  const lead = firstLine && !/[.!?]$/.test(firstLine) ? `${firstLine}.` : firstLine;
   const facts = [p.condition, p.categoryName, sold ? "Sold" : `${money(p.priceCents)}, one of a kind`].filter(Boolean).join(" · ");
-  const description = `${name}${brand ? ` by ${brand}` : ""}. ${facts}.${firstLine ? ` ${firstLine}` : ""} Closet Picks at Spock's Resale Shop.`.replace(/\s+/g, " ").slice(0, 160);
+  const description = `${name}${brand ? ` by ${brand}` : ""}. ${facts}.${lead ? ` ${lead}` : ""} Closet Picks at Spock's Resale Shop.`.replace(/\s+/g, " ").slice(0, 160);
   return { name, title, description };
 }
