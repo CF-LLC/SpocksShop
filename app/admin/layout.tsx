@@ -19,6 +19,7 @@ const links = [
   ["/admin/inventory", "Inventory"],
   ["/admin/orders", "Orders"],
   ["/admin/signups", "Drop Signups"],
+  ["/admin/newsletter", "Newsletter"],
   ["/admin/settings", "Settings"],
   ["/admin/blog", "Blog"],
   ["/admin/payments", "Payment Settings"],
