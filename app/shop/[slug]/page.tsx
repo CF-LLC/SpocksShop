@@ -14,13 +14,16 @@ import { SHOP_SECTIONS } from "@/lib/shop/sections";
 import { stripeSettings } from "@/lib/stripe";
 import { PairsWell } from "@/components/shop/pairs-well";
 import { closetPairing } from "@/lib/shop/pairings";
+import { productSeo } from "@/lib/shop/seo";
 
 type Params = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const product = await getListedProductBySlug((await params).slug);
   if (!product) return { title: "Item not found" };
-  return { title: product.title, description: product.description.slice(0, 160) || `${product.title} at Spock's Resale Shop.`, alternates: { canonical: `/shop/${product.slug}` } };
+  const seo = productSeo(product);
+  const image = product.hasPhotos ? product.images[0]?.src : undefined;
+  return { title: seo.title, description: seo.description, alternates: { canonical: `/shop/${product.slug}` }, openGraph: { title: seo.title, description: seo.description, url: `/shop/${product.slug}`, ...(image ? { images: [image] } : {}) } };
 }
 
 async function activeRates() {
@@ -51,7 +54,8 @@ export default async function ProductPage({ params }: Params) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: product.title,
+    name: productSeo(product).name,
+    url: `https://spockshop.com/shop/${product.slug}`,
     description: product.description,
     sku: product.sku,
     ...(product.hasPhotos ? { image: product.images.map((i) => i.src) } : {}),
