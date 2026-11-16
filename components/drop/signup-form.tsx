@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CONSENT_TEXT, PROMO_RULE } from "@/lib/drop/signup";
+import { SIGNUP_NOTE } from "@/lib/shop/holiday-banner";
 
 export const PROMO_STORAGE_KEY = "dd_code";
 
@@ -39,7 +40,7 @@ export function DropSignup({ source, compact = false }: { source: string; compac
         ) : <p role="status" data-signup-done>{done.used ? "You're on the list. Your first-order code has already been used." : "Thanks, you're on the list."}</p>
       ) : (
         <form onSubmit={submit} noValidate>
-          <p className="dd-signup-note">New designs daily. Sign up and we&apos;ll show your code right here.</p>
+          <p className="dd-signup-note">{SIGNUP_NOTE}</p>
           <div className="dd-signup-row">
             <label className="sr-only" htmlFor={`dd-email-${source}`}>Email</label>
             <input id={`dd-email-${source}`} className="dd-signup-input" type="email" required autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} />
