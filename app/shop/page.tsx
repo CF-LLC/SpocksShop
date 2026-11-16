@@ -14,6 +14,7 @@ import { alternate, applyClosetQuery, closetHref, facets, FEATURE_EVERY, interle
 import { amazonFeatures, dropFeatures, type Feature } from "@/lib/shop/features";
 import type { Product } from "@/lib/types";
 import { ClosetShippingNote } from "@/components/shop/closet-shipping-note";
+import { BuyDirectNote } from "@/components/shop/buy-direct-note";
 import { listActiveShippingRates } from "@/lib/commerce/shipping-rates";
 import { DropSignup } from "@/components/drop/signup-form";
 import { dropEnabled } from "@/lib/drop/config";
@@ -66,6 +67,10 @@ export default async function ShopPage({ searchParams }: { searchParams: Params 
         <h1 className="t-h1">{s.title}</h1>
         <p className="muted mt-2 max-w-2xl">{s.blurb}</p>
         <ClosetShippingNote rates={rates} />
+        <BuyDirectNote />
+        <p className="mt-3 text-sm">
+          <Link href="/holiday" className="underline">Holiday gifts under $10 and $20</Link>
+        </p>
       </header>
 
       {all.length > 0 ? <Filters query={query} f={f} total={matches.length} filtered={filtered} /> : null}

@@ -3,7 +3,7 @@ import { AMAZON_ASSOCIATES_DISCLOSURE } from "@/lib/shop/sections";
 import { LcarsBar } from "@/components/ui/lcars";
 
 
-const EXPLORE: [string, string][] = [["/drop", "Merch"], ["/gifts", "Funny Gifts"], ["/shop?tab=amazon", "Amazon Picks"], ["/shop?tab=closet", "Closet Picks"], ["/guides", "Guides"], ["https://blog.spockshop.com", "Blog"], ["/about", "About"], ["/contact", "Contact"]];
+const EXPLORE: [string, string][] = [["/drop", "Merch"], ["/gifts", "Funny Gifts"], ["/holiday", "Holiday Gifts"], ["/shop?tab=amazon", "Amazon Picks"], ["/shop?tab=closet", "Closet Picks"], ["/guides", "Guides"], ["https://blog.spockshop.com", "Blog"], ["/about", "About"], ["/contact", "Contact"]];
 
 function footerExplore(sellersEnabled: boolean): [string, string][] {
   return sellersEnabled ? [...EXPLORE, ["/sell", "Sell in Closet Picks"]] : EXPLORE;

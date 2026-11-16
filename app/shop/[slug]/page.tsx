@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { BuyBox } from "@/components/shop/buy-box";
+import { BuyDirectNote } from "@/components/shop/buy-direct-note";
 import { Gallery } from "@/components/shop/gallery";
 import { ProductCard } from "@/components/shop/product-card";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -98,6 +99,7 @@ export default async function ProductPage({ params }: Params) {
             checkoutEnabled={stripeSettings().checkoutEnabled}
             reason={reason}
           />
+          {product.source === "closet" && !sold ? <BuyDirectNote /> : null}
           {sold ? (
             <div className="flex flex-wrap gap-3">
               <Link href={section.href} className="btn btn-primary">More from {section.label}</Link>
