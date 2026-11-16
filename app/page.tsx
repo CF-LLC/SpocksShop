@@ -12,9 +12,10 @@ import { SHOP_SECTIONS } from "@/lib/shop/sections";
 import { approvedCommunityListings } from "@/lib/shop/queries";
 import { plural } from "@/lib/utils";
 import { DesignOfTheDay } from "@/components/shop/design-of-the-day";
+import { HolidayGiftBanner } from "@/components/shop/holiday-gift-banner";
 import { ClosetShippingNote } from "@/components/shop/closet-shipping-note";
 import { DropSignup } from "@/components/drop/signup-form";
-import { designOfTheDay, dropEnabled } from "@/lib/drop/config";
+import { designOfTheDay, dropEnabled, publicDesigns } from "@/lib/drop/config";
 import { listActiveShippingRates } from "@/lib/commerce/shipping-rates";
 
 export default async function HomePage() {
@@ -26,13 +27,15 @@ export default async function HomePage() {
 
   const sections = [
     { href: "/shop?tab=closet", title: SHOP_SECTIONS.closet.title, blurb: SHOP_SECTIONS.closet.blurb, count: closetCount, unit: "item", accent: "var(--gold)" },
-    ...(dotd ? [{ href: "/drop", title: "Merch", blurb: "Original illustrated tees, hoodies, mugs, stickers and hats from The Daily Drop.", count: dotd ? 1 : 0, unit: "new design today", accent: "var(--cyan, #7fd8ff)" }] : []),
+    ...(dotd ? [{ href: "/drop", title: "Merch", blurb: "Original illustrated tees, hoodies, mugs, stickers and hats from The Daily Drop.", count: publicDesigns().length, unit: "design", accent: "var(--cyan, #7fd8ff)" }] : []),
     { href: "/shop?tab=amazon", title: "Amazon Pick of the Day", blurb: "One hand-picked Amazon find, fresh every day.", count: daily.today ? 1 : 0, unit: "pick", accent: "var(--lilac)" },
   ];
 
   return (
     <div className="space-y-16 md:space-y-24">
       <SpaceHero />
+
+      <HolidayGiftBanner />
 
       <section aria-labelledby="sections-title">
         <SectionHeader id="sections-title" eyebrow="Ways to shop" title="Pick a section" />
