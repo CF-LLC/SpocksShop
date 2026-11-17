@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { BuyBox } from "@/components/shop/buy-box";
 import { BuyDirectNote } from "@/components/shop/buy-direct-note";
@@ -16,11 +16,14 @@ import { stripeSettings } from "@/lib/stripe";
 import { PairsWell } from "@/components/shop/pairs-well";
 import { closetPairing } from "@/lib/shop/pairings";
 import { productSeo } from "@/lib/shop/seo";
+import { BUNDLE_PATH, closetBundleSizeFromSlug } from "@/lib/shop/closet-bundle";
 
 type Params = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const product = await getListedProductBySlug((await params).slug);
+  const slug = (await params).slug;
+  if (closetBundleSizeFromSlug(slug)) return { title: "Closet Bundle Box", alternates: { canonical: BUNDLE_PATH } };
+  const product = await getListedProductBySlug(slug);
   if (!product) return { title: "Item not found" };
   const seo = productSeo(product);
   const image = product.hasPhotos ? product.images[0]?.src : undefined;
@@ -37,6 +40,8 @@ async function activeRates() {
 
 export default async function ProductPage({ params }: Params) {
   const { slug } = await params;
+  const bundleSize = closetBundleSizeFromSlug(slug);
+  if (bundleSize) redirect(`${BUNDLE_PATH}?size=${bundleSize}`);
   const product = await getListedProductBySlug(slug);
   if (!product) notFound();
 

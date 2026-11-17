@@ -13,6 +13,7 @@ import { canPreviewTomorrow, getDailyPickView } from "@/lib/shop/daily-pick";
 import { alternate, applyClosetQuery, closetHref, facets, FEATURE_EVERY, interleave, PAGE_SIZE, parseClosetQuery, SORTS, type ClosetQuery } from "@/lib/shop/closet-filters";
 import { amazonFeatures, dropFeatures, type Feature } from "@/lib/shop/features";
 import type { Product } from "@/lib/types";
+import { ClosetBundleBanner } from "@/components/shop/closet-bundle-banner";
 import { ClosetShippingNote } from "@/components/shop/closet-shipping-note";
 import { BuyDirectNote } from "@/components/shop/buy-direct-note";
 import { listActiveShippingRates } from "@/lib/commerce/shipping-rates";
@@ -67,6 +68,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Params 
         <h1 className="t-h1">{s.title}</h1>
         <p className="muted mt-2 max-w-2xl">{s.blurb}</p>
         <ClosetShippingNote rates={rates} />
+        <ClosetBundleBanner />
         <BuyDirectNote />
         <p className="mt-3 text-sm">
           <Link href="/holiday" className="underline">Holiday gifts under $10 and $20</Link>
