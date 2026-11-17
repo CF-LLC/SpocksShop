@@ -11,7 +11,7 @@ export const USPS_HOLIDAY_NEWSROOM_URL =
   "https://about.usps.com/newsroom/national-releases/2026/0922-usps-recommends-2026-holiday-mailing-shipping-dates.htm";
 
 export const HOLIDAY_BANNER_KICKER = "Holiday gift transmission";
-export const HOLIDAY_BANNER_TITLE = "Gifts from the Closet, plus white elephant ideas.";
+export const HOLIDAY_BANNER_TITLE = "Gifts from the Closet and Amazon Picks, plus white elephant ideas.";
 export const HOLIDAY_BANNER_ORDER_LINE = "Order by Dec 15 for Christmas delivery in the Lower 48.";
 export const HOLIDAY_BANNER_NOTE =
   "Based on USPS Ground Advantage's recommended Dec 17, 2026 ship-by for the contiguous United States. That's a recommendation, not a guarantee. Alaska, Hawaii, and U.S. territories need more time.";
