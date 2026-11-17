@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { categories, inventory, photos, products, sellers } from "@/lib/db/schema";
 import { communitySellersEnabled } from "@/lib/features";
 import { mediaUrl } from "@/lib/media";
+import { BUNDLE_SIZES, BUNDLE_SKUS, isClosetBundleSku } from "@/lib/shop/closet-bundle";
 import type { CartProduct, Product, ProductImage, ProductStatus } from "@/lib/types";
 
 export const PLACEHOLDER_IMAGE: ProductImage = { id: "placeholder", src: "/placeholder.svg", alt: "Photo coming soon", width: 1200, height: 1000 };
@@ -74,11 +75,24 @@ async function safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promis
   }
 }
 
-/** Spock's Closet: listed, in-stock closet items. */
+/** Spock's Closet: listed, in-stock closet items. The bundle box is sold on its own page, not in this grid. */
 export function getClosetProducts(): Promise<Product[]> {
   return safe(
     "closet query",
-    async () => (await load(and(eq(products.source, "closet"), eq(products.status, "listed")))).filter((p) => p.available > 0),
+    async () =>
+      (await load(and(eq(products.source, "closet"), eq(products.status, "listed")))).filter((p) => p.available > 0 && !isClosetBundleSku(p.sku)),
+    [],
+  );
+}
+
+/** Size-specific Closet Bundle Box products, in size order (including sold-out sizes). */
+export function getClosetBundleProducts(): Promise<Product[]> {
+  return safe(
+    "bundle query",
+    async () => {
+      const rows = await load(and(eq(products.source, "closet"), inArray(products.sku, [...BUNDLE_SKUS])));
+      return BUNDLE_SIZES.map((size) => rows.find((p) => p.sku === size.sku)).filter((p): p is Product => Boolean(p));
+    },
     [],
   );
 }
