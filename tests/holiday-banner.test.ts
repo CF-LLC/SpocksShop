@@ -5,9 +5,13 @@ import {
   HOLIDAY_BANNER_ORDER_LINE,
   HOLIDAY_GIFT_LINKS,
   HOLIDAY_ORDER_BY,
+  HOLIDAY_ORDER_BY_END,
+  HOLIDAY_TZ,
   SIGNUP_NOTE,
   USPS_GROUND_ADVANTAGE_SHIP_BY,
   USPS_HOLIDAY_DATES_URL,
+  holidayCountdown,
+  isHolidayOrderWindowOpen,
 } from "../lib/shop/holiday-banner";
 
 describe("holiday gift banner copy", () => {
@@ -32,5 +36,34 @@ describe("holiday gift banner copy", () => {
     expect(signup).not.toMatch(/New designs daily/);
     expect(signup).toContain("first-order code");
     expect(SIGNUP_NOTE).toBe("Sign up and we'll show your first-order code right here.");
+  });
+});
+
+describe("holiday cutoff countdown", () => {
+  it("treats Dec 15, 2026 11:59 PM CT as still open, and Dec 16 CT as closed", () => {
+    expect(HOLIDAY_ORDER_BY_END.toISOString()).toBe("2026-12-16T05:59:59.999Z");
+    const endInChicago = new Intl.DateTimeFormat("en-US", {
+      timeZone: HOLIDAY_TZ,
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      timeZoneName: "short",
+    }).format(HOLIDAY_ORDER_BY_END);
+    expect(endInChicago).toMatch(/December 15, 2026/);
+    expect(isHolidayOrderWindowOpen(new Date("2026-12-16T05:59:59.999Z"))).toBe(true);
+    expect(isHolidayOrderWindowOpen(new Date("2026-12-16T06:00:00.000Z"))).toBe(false);
+  });
+
+  it("counts down while the window is open and is empty after cutoff", () => {
+    const mid = holidayCountdown(new Date("2026-12-10T18:00:00.000Z")); // Dec 10 noon CT
+    expect(mid.open).toBe(true);
+    expect(mid.days).toBe(5);
+    expect(mid.label).toMatch(/5 days left to order/);
+    const closed = holidayCountdown(new Date("2026-12-16T06:00:00.000Z"));
+    expect(closed.open).toBe(false);
+    expect(closed.label).toBe("");
   });
 });

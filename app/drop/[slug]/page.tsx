@@ -9,6 +9,7 @@ import { adminCostPrice } from "@/lib/drop/admin-cost";
 import { SIZES } from "@/lib/drop/config";
 import { ProductView } from "./product-view";
 import { PairsWell } from "@/components/shop/pairs-well";
+import { HolidayCutoffBanner } from "@/components/shop/holiday-cutoff-banner";
 import { DROP_PAIRINGS } from "@/lib/shop/pairings";
 import { gallery } from "@/lib/drop/mockups";
 
@@ -46,6 +47,7 @@ export default async function DropProduct({ params }: { params: Promise<{ slug: 
   return (
     <>
       <Link href="/drop" className="dd-note">← All designs</Link>
+      {!held ? <HolidayCutoffBanner /> : null}
       {held ? (
         <div className="dd-prod">
           <div className="dd-card"><div className="dd-shirt"><img src={`/drop/art/${d.file}.webp`} alt={d.title} /></div></div>

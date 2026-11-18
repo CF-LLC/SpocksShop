@@ -41,4 +41,6 @@ export type CartProduct = {
   image: string | null;
   source: "closet" | "community";
   purchasable: boolean;
+  weightLb: number;
+  sku: string;
 };

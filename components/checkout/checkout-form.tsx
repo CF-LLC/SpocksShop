@@ -7,6 +7,8 @@ import { useState } from "react";
 import { useCart } from "@/contexts/cart-context";
 import { formatCents } from "@/lib/commerce/money";
 import { EmptyState } from "@/components/ui/empty-state";
+import { CartBundleNudge } from "@/components/shop/cart-bundle-nudge";
+import { HolidayCutoffBanner } from "@/components/shop/holiday-cutoff-banner";
 
 export function CheckoutForm({ checkoutEnabled, shippingRates }: { checkoutEnabled: boolean; shippingRates: { name: string; amountCents: number }[] }) {
   const cart = useCart();
@@ -52,6 +54,10 @@ export function CheckoutForm({ checkoutEnabled, shippingRates }: { checkoutEnabl
   return (
     <div className="grid gap-6 md:grid-cols-[1fr_320px]">
       <section className="panel p-5" aria-labelledby="review-title">
+        <div className="mb-4 grid gap-2">
+          <HolidayCutoffBanner compact />
+          <CartBundleNudge />
+        </div>
         <h2 id="review-title" className="t-h3 mb-3">Review items</h2>
         <ul className="divide-y divide-[var(--line)]">
           {cart.lines.map((l) => {

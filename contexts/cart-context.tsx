@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@/components/analytics";
+import type { ShippingRateRow } from "@/lib/commerce/shipping";
 import type { CartLine, CartProduct } from "@/lib/types";
 import { CART_STORAGE_KEY, readFromStorage, writeToStorage } from "@/lib/storage";
 
@@ -16,6 +17,7 @@ type CartContextValue = {
   count: number;
   subtotalCents: number;
   checkoutEnabled: boolean | null;
+  shippingRates: ShippingRateRow[];
   loading: boolean;
   isOpen: boolean;
   open: () => void;
@@ -35,6 +37,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [verified, setVerified] = useState<Record<string, CartProduct>>({});
   const [checkoutEnabled, setCheckoutEnabled] = useState<boolean | null>(null);
+  const [shippingRates, setShippingRates] = useState<ShippingRateRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setOpen] = useState(false);
   const lastIds = useRef("");
@@ -55,10 +58,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch(`/api/cart?ids=${encodeURIComponent(ids)}`, { cache: "no-store" });
       if (!res.ok) return;
-      const data = (await res.json()) as { items: CartProduct[]; checkoutEnabled: boolean };
+      const data = (await res.json()) as { items: CartProduct[]; checkoutEnabled: boolean; shippingRates?: ShippingRateRow[] };
       const byId = Object.fromEntries(data.items.map((p) => [p.id, p]));
       setVerified(byId);
       setCheckoutEnabled(data.checkoutEnabled);
+      if (Array.isArray(data.shippingRates)) setShippingRates(data.shippingRates);
       // Drop lines for products that no longer exist; clamp to stock.
       setState((cur) => ({
         snapshots: cur.snapshots,
@@ -115,6 +119,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       count: state.lines.reduce((s, l) => s + l.quantity, 0),
       subtotalCents: state.lines.reduce((s, l) => s + (products[l.productId]?.priceCents ?? 0) * l.quantity, 0),
       checkoutEnabled,
+      shippingRates,
       loading,
       isOpen,
       open: () => setOpen(true),
@@ -125,7 +130,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       clear,
       refresh,
     };
-  }, [state, verified, checkoutEnabled, loading, isOpen, add, setQuantity, remove, clear, refresh]);
+  }, [state, verified, checkoutEnabled, shippingRates, loading, isOpen, add, setQuantity, remove, clear, refresh]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
