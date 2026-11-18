@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { BuyBox } from "@/components/shop/buy-box";
+import { HolidayCutoffBanner } from "@/components/shop/holiday-cutoff-banner";
 import { BuyDirectNote } from "@/components/shop/buy-direct-note";
 import { Gallery } from "@/components/shop/gallery";
 import { ProductCard } from "@/components/shop/product-card";
@@ -78,6 +79,8 @@ export default async function ProductPage({ params }: Params) {
   return (
     <article className="pb-24 md:pb-0">
       <Breadcrumbs items={[{ href: "/", label: "Home" }, { href: "/shop", label: "Shop" }, { href: section.href, label: section.label }, { label: product.title }]} />
+
+      <HolidayCutoffBanner />
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         <Gallery images={product.images} title={product.title} />

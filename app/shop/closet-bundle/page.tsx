@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClosetBundleBuyBox } from "@/components/shop/closet-bundle-buy-box";
+import { HolidayCutoffBanner } from "@/components/shop/holiday-cutoff-banner";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { getClosetBundleProducts } from "@/lib/catalog";
 import { formatCents } from "@/lib/commerce/money";
@@ -58,6 +59,8 @@ export default async function ClosetBundlePage({ searchParams }: Params) {
           { label: BUNDLE_TITLE_BASE },
         ]}
       />
+
+      <HolidayCutoffBanner />
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         <div className="panel overflow-hidden p-0">

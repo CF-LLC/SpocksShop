@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { useCart } from "@/contexts/cart-context";
 import { formatCents } from "@/lib/commerce/money";
+import { CartBundleNudge } from "@/components/shop/cart-bundle-nudge";
+import { HolidayCutoffBanner } from "@/components/shop/holiday-cutoff-banner";
 import { CloseIcon, MinusIcon, PlusIcon } from "@/components/ui/icons";
 
 export function CartDrawer() {
@@ -90,6 +92,10 @@ export function CartDrawer() {
               })}
             </ul>
             <div className="border-t border-[var(--line)] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
+              <div className="mb-3 grid gap-2">
+                <HolidayCutoffBanner compact />
+                <CartBundleNudge onNavigate={close} />
+              </div>
               <div className="flex items-baseline justify-between">
                 <span className="muted">Subtotal</span>
                 <span className="price text-xl">{formatCents(cart.subtotalCents)}</span>

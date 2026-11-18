@@ -140,6 +140,8 @@ export function getCartProducts(ids: string[]): Promise<CartProduct[]> {
         image: p.hasPhotos ? p.images[0].src : null,
         source: p.source,
         purchasable: isPurchasable(p),
+        weightLb: p.weightLb,
+        sku: p.sku,
       })),
     [],
   );

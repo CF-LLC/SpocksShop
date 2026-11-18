@@ -6,10 +6,12 @@ import {
   HOLIDAY_BANNER_TITLE,
   HOLIDAY_GIFT_LINKS,
   USPS_HOLIDAY_DATES_URL,
+  isHolidayOrderWindowOpen,
 } from "@/lib/shop/holiday-banner";
 
 /** Space-themed homepage banner pointing at /holiday and the gift guides. No prices. */
 export function HolidayGiftBanner() {
+  const orderWindowOpen = isHolidayOrderWindowOpen();
   return (
     <section
       aria-labelledby="holiday-banner-title"
@@ -20,7 +22,8 @@ export function HolidayGiftBanner() {
       <h2 id="holiday-banner-title" className="t-h2 mt-2 max-w-2xl">
         {HOLIDAY_BANNER_TITLE}
       </h2>
-      <p className="t-lead mt-3 max-w-2xl">{HOLIDAY_BANNER_ORDER_LINE}</p>
+      {orderWindowOpen ? <p className="t-lead mt-3 max-w-2xl">{HOLIDAY_BANNER_ORDER_LINE}</p> : null}
+      {orderWindowOpen ? (
       <p className="muted mt-2 max-w-2xl text-sm">
         {HOLIDAY_BANNER_NOTE}{" "}
         <a href={USPS_HOLIDAY_DATES_URL} className="underline" rel="noopener noreferrer" target="_blank">
@@ -28,6 +31,7 @@ export function HolidayGiftBanner() {
         </a>
         .
       </p>
+      ) : null}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <Link href="/holiday" className="btn btn-primary">
           Shop holiday gifts
