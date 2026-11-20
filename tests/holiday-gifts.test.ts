@@ -90,6 +90,8 @@ describe("holiday gift guide page wiring", () => {
     expect(page).toContain("activeAffiliateItems");
     expect(page).toContain("AMAZON_ASSOCIATES_DISCLOSURE");
     expect(page).toContain("AffiliateCard");
+    expect(page).toContain("ClosetBundleBanner");
+    expect(page).toContain("BUNDLE_WHITE_ELEPHANT_LINE");
     expect(page).not.toMatch(DEPOP_URL_RE);
     expect(BUY_DIRECT_COPY).not.toMatch(DEPOP_URL_RE);
   });

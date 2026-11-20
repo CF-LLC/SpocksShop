@@ -13,6 +13,7 @@ import { approvedCommunityListings } from "@/lib/shop/queries";
 import { plural } from "@/lib/utils";
 import { DesignOfTheDay } from "@/components/shop/design-of-the-day";
 import { HolidayGiftBanner } from "@/components/shop/holiday-gift-banner";
+import { ClosetBundleBanner } from "@/components/shop/closet-bundle-banner";
 import { ClosetShippingNote } from "@/components/shop/closet-shipping-note";
 import { DropSignup } from "@/components/drop/signup-form";
 import { designOfTheDay, dropEnabled, publicDesigns } from "@/lib/drop/config";
@@ -36,6 +37,8 @@ export default async function HomePage() {
       <SpaceHero />
 
       <HolidayGiftBanner />
+
+      <ClosetBundleBanner className="" />
 
       <section aria-labelledby="sections-title">
         <SectionHeader id="sections-title" eyebrow="Ways to shop" title="Pick a section" />
