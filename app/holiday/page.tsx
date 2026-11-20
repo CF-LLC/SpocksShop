@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BuyDirectNote } from "@/components/shop/buy-direct-note";
+import { ClosetBundleBanner } from "@/components/shop/closet-bundle-banner";
 import { AffiliateCard } from "@/components/shop/affiliate-card";
 import { ClosetShippingNote } from "@/components/shop/closet-shipping-note";
 import { ProductCard } from "@/components/shop/product-card";
@@ -15,6 +16,7 @@ import {
   inGiftSection,
   type GiftSectionId,
 } from "@/lib/shop/holiday-gifts";
+import { BUNDLE_PATH, BUNDLE_WHITE_ELEPHANT_LINE } from "@/lib/shop/closet-bundle";
 import type { Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +49,7 @@ export default async function HolidayPage() {
           Under $10 Closet finds, white elephant ideas, and gifts for him and her, pulled from what is live now. Amazon prices and availability are on Amazon. Live long and prosper.
         </p>
         <ClosetShippingNote rates={rates} />
+        <ClosetBundleBanner />
         <BuyDirectNote />
         {amazonAnywhere ? (
           <p className="dim mt-3 text-sm" data-testid="amazon-disclosure" data-affiliate-disclosure>
@@ -101,6 +104,13 @@ function GiftBand({
         <p className="muted mt-1 text-sm">{kicker}</p>
         <p className="dim text-sm">{count} {count === 1 ? "item" : "items"}</p>
       </div>
+      {id === "whiteElephant" ? (
+        <p className="muted mb-5 max-w-2xl text-sm" data-testid="holiday-bundle-white-elephant">
+          {BUNDLE_WHITE_ELEPHANT_LINE}{" "}
+          <Link href={BUNDLE_PATH} className="underline">Build a bundle box</Link>
+          <span className="hero-tech mt-2 block text-[11px] tracking-[0.2em] text-stone-500 uppercase">🖖 Live long and prosper.</span>
+        </p>
+      ) : null}
       {count === 0 ? (
         <p className="muted">{empty} <Link href="/shop" className="underline">Shop Closet Picks</Link></p>
       ) : (

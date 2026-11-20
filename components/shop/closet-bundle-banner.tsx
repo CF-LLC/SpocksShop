@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { BUNDLE_BANNER_TEXT, BUNDLE_KICKER, BUNDLE_PATH, BUNDLE_TITLE_BASE } from "@/lib/shop/closet-bundle";
 
-/** Short Closet-page invitation to the five-top bundle box. */
-export function ClosetBundleBanner() {
+/** Short invitation to the five-top bundle box. Used on Closet, the homepage, and /holiday. */
+export function ClosetBundleBanner({ className = "mt-5" }: { className?: string }) {
   return (
     <section
       aria-labelledby="closet-bundle-banner-title"
       data-testid="closet-bundle-banner"
-      className="panel relative mt-5 overflow-hidden p-5 sm:p-6"
+      className={`panel relative overflow-hidden p-5 sm:p-6 ${className}`.trim()}
     >
       <p className="t-eyebrow">{BUNDLE_KICKER}</p>
       <h2 id="closet-bundle-banner-title" className="t-h3 mt-2 max-w-2xl">

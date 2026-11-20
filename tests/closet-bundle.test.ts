@@ -6,6 +6,7 @@ import {
   BUNDLE_BANNER_TEXT,
   BUNDLE_HEADLINE,
   BUNDLE_PATH,
+  BUNDLE_WHITE_ELEPHANT_LINE,
   BUNDLE_PRICE_CENTS,
   BUNDLE_SIZES,
   BUNDLE_SKU_PREFIX,
@@ -60,17 +61,27 @@ describe("closet bundle box", () => {
 
   it("keeps shopper copy free of Depop links and routes the box to its own page", () => {
     const shop = readFileSync("app/shop/page.tsx", "utf8");
+    const home = readFileSync("app/page.tsx", "utf8");
+    const holiday = readFileSync("app/holiday/page.tsx", "utf8");
     const banner = readFileSync("components/shop/closet-bundle-banner.tsx", "utf8");
     const page = readFileSync("app/shop/closet-bundle/page.tsx", "utf8");
     const buy = readFileSync("components/shop/closet-bundle-buy-box.tsx", "utf8");
     expect(shop).toContain("ClosetBundleBanner");
+    expect(home).toContain("ClosetBundleBanner");
+    expect(holiday).toContain("ClosetBundleBanner");
+    expect(holiday).toContain("BUNDLE_WHITE_ELEPHANT_LINE");
+    expect(holiday).toContain('data-testid="holiday-bundle-white-elephant"');
+    expect(BUNDLE_WHITE_ELEPHANT_LINE).toMatch(/white elephant/i);
+    expect(BUNDLE_WHITE_ELEPHANT_LINE).toContain("$14.99");
     expect(banner).toContain(BUNDLE_PATH);
     expect(banner).toContain("BUNDLE_BANNER_TEXT");
+    expect(banner).toContain("BUNDLE_KICKER");
     expect(page).toContain("BUNDLE_HEADLINE");
     expect(page).toContain("ClosetBundleBuyBox");
-    for (const src of [banner, page, buy, BUNDLE_BANNER_TEXT, BUNDLE_HEADLINE]) {
+    for (const src of [banner, page, buy, home, holiday, BUNDLE_BANNER_TEXT, BUNDLE_HEADLINE, BUNDLE_WHITE_ELEPHANT_LINE]) {
       expect(src.toLowerCase()).not.toContain("depop.com");
       expect(src.toLowerCase()).not.toContain("href=\"https://www.depop");
+      expect(src.toLowerCase()).not.toContain("depop");
     }
   });
 });

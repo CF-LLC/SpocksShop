@@ -37,6 +37,9 @@ export const BUNDLE_CONDITION_NOTES =
 export const BUNDLE_KICKER = "Closet Picks · Five tops, one shipping fee";
 export const BUNDLE_HEADLINE = "Five Closet tops in your size, packed as one box.";
 export const BUNDLE_BANNER_TEXT = "Skip five shipping fees. Get five tops in your size, packed as one box, for $14.99 plus one US shipping fee.";
+/** Shopper-facing line for the holiday white-elephant section. No marketplace names or links. */
+export const BUNDLE_WHITE_ELEPHANT_LINE =
+  "Need a ready-to-wrap white elephant gift? A Closet Bundle Box is five tops in one size, packed as one box, for $14.99 plus one US shipping fee.";
 
 export function bundleTitle(size: BundleSize): string {
   return `${BUNDLE_TITLE_BASE} — 5 tops, size ${size}`;
