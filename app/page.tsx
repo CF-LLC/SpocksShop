@@ -18,6 +18,10 @@ import { ClosetShippingNote } from "@/components/shop/closet-shipping-note";
 import { DropSignup } from "@/components/drop/signup-form";
 import { designOfTheDay, dropEnabled, publicDesigns } from "@/lib/drop/config";
 import { listActiveShippingRates } from "@/lib/commerce/shipping-rates";
+import { pageSeo, SITE_DESCRIPTION } from "@/lib/seo";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = pageSeo("/", "Spock's Resale Shop", SITE_DESCRIPTION, { absolute: true });
 
 export default async function HomePage() {
   const [closet, community, preview, rates] = await Promise.all([getClosetProducts(), approvedCommunityListings(), canPreviewTomorrow(), listActiveShippingRates()]);

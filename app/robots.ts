@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/admin", "/checkout", "/drop/success"],
+      disallow: ["/api/", "/admin", "/cart", "/checkout", "/drop/success"],
     },
     sitemap: "https://spockshop.com/sitemap.xml",
   };
