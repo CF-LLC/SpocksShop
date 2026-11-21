@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AMAZON_ASSOCIATES_DISCLOSURE } from "@/lib/shop/sections";
 import { LcarsBar } from "@/components/ui/lcars";
+import { CF_LLC_SITES } from "@/lib/seo";
 
 
 const EXPLORE: [string, string][] = [["/drop", "Merch"], ["/gifts", "Funny Gifts"], ["/holiday", "Holiday Gifts"], ["/shop?tab=amazon", "Amazon Picks"], ["/shop?tab=closet", "Closet Picks"], ["/guides", "Guides"], ["https://blog.spockshop.com", "Blog"], ["/about", "About"], ["/contact", "Contact"]];
@@ -32,6 +33,14 @@ export function SiteFooter({ sellersEnabled = false }: { sellersEnabled?: boolea
             <p className="muted">{AMAZON_ASSOCIATES_DISCLOSURE}</p>
           </div>
         </div>
+        <nav aria-label="More from CF LLC" className="mt-8 border-t border-[var(--line)] pt-6">
+          <p className="t-eyebrow mb-2">More from CF LLC</p>
+          <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+            {CF_LLC_SITES.map((s) => (
+              <li key={s.href}><a href={s.href} className="muted hover:text-[var(--text)]">{s.label}</a></li>
+            ))}
+          </ul>
+        </nav>
         <p className="dim mt-8 text-xs">© {new Date().getFullYear()} Spock&apos;s Resale Shop</p>
       </div>
     </footer>

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { pageSeo } from "@/lib/seo";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Contact", description: "Questions about an item or an order? Email Spock's Resale Shop." };
+export const metadata: Metadata = pageSeo("/contact", "Contact", "Questions about an item or an order? Email Spock's Resale Shop.");
 
 const CONTACT_EMAIL = "support@spockshop.com";
 

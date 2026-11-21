@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { pageSeo } from "@/lib/seo";
 import Link from "next/link";
 import { LcarsBar } from "@/components/ui/lcars";
 import { AMAZON_ASSOCIATES_DISCLOSURE, SHOP_SECTIONS } from "@/lib/shop/sections";
 import { closetShippingCopy } from "@/lib/commerce/shipping-copy";
 import { listActiveShippingRates } from "@/lib/commerce/shipping-rates";
 
-export const metadata: Metadata = { title: "About", description: "What Spock's Resale Shop is and how buying works." };
+export const metadata: Metadata = pageSeo("/about", "About", "What Spock's Resale Shop is and how buying works.");
 
 export default async function AboutPage() {
   const shipping = closetShippingCopy(await listActiveShippingRates());

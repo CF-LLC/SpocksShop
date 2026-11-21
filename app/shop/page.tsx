@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageSeo } from "@/lib/seo";
 import Link from "next/link";
 import { DailyPickSection } from "@/components/shop/daily-pick";
 import { CommunityCard } from "@/components/shop/community-card";
@@ -20,10 +21,7 @@ import { listActiveShippingRates } from "@/lib/commerce/shipping-rates";
 import { DropSignup } from "@/components/drop/signup-form";
 import { dropEnabled } from "@/lib/drop/config";
 
-export const metadata: Metadata = {
-  title: "Shop Closet Picks",
-  description: "Shop Closet Picks: one-of-a-kind secondhand finds. Filter by category, size and price.",
-};
+export const metadata: Metadata = pageSeo("/shop", "Shop Closet Picks", "Shop Closet Picks: one-of-a-kind secondhand finds. Filter by category, size and price.");
 
 const grid = "grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4";
 

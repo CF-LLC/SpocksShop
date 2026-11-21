@@ -9,6 +9,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { CartDrawer } from "@/components/cart-drawer";
 import { communitySellersEnabled } from "@/lib/features";
 import { EventTracker } from "@/components/analytics";
+import { SITE, jsonLdScript, siteJsonLd } from "@/lib/seo";
 
 // Cloudflare Web Analytics (free, cookieless). Public site token, not a secret.
 const CF_BEACON_TOKEN = "08ec89e094ba4f04b285654afdfe320c";
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://spockshop.com"),
   title: { default: "Spock's Resale Shop", template: "%s | Spock's Resale Shop" },
   description: DESCRIPTION,
-  openGraph: { title: "Spock's Resale Shop", description: DESCRIPTION, siteName: "Spock's Resale Shop", type: "website", locale: "en_US" },
+  openGraph: { title: "Spock's Resale Shop", description: DESCRIPTION, siteName: "Spock's Resale Shop", type: "website", locale: "en_US", url: SITE },
   twitter: { card: "summary_large_image", title: "Spock's Resale Shop", description: DESCRIPTION },
 };
 
@@ -37,6 +38,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en" className={`${bodyFont.variable} ${displayFont.variable} antialiased`}>
       <body className="min-h-dvh">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(siteJsonLd()) }} />
         <div className="space-backdrop" aria-hidden />
         <Providers>
           <a href="#main-content" className="sr-only-focusable fixed left-4 top-3 z-50 rounded-full bg-[var(--gold)] px-4 py-2 font-semibold text-[var(--on-gold)]">Skip to content</a>
