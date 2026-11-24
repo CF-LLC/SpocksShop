@@ -33,8 +33,9 @@ export type PagingOpts = {
 
 const WARDROBE_API = (memberId: string, page: number, perPage: number) =>
   `https://www.vinted.com/api/v2/wardrobe/${memberId}/items?page=${page}&per_page=${perPage}&order=newest_first`;
+const VINTED_HOME = "https://www.vinted.com/";
 
-/** Only Vinted's anonymous visitor token from the member page response (no login, nothing stored). */
+/** Only Vinted's anonymous visitor token from a public Vinted response (no login, nothing stored). */
 function visitorCookie(setCookie: string[] | undefined): string | null {
   for (const c of setCookie ?? []) {
     const m = /^\s*access_token_web=([^;\s]{1,4096})/.exec(c);
@@ -44,9 +45,9 @@ function visitorCookie(setCookie: string[] | undefined): string | null {
 }
 
 /**
- * Reads Cooper's own public Vinted member page (mrspock13 only), then, when the page shows only the first
- * items, pages through the full wardrobe the same way the member page does in a browser: sequential, with a
- * pause between pages, a page cap, and a backoff on HTTP 429. No login; a 403 or bot check stops it.
+ * Reads Cooper's own public Vinted member page (mrspock13 only), then pages through the wardrobe JSON
+ * the member page itself loads in the browser (Vinted no longer embeds items in the HTML). Sequential,
+ * with a pause between pages, a page cap, and a backoff on HTTP 429. No login; a 403 or bot check stops it.
  * `wardrobe.complete` is true only when every page loaded, every item is his, and the item count matches
  * Vinted's own total. Anything less returns what was read (for drafts/sold marking) but complete=false.
  */
@@ -66,30 +67,53 @@ export async function readOwnMember(memberUrl: string, fetcher: Fetcher, opts: P
   if (!new RegExp(`\\b${OWN_MEMBER}\\b`, "i").test(html)) return notOwn;
   const wardrobe = parseWardrobe(html);
   if (wardrobe.ownerId && wardrobe.ownerId !== m.id) return notOwn;
-  if (!wardrobe.items.length) {
-    const links = memberItemLinks(html);
-    if (!links.length) return { ok: false, blocked: false, message: "Vinted's member page loaded but listed no items the server could read (it may load them in the browser). Paste your item links instead." };
-    return { ok: true, links, wardrobe, paging: { pagesFetched: 1, expected: null, seen: links.length, reason: "The member page had no item data, only links." } };
-  }
 
   const byUrl = new Map<string, WardrobeItem>(wardrobe.items.map((i) => [i.url, i]));
-  const done = (reason: string | null, pagesFetched: number): MemberRead => {
+  const pasteLinks = "Vinted's member page loaded but listed no items the server could read (it may load them in the browser). Paste your item links instead.";
+  const linksOnly = (message = pasteLinks): MemberRead => {
+    const links = memberItemLinks(html);
+    if (!links.length) return { ok: false, blocked: false, message };
+    return { ok: true, links, wardrobe, paging: { pagesFetched: 1, expected: null, seen: links.length, reason: "The member page had no item data, only links." } };
+  };
+  const done = (reason: string | null, pagesFetched: number, total = wardrobe.total, blocked = false): MemberRead => {
     const items = [...byUrl.values()];
-    const complete = reason === null && wardrobe.total !== null && items.length === wardrobe.total;
-    const why = reason ?? (complete ? null : `Read ${items.length} items but Vinted says ${wardrobe.total ?? "?"}.`);
-    return { ok: true, links: items.map((i) => i.url), wardrobe: { ...wardrobe, items, complete }, paging: { pagesFetched, expected: wardrobe.total, seen: items.length, reason: why } };
+    if (!items.length) {
+      if (blocked) return { ok: false, blocked: true, message: "Vinted blocked or challenged the shop server. SpockShop doesn't try to get around it: paste item links, or add items by hand." };
+      return linksOnly(reason ? `${reason} Paste your item links instead.` : pasteLinks);
+    }
+    const complete = reason === null && total !== null && items.length === total;
+    const why = reason ?? (complete ? null : `Read ${items.length} items but Vinted says ${total ?? "?"}.`);
+    return { ok: true, links: items.map((i) => i.url), wardrobe: { ...wardrobe, items, total, complete }, paging: { pagesFetched, expected: total, seen: items.length, reason: why } };
   };
   if (wardrobe.complete) return done(null, 1);
-  if (wardrobe.total === null) return done("The member page didn't say how many items there are.", 1);
-  // Only his own wardrobe, and only once the page itself proved it is his.
-  if (m.id !== OWN_MEMBER_ID || wardrobe.ownerId !== OWN_MEMBER_ID) return done(`Only ${OWN_MEMBER}'s own wardrobe is paged.`, 1);
-  const pages = Math.ceil(wardrobe.total / perPage);
-  if (pages > maxPages) return done(`Vinted lists ${wardrobe.total} items (${pages} pages), more than the ${maxPages}-page limit.`, 1);
-  const cookie = visitorCookie(first.setCookie);
-  if (!cookie) return done("Vinted didn't allow loading the rest of the member page.", 1);
+  // Only his own wardrobe is paged through the JSON endpoint.
+  if (m.id !== OWN_MEMBER_ID || (wardrobe.ownerId !== null && wardrobe.ownerId !== OWN_MEMBER_ID)) {
+    return byUrl.size ? done(`Only ${OWN_MEMBER}'s own wardrobe is paged.`, 1) : linksOnly();
+  }
+  if (wardrobe.total !== null && Math.ceil(wardrobe.total / perPage) > maxPages) {
+    return done(`Vinted lists ${wardrobe.total} items (${Math.ceil(wardrobe.total / perPage)} pages), more than the ${maxPages}-page limit.`, 1);
+  }
 
+  let cookie = visitorCookie(first.setCookie);
+  // If the member page didn't list items and didn't issue a visitor token, try the public homepage once.
+  if (!cookie && !wardrobe.items.length) {
+    try {
+      await sleep(delayMs);
+      const home = await fetcher(VINTED_HOME, { maxBytes: MAX_PAGE_BYTES, accept: "text/html" });
+      cookie = visitorCookie(home.setCookie);
+    } catch {
+      cookie = null;
+    }
+  }
+  if (!cookie) {
+    return byUrl.size ? done(wardrobe.total === null ? "The member page didn't say how many items there are." : "Vinted didn't allow loading the rest of the member page.", 1) : linksOnly();
+  }
+
+  let total = wardrobe.total;
   let fetched = 1;
-  for (let page = 1; page <= pages; page++) {
+  const lastPage = () => (total !== null ? Math.ceil(total / perPage) : maxPages);
+  for (let page = 1; page <= lastPage(); page++) {
+    if (page > maxPages) return done(`Vinted lists ${total ?? byUrl.size} items, more than the ${maxPages}-page limit.`, fetched, total);
     let body: string | null = null;
     for (let attempt = 0; body === null; attempt++) {
       await sleep(delayMs);
@@ -99,19 +123,24 @@ export async function readOwnMember(memberUrl: string, fetcher: Fetcher, opts: P
       } catch (e) {
         const status = (e as { httpStatus?: number } | null)?.httpStatus;
         if (status === 429 && attempt < backoffMs.length) { await sleep(backoffMs[attempt]); continue; }
-        return done(status === 429 ? `Vinted asked the server to slow down on page ${page}; stopped.` : isBlocked(e) ? `Vinted blocked page ${page}; stopped (nothing bypassed).` : `Page ${page} of your member items didn't load.`, fetched);
+        return done(status === 429 ? `Vinted asked the server to slow down on page ${page}; stopped.` : isBlocked(e) ? `Vinted blocked page ${page}; stopped (nothing bypassed).` : `Page ${page} of your member items didn't load.`, fetched, total, isBlocked(e));
       }
     }
     fetched++;
     const p = parseWardrobePage(body);
-    if (!p) return done(`Page ${page} of your member items wasn't readable.`, fetched);
+    if (!p) return done(`Page ${page} of your member items wasn't readable.`, fetched, total);
     if (p.owners.some((o) => o !== OWN_MEMBER_ID)) return notOwn;
-    if (p.total !== wardrobe.total) return done(`Vinted's item count changed while syncing (${wardrobe.total} -> ${p.total ?? "?"}).`, fetched);
-    if (p.items.length !== p.rawCount) return done(`Some items on page ${page} couldn't be read.`, fetched);
+    if (total === null) total = p.total;
+    else if (p.total !== total) return done(`Vinted's item count changed while syncing (${total} -> ${p.total ?? "?"}).`, fetched, total);
+    if (p.items.length !== p.rawCount) return done(`Some items on page ${page} couldn't be read.`, fetched, total);
     for (const it of p.items) byUrl.set(it.url, it);
+    // Keep what this page already returned, but do not request further pages past the cap.
+    if (total !== null && Math.ceil(total / perPage) > maxPages) {
+      return done(`Vinted lists ${total} items (${Math.ceil(total / perPage)} pages), more than the ${maxPages}-page limit.`, fetched, total);
+    }
     if (p.rawCount < perPage) break;
   }
-  return done(null, fetched);
+  return done(null, fetched, total);
 }
 
 export type MissingResult = { id: string; title: string; change: string };

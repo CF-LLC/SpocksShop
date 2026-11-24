@@ -153,6 +153,86 @@ function fakeDb(active: { id: string; title: string; status: string; sourceUrl: 
 }
 const row = (n: number, status = "listed") => ({ id: `id-${n}`, title: `Item ${n}`, status, sourceUrl: `https://www.vinted.com/items/${n}` });
 
+
+/** Today's live member page: initialWardrobeItems is null; items come from the wardrobe JSON API. */
+const emptySsrPage = () =>
+  `<html>mrspock13<script>self.__next_f.push([1,${JSON.stringify(`x:{"initialWardrobeItems":null,"homepageSessionId":null}`)}])</script></html>`;
+
+function apiOnly(all: number[], opts: { cookieOn?: "member" | "home" | "none"; api?: Api } = {}) {
+  const { cookieOn = "member", api } = opts;
+  const calls: string[] = [];
+  const token = ["anon_id=x; Path=/", "access_token_web=TOKEN123; Path=/; HttpOnly"];
+  const f: Fetcher = async (url, o) => {
+    calls.push(url);
+    if (url === "https://www.vinted.com/" || url === "https://www.vinted.com") {
+      return { bytes: enc("<html>Vinted</html>"), contentType: "text/html", setCookie: cookieOn === "home" ? token : [] };
+    }
+    if (url.startsWith("https://www.vinted.com/member/")) {
+      return { bytes: enc(emptySsrPage()), contentType: "text/html", setCookie: cookieOn === "member" ? token : [] };
+    }
+    const u = new URL(url);
+    expect(u.pathname).toBe(`/api/v2/wardrobe/${OWN}/items`);
+    const page = Number(u.searchParams.get("page")), per = Number(u.searchParams.get("per_page"));
+    const body = api ? api(page, per, o.cookie) : { items: all.slice((page - 1) * per, page * per).map((i) => apiItem(i)), pagination: { current_page: page, total_pages: Math.ceil(all.length / per), total_entries: all.length, per_page: per } };
+    return { bytes: enc(JSON.stringify(body)), contentType: "application/json" };
+  };
+  return { f, calls };
+}
+
+describe("Vinted member sync: items only in the wardrobe JSON API", () => {
+  it("reads every item when the member page embeds no wardrobe list", async () => {
+    const all = ids(1000, 65);
+    const { f, calls } = apiOnly(all);
+    waits.length = 0;
+    const r = okRead(await readOwnMember(MEMBER, f, { ...fast, perPage: 96 }));
+    expect(r.wardrobe.complete).toBe(true);
+    expect(r.links).toHaveLength(65);
+    expect(r.paging).toEqual({ pagesFetched: 2, expected: 65, seen: 65, reason: null });
+    expect(calls[0]).toMatch(/\/member\/3206261213/);
+    expect(calls[1]).toBe(`https://www.vinted.com/api/v2/wardrobe/${OWN}/items?page=1&per_page=96&order=newest_first`);
+    expect(calls).toHaveLength(2);
+    expect(r.wardrobe.items[0].listing.title).toBe("Item 1000");
+  });
+  it("pages the JSON API when one request is not enough", async () => {
+    const all = ids(1, 25);
+    const { f, calls } = apiOnly(all);
+    const r = okRead(await readOwnMember(MEMBER, f, { ...fast, perPage: 20 }));
+    expect(r.wardrobe.complete).toBe(true);
+    expect(r.links).toHaveLength(25);
+    expect(r.paging.pagesFetched).toBe(3);
+    expect(calls.filter((c) => c.includes("/api/"))).toHaveLength(2);
+  });
+  it("uses a visitor token from the public homepage if the member page didn't issue one", async () => {
+    const all = ids(1, 5);
+    const { f, calls } = apiOnly(all, { cookieOn: "home" });
+    const r = okRead(await readOwnMember(MEMBER, f, { ...fast, perPage: 96 }));
+    expect(r.wardrobe.complete).toBe(true);
+    expect(r.links).toHaveLength(5);
+    expect(calls[0]).toMatch(/\/member\//);
+    expect(calls[1]).toBe("https://www.vinted.com/");
+    expect(calls[2]).toMatch(/\/api\/v2\/wardrobe\//);
+  });
+  it("falls back to pasting links when no visitor token and no item links are available", async () => {
+    const { f, calls } = apiOnly([], { cookieOn: "none" });
+    const r = await readOwnMember(MEMBER, f, fast);
+    expect(r).toMatchObject({ ok: false, blocked: false });
+    if (!r.ok) expect(r.message).toMatch(/Paste your item links/);
+    expect(calls.some((c) => c.includes("/api/"))).toBe(false);
+  });
+  it("a 403 from the wardrobe API is a block, and asks to paste links if nothing was read", async () => {
+    const { f } = apiOnly(ids(1, 5), { api: () => { throw new FetchError("blocked", 403); } });
+    const r = await readOwnMember(MEMBER, f, fast);
+    expect(r).toMatchObject({ ok: false, blocked: true });
+    if (!r.ok) expect(r.message).toMatch(/paste item links/i);
+  });
+  it("still refuses to call the wardrobe API for a different member id", async () => {
+    const { f, calls } = apiOnly(ids(1, 5));
+    const r = await readOwnMember("https://www.vinted.com/member/42-mrspock13", f, fast);
+    expect(r.ok).toBe(false);
+    expect(calls.every((c) => !c.includes("/api/"))).toBe(true);
+  });
+});
+
 describe("Vinted member sync: unpublishing", () => {
   it("multi-page complete list: unpublishes (archives) only the missing items, never deletes", async () => {
     const all = ids(1, 45);
