@@ -40,6 +40,10 @@ describe("Vinted URL rules", () => {
     expect(normalizeMemberUrl("https://www.vinted.com/member/123-mrspock13")).toEqual({ ok: true, url: "https://www.vinted.com/member/123", id: "123" });
     expect(normalizeMemberUrl("https://www.vinted.com/member/123-someoneelse").ok).toBe(false);
     expect(normalizeMemberUrl("https://evil.com/member/123-mrspock13").ok).toBe(false);
+    expect(normalizeMemberUrl("https://www.vinted.com/member/mrspock13")).toEqual({ ok: true, url: "https://www.vinted.com/member/3206261213", id: "3206261213" });
+    expect(normalizeMemberUrl("mrspock13")).toEqual({ ok: true, url: "https://www.vinted.com/member/3206261213", id: "3206261213" });
+    expect(normalizeMemberUrl("https://www.vinted.com/member/someoneelse").ok).toBe(false);
+    expect(normalizeMemberUrl("someoneelse").ok).toBe(false);
   });
 });
 

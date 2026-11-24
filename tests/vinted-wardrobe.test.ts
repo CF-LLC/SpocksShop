@@ -30,6 +30,10 @@ describe("Vinted member page (wardrobe) parsing", () => {
   it("returns nothing on pages without wardrobe data", () => {
     expect(parseWardrobe("<html>nope</html>")).toMatchObject({ items: [], complete: false });
   });
+  it("treats a null initialWardrobeItems payload as empty (Vinted's current member page)", () => {
+    const html = `<html>mrspock13<script>self.__next_f.push([1,${JSON.stringify(`x:{"initialWardrobeItems":null}`)}])</script></html>`;
+    expect(parseWardrobe(html)).toMatchObject({ items: [], total: null, complete: false, ownerId: null });
+  });
   it("member sync refuses a page whose items belong to another member", async () => {
     const f: Fetcher = async () => ({ bytes: new TextEncoder().encode(page([item(1, { user: { id: 999 } })])), contentType: "text/html" });
     expect(await readOwnMember("https://www.vinted.com/member/3206261213-mrspock13", f)).toMatchObject({ ok: false, blocked: false });
